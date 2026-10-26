@@ -4,7 +4,7 @@
 формфактор і функції (EQ, компресор, ефекти, cue, сцени, MIDI, рекордер), але не схемотехніку.
 
 > [!NOTE]
-> Стан: дослідження ([docs/00-research.md](docs/00-research.md)). Наступний крок — макет на готових
+> Стан: чернетка ТЗ ([docs/01-spec.md](docs/01-spec.md)), дослідження — [docs/00-research.md](docs/00-research.md). Наступний крок — макет на готових
 > платах: Teensy 4.1 + PCM1865 + PCM5102A, перевірка USB-аудіо 8 каналів у Windows, macOS та iOS.
 
 ```mermaid
@@ -19,6 +19,7 @@ flowchart LR
 | Документ | Зміст |
 |---|---|
 | [docs/00-research.md](docs/00-research.md) | TX-6, варіанти архітектури, канали й USB, живлення, функції, ризики |
+| [docs/01-spec.md](docs/01-spec.md) | **ТЗ Rev 1:** функціонал, керування, роз'єми, ТТХ |
 | [docs/decisions.md](docs/decisions.md) | Журнал рішень цифрового підпроєкту (DM1…) |
 | [docs/datasheets/](docs/datasheets/README.md) | Datasheets цього підпроєкту |
 
