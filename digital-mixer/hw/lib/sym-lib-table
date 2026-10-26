@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "pocket-digital")(type "KiCad")(uri "${KIPRJMOD}/../lib/pocket-digital.kicad_sym")(options "")(descr "Project symbols (hw/lib/gen_symbols.py)"))
+)
