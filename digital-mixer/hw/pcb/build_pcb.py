@@ -27,7 +27,8 @@ W, D = L.W, L.D
 
 MOUNT_FP = "pocket-digital:MountingHole_2.2mm_M2_Pad_Standoff_2Side"
 MOUNT_R = 2.45
-BATT_ZONE = (L.M + 47.0 - L.BATT[0] / 2 - 0.5, D - 4 - L.BATT[1] - 0.5, 50.0 + L.BATT[0] / 2 + 0.5, D - 3.5)
+BATT_ZONE = (L.BATT_C[0] - L.BATT[0] / 2 - 0.5, L.BATT_C[1] - L.BATT[1] / 2 - 0.5,
+             L.BATT_C[0] + L.BATT[0] / 2 + 0.5, L.BATT_C[1] + L.BATT[1] / 2 + 0.5)
 RAILS = {"GND", "+3V3", "+3V3A", "+4V2", "VSYS", "VBUS", "BAT+"}
 
 
@@ -57,7 +58,7 @@ def at_edge(pcb, ref, along, edge, outward, front_pad, bottom, overhang=0.0):
     """Edge part (jack, USB-C, Teensy): rotation that puts `front_pad` on the side of `outward`
     ('-y' rear, '+y' front, '+x' right) of the courtyard centre, courtyard edge `overhang` past the
     board edge, centred at `along` on the other axis."""
-    axis, sign = ("y", -1) if outward == "-y" else ("y", 1) if outward == "+y" else ("x", 1)
+    axis, sign = {"-y": ("y", -1), "+y": ("y", 1), "+x": ("x", 1), "-x": ("x", -1)}[outward]
     fp = pcb.fps[ref]
     for rot in (0, 90, 180, 270):
         pcb.place(ref, 0, 0, rot, bottom)
@@ -75,7 +76,8 @@ def at_edge(pcb, ref, along, edge, outward, front_pad, bottom, overhang=0.0):
         dy = (-overhang - t) if sign < 0 else (edge + overhang - b)
         fp.Move(pcbnew.VECTOR2I(mm(along - (l + r) / 2), mm(dy)))
     else:
-        fp.Move(pcbnew.VECTOR2I(mm(edge + overhang - r), mm(along - (t + b) / 2)))
+        dx = (-overhang - l) if sign < 0 else (edge + overhang - r)
+        fp.Move(pcbnew.VECTOR2I(mm(dx), mm(along - (t + b) / 2)))
 
 
 def find_holes(pcb, corners, clear=0.3):
@@ -113,6 +115,7 @@ def main():
     for ref, c in comps.items():
         pcb.add(ref, c)
     pcb.outline([(0, 0), (W, 0), (W, D), (0, D)])
+    pcb.W, pcb.D = W, D
     placed = set()
 
     def nets(ref):
@@ -123,7 +126,7 @@ def main():
         placed.add(ref)
 
     # ---------------------------------------------------------------- top: controls
-    y_lcd = L.M + L.LCD[1] / 2
+    y_lcd = L.y0 + L.LCD[1] / 2
     y_me = y_lcd + L.LCD[1] / 2 + L.GAP + L.ENC[1] / 2
     y_b = y_me + L.ENC[1] / 2 + L.GAP + L.CAP[1] / 2
     step = L.CAP[1] + L.GAP
@@ -153,7 +156,7 @@ def main():
 
     # ---------------------------------------------------------------- bottom: edges
     rear = ["IN1", "IN2", "IN3", "IN4", "MAIN", "AUX", "MIDI"]
-    jx = {name: L.M + 6.5 + 14.5 * i for i, name in enumerate(rear)}
+    jx = dict(zip(rear, L.JX))
     for ref, c in comps.items():
         fpn, p = c["fp"], {k: v.lstrip("/") for k, v in c["pins"].items()}
         if "SJ-43514" in fpn:
@@ -163,58 +166,67 @@ def main():
             if key:
                 at_edge(pcb, ref, jx[key], 0.0, "-y", "1", True, 0.5)
             elif t == "PH_L":
-                at_edge(pcb, ref, L.xm, D, "+y", "1", True, 0.5)
+                at_edge(pcb, ref, (L.xs[3] + L.xm - 7.0) / 2, D, "+y", "1", True, 0.5)   # pegs between M4 and SHIFT
             placed.add(ref)
         elif "Teensy41" in fpn:
-            at_edge(pcb, ref, L.M + L.TEENSY[0] / 2 + 1, D, "+y", "25", True, 0.0)
+            at_edge(pcb, ref, L.T_Y0 + L.TEENSY[0] / 2, 0.0, "-x", "25", True, 0.0)   # microSD end left
             placed.add(ref)
         elif "USB4085" in fpn:
-            at_edge(pcb, ref, 29.5, W, "+x", "SH", True, 3.05)     # Rev A: board edge at local y 6.1
+            at_edge(pcb, ref, 12.0, W, "+x", "SH", True, 3.05)     # Rev A: board edge at local y 6.1
             placed.add(ref)
-
-    # ---------------------------------------------------------------- bottom: ICs
-    ic_at = {"PCM1865": [], "PCM5102A": [], "MCP23017-E/SO": []}
-    for ref, c in comps.items():
-        if c["value"] in ic_at:
-            ic_at[c["value"]].append(ref)
-    adc = sorted(ic_at["PCM1865"], key=lambda r: "IN1_LS" not in str(comps[r]["pins"]))
-    for ref, x in zip(sorted(ic_at["PCM1865"], key=lambda r: min(n for n in nets(r) if n.startswith("ADC"))),
-                      (jx["IN1"] + 7.25, jx["IN3"] + 7.25)):
-        put_c(ref, x, 27.5, 90, True)
-    for ref in ic_at["PCM5102A"]:
-        name = next(x for x in nets(ref) if x.endswith("_CAPP")).split("_")[0]
-        x = {"MAIN": jx["MAIN"], "AUX": jx["AUX"], "CUE": L.xm}[name]
-        y = 27.5 if name != "CUE" else D - 30.0
-        put_c(ref, x, y, 90, True)
-    for ref, y in zip(sorted(ic_at["MCP23017-E/SO"]), (52.0, 76.0)):
-        put_c(ref, W - 22.0, y, 0, True)
-    for ref, c in comps.items():
-        v = c["value"]
-        if v == "TPA6132A2":
-            put_c(ref, L.xm, D - 22.0, 0, True)
-        elif v == "TP4056":
-            put_c(ref, W - 10.0, 42.0, 0, True)
-        elif v == "TPS63802":
-            put_c(ref, W - 9.0, 20.0, 0, True)
-        elif v == "LP5907MFX-3.3":
-            put_c(ref, W - 18.0, 20.0, 0, True)
-        elif v == "USBLC6-2SC6":
-            put_c(ref, W - 9.0, 33.0, 0, True)
-        elif "LiPo" in v:
-            put_c(ref, 50.0, D - 8.0, 0, True)
 
     # ---------------------------------------------------------------- mounting holes (reserved first)
     holes = find_holes(pcb, {"H1": (0, 0), "H2": (W, 0), "H3": (0, D), "H4": (W, D)})
     keep = [(x - MOUNT_R - 0.3, y - MOUNT_R - 0.3, x + MOUNT_R + 0.3, y + MOUNT_R + 0.3)
             for _, x, y in filter(None, holes.values())]
 
+    # ---------------------------------------------------------------- bottom: ICs (right column)
+    xm, y0 = L.xm, L.y0
+
+    def put_ic(ref, x, y, rot):
+        if not pcb.put_free(ref, x, y, rot, True, placed, extra=[BATT_ZONE] + keep):
+            raise RuntimeError(f"no room for {ref} near ({x}, {y})")
+        placed.add(ref)
+
+    ic_at = {"PCM1865": [], "PCM5102A": [], "MCP23017-E/SO": []}
+    for ref, c in comps.items():
+        if c["value"] in ic_at:
+            ic_at[c["value"]].append(ref)
+    for ref, x in zip(sorted(ic_at["PCM1865"], key=lambda r: min(n for n in nets(r) if n.startswith("ADC"))),
+                      (xm - 7.0, xm + 7.0)):
+        put_ic(ref, x, y0 + 24.0, 90)
+    for ref in ic_at["PCM5102A"]:
+        name = next(x for x in nets(ref) if x.endswith("_CAPP")).split("_")[0]
+        put_ic(ref, xm + {"MAIN": -9.0, "AUX": 0.0, "CUE": 9.0}[name], y0 + 40.0, 90)
+    for ref, y in zip(sorted(ic_at["MCP23017-E/SO"]), (y0 + 56.0, y0 + 70.0)):
+        put_ic(ref, xm, y, 0)
+    for ref, c in comps.items():
+        v = c["value"]
+        if v == "TPA6132A2":
+            put_ic(ref, xm, D - 24.0, 0)
+        elif v == "TP4056":
+            put_ic(ref, xm - 6.0, y0 + 9.0, 0)
+        elif v == "TPS63802":
+            put_ic(ref, xm + 6.0, y0 + 3.0, 0)
+        elif v == "LP5907MFX-3.3":
+            put_ic(ref, xm - 6.0, y0 + 2.0, 0)
+        elif v == "USBLC6-2SC6":
+            put_ic(ref, W - 8.0, y0 + 2.0, 0)
+        elif "LiPo" in v:                       # through-hole: clear of the top courtyards as well
+            top = [crt_box(pcb.fps[r]) for r in placed if not pcb.fps[r].IsFlipped()]
+            if not pcb.put_free(ref, L.BATT_C[0] + L.BATT[0] / 2 + 3.0, L.BATT_C[1], 90, True, placed,
+                                extra=[BATT_ZONE] + keep + top):
+                raise RuntimeError("no room for the battery connector")
+            placed.add(ref)
+
     # ---------------------------------------------------------------- bottom: passives
     rest = [r for r in pcb.fps if r not in placed]
     decap = {r: c["decouples"] for r, c in comps.items() if c.get("decouples") and r in pcb.fps}
-    left = pcb.place_near(rest, placed, (1.0, 1.0, W - 1.0, D - 1.0), RAILS, lambda r: (W - 20.0, 30.0),
+    left = pcb.place_near(rest, placed, (1.0, 1.0, W - 1.0, D - 1.0), RAILS, lambda r: (L.xm, D / 2),
                           extra=[BATT_ZONE] + keep, decap=decap)
     if left:
-        left = pcb.pack(left, 1.0, 1.0, W - 1.0, D - 1.0, placed | set(rest) - set(left))
+        left = pcb.pack(left, 1.0, 1.0, W - 1.0, D - 1.0, placed | set(rest) - set(left),
+                        extra=[BATT_ZONE] + keep)
 
     gnd = pcb.net("/GND")
     for name, spot in holes.items():

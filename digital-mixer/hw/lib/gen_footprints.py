@@ -1,16 +1,13 @@
 """Generate the project footprints (hw/lib/pocket-digital.pretty).
 
 Run: python3 hw/lib/gen_footprints.py   (from digital-mixer/)
-Every footprint names its source in `descr`. Three parts have no drawing yet (TSF-1266, the 7 x 7
-self-locking switch, the GMT147SPI header): their footprints are PLACEHOLDERS, marked so in the
-name of the descr, and must be replaced from a drawing or a measured sample before any order.
+Every footprint names its source in `descr` (drawings in docs/datasheets).
 Helper class as in analog-mixer/hw/lib/gen_footprints.py.
 """
 from pathlib import Path
 
 OUT = Path(__file__).parent / "pocket-digital.pretty"
 SILK, FAB, CRT = 0.12, 0.10, 0.05
-PLACEHOLDER = "PLACEHOLDER - НЕ ПЕРЕВІРЕНО, замінити за кресленням або виміром до замовлення. "
 
 
 def fmt(v):
@@ -89,11 +86,13 @@ def teensy41_smd():
         x = -29.21 + i * 2.54
         f.smd(str(i + 1), x, 7.62, 1.7, 1.7, shape="circle", paste=False)
         f.smd(str(48 - i), x, -7.62, 1.7, 1.7, shape="circle", paste=False)
-    wx0, wx1 = -30.48 + 1.6, -30.48 + 7.6            # window under the USB end (inside the pin rows)
+    # window 1..5 mm from the USB end, where the PJRC card back shows the USB device pads and the
+    # VIN/VUSB trace (position from the photo - ОРІЄНТИР); wire pads just past the USB end
+    wx0, wx1 = -30.48 + 1.0, -30.48 + 5.0
     f.rect(wx0, -5.0, wx1, 5.0, "Edge.Cuts", 0.1)
     for num, y, name in (("49", -2.54, "VUSB"), ("66", 0.0, "D-"), ("67", 2.54, "D+")):
-        f.smd(num, wx1 + 1.6, y, 1.6, 1.4, side="B", paste=False)
-        f.text(wx1 + 4.0, y, name, "B.SilkS", 0.7)
+        f.smd(num, -30.48 - 1.6, y, 1.6, 1.4, side="B", paste=False)
+        f.text(-30.48 - 4.2, y, name, "B.SilkS", 0.7)
     f.rect(-30.48, -8.89, 30.48, 8.89, "F.Fab", FAB)
     f.rect(-30.48 - 0.7, -3.75, -30.48 + 5.0, 3.75, "F.Fab", FAB)   # micro-USB, 7.5 wide (PJRC)
     f.text(25.0, 0, "SD", "F.Fab", 1.0)
@@ -101,6 +100,7 @@ def teensy41_smd():
     f.line(-30.48, 8.89, 30.48, 8.89, "F.SilkS", SILK)
     f.text(-29.21, 5.6, "1", "F.SilkS", 0.8)
     f.rect(-31.43, -9.14, 30.73, 9.14, "F.CrtYd", CRT)
+    f.rect(-33.0, -3.6, -30.7, 3.6, "B.CrtYd", CRT)          # wire pads, other side
     return f.write(-10.5, 10.5)
 
 
@@ -133,44 +133,50 @@ def xfl4015():
 
 
 def tsf1266():
-    """PLACEHOLDER: TSF-1266 6 x 6 x 5 mm SMT tact (seller listing only, no drawing). Pads copied
-    from KiCad SW_SPST_PTS645Sx43SMTR92 (C&K PTS645 SMT, a common 6 x 6 gull-wing pattern)."""
-    f = FP("SW_TSF-1266_6x6mm_SMD", PLACEHOLDER + "TSF-1266 6x6x5 SMT tact; pads as C&K PTS645 SMT "
-           "(KiCad SW_SPST_PTS645Sx43SMTR92)", "tact switch 6x6 SMD placeholder", attr="smd")
-    for num, x, y in (("1", -3.98, -2.25), ("1", 3.98, -2.25), ("2", -3.98, 2.25), ("2", 3.98, 2.25)):
-        f.smd(num, x, y, 1.55, 1.3)
-    f.body(-3.0, -3.0, 3.0, 3.0, pad=0.25)
-    f.rect(-4.9, -3.25, 4.9, 3.25, "F.CrtYd", CRT)
-    f.text(0, 0, "PH", "F.Fab", 0.8)
+    """TSF-1266 6 x 6 x 5 SMT tact, seller drawing (docs/datasheets/tsf-1266-drawing.png): two
+    terminals; P.C.B mounting pattern 2 pads 2 x 2, inner gap 4, overall 8; body 6 x 6 (6.7 with the
+    terminals), 5 high."""
+    f = FP("SW_TSF-1266_6x6mm_SMD", "TSF-1266 6x6x5 SMT tact switch, 2 terminals; pads 2 x 2 at +-3.0 "
+           "(seller drawing, P.C.B mounting pattern)", "tact switch 6x6 SMD TSF-1266", attr="smd")
+    for num, x in (("1", -3.0), ("2", 3.0)):
+        f.smd(num, x, 0, 2.0, 2.0)
+    f.body(-3.0, -3.0, 3.0, 3.0)
+    f.rect(-4.25, -3.25, 4.25, 3.25, "F.CrtYd", CRT)
     return f.write(-4.2, 4.2)
 
 
 def latch_7x7():
-    """PLACEHOLDER: 7 x 7 self-locking DPDT, 6 pins (sellers: two rows of three; pitch not found).
-    Assumed 2 rows x 3, pitch 2.0, rows 5.0 apart, drill 0.8; pins 1-3 / 4-6 = poles A/B/C of
-    Switch:SW_DPDT_x2 - roles to be set from the drawing."""
-    f = FP("SW_Push_Latching_DPDT_7x7mm", PLACEHOLDER + "7x7 self-locking DPDT 6-pin, assumed 2 x 3 "
-           "pitch 2.0, rows 5.0", "push switch latching DPDT 7x7 placeholder")
+    """7 x 7 self-locking DPDT push switch, seller drawing (docs/datasheets/push-latching-dpdt-*):
+    6 x d1 holes, 2 rows of 3, pitch 2.0, rows 5.0 apart; body 7 x 7, 12.3 high (latched 11.0). The
+    middle pin of each row is the common (filled dot of the circuit diagram): pins 1-2-3 / 4-5-6 =
+    A-B-C of Switch:SW_DPDT_x2 per pole, B = common."""
+    f = FP("SW_Push_Latching_DPDT_7x7mm", "7x7 self-locking DPDT push switch, 6 pins d1, pitch 2.0, rows 5.0 "
+           "(seller drawing); middle pin of each row common", "push switch latching DPDT 7x7")
     for i in range(3):
-        f.tht(str(i + 1), -2.0 + i * 2.0, -2.5, 1.4, 0.8, "rect" if i == 0 else "circle")
-        f.tht(str(i + 4), -2.0 + i * 2.0, 2.5, 1.4, 0.8)
+        f.tht(str(i + 1), -2.0 + i * 2.0, -2.5, 1.6, 1.0, "rect" if i == 0 else "circle")
+        f.tht(str(i + 4), -2.0 + i * 2.0, 2.5, 1.6, 1.0)
     f.body(-3.5, -3.5, 3.5, 3.5)
-    f.text(0, 0, "PH", "F.Fab", 0.8)
     return f.write(-4.6, 4.6)
 
 
 def lcd_gmt147():
-    """PLACEHOLDER: GMT147SPI 1.47in module on its pin header (DM18, DM23). Seller drawing (top part):
-    PCB 20.96 x 44, T 1.2, module 2.76 thick, connecting seat 2.5 high at the end with the two
-    mounting holes; pins 1 GND, 2 VDD, 3 SCL, 4 SDA, 5 RES, 6 DC, 7 CS, 8 BL. Header pitch, its
-    position and the holes are not in the part of the drawing seen yet: 8 x 2.54 assumed centred at
-    that end, 1.5 from it."""
-    f = FP("LCD_GMT147SPI", PLACEHOLDER + "GMT147SPI 1.47in 172x320 module 20.96 x 44, header 1x8 P2.54 "
-           "assumed at a short end", "LCD ST7789 GMT147SPI placeholder")
+    """GMT147-01M (GMT147SPI) on its pin header, seller drawing docs/datasheets/gmt147-01m-drawing.webp:
+    PCB 20.96 x 44, T 1.2; 8 holes d1.57 at P2.54 (17.78) along the bottom edge - seen from the
+    display side BL ... GND left to right, so pin 1 (GND) is at +X; 2 x d3.5 holes 16.54 apart, 2.07
+    below the top edge; FPC seat 2.05 high on the back at the top end (stays above our board on the
+    header). Header row 1.5 from the bottom edge: scaled from the drawing (no dimension) - ОРІЄНТИР.
+    The drawing gives 2.31 from the left edge to the left hole (2.21 if centred) - holes centred here.
+    Origin = module centre, display side up, holes toward -Y."""
+    f = FP("LCD_GMT147SPI", "GMT147-01M 1.47in 172x320 module on 1x8 P2.54 header (seller drawing); "
+           "header row 1.5 from the edge scaled - verify; M2 holes under the module holes d3.5",
+           "LCD ST7789 GMT147SPI")
     for i in range(8):
-        f.tht(str(i + 1), -8.89 + i * 2.54, -22.0 + 1.5, 1.7, 1.0, "rect" if i == 0 else "circle")
+        f.tht(str(i + 1), 8.89 - i * 2.54, 22.0 - 1.5, 1.7, 1.0, "rect" if i == 0 else "circle")
+    for x in (-8.27, 8.27):
+        f.npth(x, -22.0 + 2.07, 2.2)
     f.body(-10.48, -22.0, 10.48, 22.0)
-    f.rect(-8.7, -16.2 + 1.5, 8.7, 16.2 + 1.5, "F.Fab", FAB)     # active area 17.39 x 32.35 (Waveshare), approx
+    f.rect(-8.7, -22.0 + 5.82, 8.7, -22.0 + 5.82 + 32.35, "F.Fab", FAB)     # active area 17.39 x 32.35
+    f.text(8.89, 22.0 - 3.2, "GND", "F.SilkS", 0.7)
     return f.write(-23.2, 23.2)
 
 

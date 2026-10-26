@@ -287,9 +287,9 @@ class PCB:
                 left.append(ref)
         return left
 
-    def pack(self, refs, x0, y0, x1, y1, placed, bottom=True, gap=0.5, step=0.5):
+    def pack(self, refs, x0, y0, x1, y1, placed, bottom=True, gap=0.5, step=0.5, extra=()):
         """Greedy first-fit inside a rectangle, avoiding obstacles. Returns refs that did not fit."""
-        obs = self.obstacles(placed, bottom)
+        obs = self.obstacles(placed, bottom) + list(extra)
         left = []
         for ref in refs:
             self.place(ref, 0, 0, 0, bottom)
@@ -313,6 +313,23 @@ class PCB:
             obs.append((x, y, x + w, y + h))
             placed.add(ref)
         return left
+
+    def put_free(self, ref, tx, ty, rot, bottom, placed, extra=(), gap=0.4, step=0.25, reach=25.0):
+        """Free spot nearest to (tx, ty) for the courtyard centre, avoiding parts on the same side,
+        every through-hole pad and `extra`. Returns False if none within `reach`."""
+        obs = self.obstacles(placed, bottom) + list(extra)
+        self.place(ref, 0, 0, rot, bottom)
+        l, t, r, b = self.rect_of(ref)
+        w, h = r - l + gap, b - t + gap
+        k = int(reach / step)
+        for _, i, j in sorted((i * i + j * j, i, j) for i in range(-k, k + 1) for j in range(-k, k + 1)):
+            x, y = tx + i * step - w / 2, ty + j * step - h / 2
+            if x < 0.5 or y < 0.5 or x + w > self.W - 0.5 or y + h > self.D - 0.5:
+                continue
+            if not any(x < o[2] and x + w > o[0] and y < o[3] and y + h > o[1] for o in obs):
+                self.fps[ref].Move(pcbnew.VECTOR2I(mm(x + gap / 2 - l), mm(y + gap / 2 - t)))
+                return True
+        return False
 
     def save(self, path):
         ds = self.board.GetDesignSettings()
