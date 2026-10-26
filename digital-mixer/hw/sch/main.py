@@ -19,11 +19,11 @@ JACK = "pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal"     # Rev A part, footp
 FADER = "Potentiometer_THT:Potentiometer_Bourns_PTA2043_Single_Slide"
 ENC = "Rotary_Encoder:RotaryEncoder_Alps_EC11E_Vertical_H20mm"
 ENC_SW = "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm"
-CHOC = "pocket-digital:Kailh_Choc_PG1350"                      # from docs/datasheets/kailh-choc-pg1350.pdf
-LED_RM = "LED_SMD:LED_SK6812MINI-E_3.2x2.8mm_P1.5mm_ReverseMount"
+TACT = "pocket-digital:SW_TSF-1266_6x6mm_SMD"                  # 6 x 6 x 5 SMT tact (DM16), drawing / sample TBD
+LATCH = "pocket-digital:SW_Push_Latching_DPDT_7x7mm"           # self-locking 7 x 7 DPDT (DM17), drawing TBD
 
 A3 = "+3V3A"          # LP5907: analog supplies of the codecs
-D3 = "+3V3"           # Teensy 3.3 V pin: digital supplies, OLED, pull-ups
+D3 = "+3V3"           # Teensy 3.3 V pin: digital supplies, display, pull-ups
 RAIL = "+4V2"         # TPS63802 output
 
 
@@ -116,16 +116,18 @@ def build():
         "43": "DAC_BCK", "42": "DAC_LRCK", "9": "DAC_MAIN", "24": "DAC_AUX", "11": "DAC_CUE",
         # SAI2 <- 2 x PCM1865 (TDM, 8 slots): BCLK2 4, LRCLK2 3, IN2 5, MCLK2 33
         "6": "ADC_BCK", "5": "ADC_LRCK", "7": "ADC_DOUT", "25": "ADC_MCLK",
-        # I2C0: codecs + OLED; I2C2: expanders
+        # I2C0: codecs; I2C2: expanders
         "40": "I2C_SDA", "41": "I2C_SCL", "17": "I2C2_SDA", "16": "I2C2_SCL",
         "22": "MCP1_INT", "23": "MCP2_INT",
         # faders A0-A3, battery A14
         "36": "FADER1", "37": "FADER2", "38": "FADER3", "39": "FADER4", "30": "VBAT_SENSE",
         # master encoder, function buttons
         "2": "ENC_M_A", "3": "ENC_M_B", "4": "ENC_M_SW",
-        "12": "BTN_FX1", "13": "BTN_FX2", "14": "BTN_AUX", "20": "BTN_CUE", "21": "BTN_SHIFT",
-        # LED data (Serial8 TX for WS2812Serial), DAC soft mute, headphone enable
-        "27": "LED_DATA_3V3", "28": "DAC_XSMT", "29": "HP_EN",
+        # display GMT147SPI on SPI0: SCK 13, MOSI 11, CS 10, DC 40, RES 41, backlight PWM 28; SHIFT 29
+        "35": "LCD_SCK", "13": "LCD_MOSI", "12": "LCD_CS", "32": "LCD_DC", "33": "LCD_RES", "20": "LCD_BLK",
+        "21": "BTN_SHIFT",
+        # DAC soft mute, headphone enable
+        "28": "DAC_XSMT", "29": "HP_EN",
     }, w=60)
     b.c("10u", RAIL, "GND", C1206)
     b.c("10u", D3, "GND", C1206)
@@ -170,7 +172,7 @@ def build():
     b.c("10u", "VSYS", "GND", C1206)
 
     b.block("Buck-boost TPS63802 → +4V2 (DM11). R1/R2 = 665k/91k → 4,15 V (VFB 0,5 V, табл. 10-5); "
-            "L 0,47 µH XFL4015; C 10 µF вх., 2×22 µF вих. (>3,6 V). Вимикач MSK12C02 — на EN", 1)
+            "L 0,47 µH XFL4015; C 10 µF вх., 2×22 µF вих. (>3,6 V). Вимикач — кнопка з фіксацією 7×7 на EN (DM17)", 1)
     b.part("U", "pocket-digital:TPS63802", "TPS63802", "pocket-digital:Texas_VSON-HR-10_2x3mm_P0.5mm",
            {"VIN": "VSYS", "EN": "PWR_EN", "MODE": "GND", "L1": "BB_L1", "L2": "BB_L2", "AGND": "GND",
             "GND": "GND", "VOUT": RAIL, "FB": "BB_FB", "PG": None}, w=40)
@@ -181,8 +183,10 @@ def build():
     b.c("22u", RAIL, "GND", C1206)
     b.r("665k", RAIL, "BB_FB")
     b.r("91k", "BB_FB", "GND")
-    b.part("SW", "Switch:SW_SPDT", "MSK12C02 вимикач", "pocket-digital:SW_Slide_SPDT_SHOUHAN_MSK12C02_RightAngle",
-           {"B": "PWR_EN", "A": "VSYS", "C": "GND"}, w=20)       # B = common (pad 2), as in Rev A
+    # one pole: common -> EN, NO -> VSYS, NC -> GND; the second pole is spare. Pin roles (A/B/C vs
+    # NO/common/NC) to be fixed with the switch drawing - ПЕРЕВІРИТИ.
+    b.part("SW", "Switch:SW_DPDT_x2", "Power 7x7 DPDT self-lock", LATCH,
+           {"1": "VSYS", "2": "PWR_EN", "3": "GND", "4": None, "5": None, "6": None}, units=(1, 2), w=20)
     b.r("100k", "PWR_EN", "GND")                                 # EN never floats while switching
 
     b.block("LP5907 3,3 V — аналог кодеків (+3V3A): < 6,5 µVrms, 250 mA; навантаження 128 mA (calc/power.py)", 1)
@@ -266,8 +270,9 @@ def build():
     # ================================================================ controls
     for k in (1, 2):
         chs = (1, 2) if k == 1 else (3, 4)
-        b.block(f"MCP23017 #{k} (I²C2, 0x2{k - 1}): енкодери каналів {chs[0]}, {chs[1]} (A/B) і Mute; "
+        b.block(f"MCP23017 #{k} (I²C2, 0x2{k - 1}): енкодери каналів {chs[0]}, {chs[1]} (A/B), Mute, кнопки FX/AUX/CUE (GPx7); "
                 "внутрішні підтяжки 100k, INTA/INTB дзеркальні → один INT", 2)
+        spare = {(1, "A"): "BTN_FX1", (1, "B"): "BTN_FX2", (2, "A"): "BTN_AUX", (2, "B"): "BTN_CUE"}
         pins = {"V_{DD}": D3, "V_{SS}": "GND", "SCK": "I2C2_SCL", "SDA": "I2C2_SDA", "~{RESET}": D3,
                 "A0": "GND" if k == 1 else D3, "A1": "GND", "A2": "GND",
                 "INTA": f"MCP{k}_INT", "INTB": None, "NC": None}
@@ -276,40 +281,32 @@ def build():
                 pins[f"GP{half}{2 * e}"] = f"ENC{ch}_{e + 1}_A"
                 pins[f"GP{half}{2 * e + 1}"] = f"ENC{ch}_{e + 1}_B"
             pins[f"GP{half}6"] = f"MUTE{ch}"
-            pins[f"GP{half}7"] = None
+            pins[f"GP{half}7"] = spare[(k, half)]
         b.part("U", "Interface_Expansion:MCP23017x-x-SO", "MCP23017-E/SO", "Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm",
                pins, w=50)
         b.decouple(D3)
 
     for ch in (1, 2, 3, 4):
         b.block(f"Канал {ch}: 3 енкодери EC11 (шари EQ / посили / канал, DM6), фейдер 35 мм (DM8), "
-                "Mute — Kailh Choc PG1350 з SK6812MINI-E під ним", 2)
+                "Mute — тактова кнопка TSF-1266 (DM16)", 2)
         for e in range(3):
             b.part("SW", "Device:RotaryEncoder", f"EC11 ch{ch}.{e + 1}", ENC,
                    {"A": f"ENC{ch}_{e + 1}_A", "B": f"ENC{ch}_{e + 1}_B", "C": "GND"}, w=20)
         b.part("RV", "Device:R_Potentiometer", "PTA2043 10k B", FADER,
                {"1": "GND", "2": f"FADER{ch}", "3": D3}, w=20)
         b.c("100n", f"FADER{ch}", "GND")
-        b.part("SW", "Switch:SW_Push", f"Mute {ch} Kailh PG1350", CHOC, {"1": f"MUTE{ch}", "2": "GND"}, w=20)
+        b.part("SW", "Switch:SW_Push", f"Mute {ch} TSF-1266", TACT, {"1": f"MUTE{ch}", "2": "GND"}, w=20)
 
-    b.block("LED під Mute: 4 × SK6812MINI-E (зворотний монтаж під вікном Choc), живлення +4V2 (≥ 3,7 V); "
-            "DIN 3,3 V ≥ 0,7·VDD = 2,9 V — запас `ПЕРЕВІРИТИ`", 2)
-    chain = "LED_DATA"
-    b.r("33", "LED_DATA_3V3", chain)
-    for i in range(1, 5):
-        nxt = f"LED_D{i}" if i < 4 else None
-        b.part("LED", "LED:SK6812MINI-E", f"SK6812MINI-E mute{i}", LED_RM,
-               {"VDD": RAIL, "VSS": "GND", "DIN": chain, "DOUT": nxt}, w=20)
-        b.decouple(RAIL)
-        chain = nxt
-
-    b.block("Майстер: енкодер EC11 з кнопкою, кнопки FX I, FX II, AUX, CUE, SHIFT (Choc, внутр. підтяжка Teensy), OLED", 2)
+    b.block("Майстер: енкодер EC11 з кнопкою, кнопки FX I, FX II, AUX, CUE, SHIFT (TSF-1266); "
+            "дисплей GMT147SPI 1,47\" 172×320 ST7789, SPI (DM18) — порядок виводів модуля ПЕРЕВІРИТИ", 2)
     b.part("SW", "Device:RotaryEncoder_Switch", "EC11 master", ENC_SW,
            {"A": "ENC_M_A", "B": "ENC_M_B", "C": "GND", "S1": "ENC_M_SW", "S2": "GND"}, w=20)
     for n in ("FX1", "FX2", "AUX", "CUE", "SHIFT"):
-        b.part("SW", "Switch:SW_Push", f"{n} Kailh PG1350", CHOC, {"1": f"BTN_{n}", "2": "GND"}, w=20)
-    b.part("DS", "Connector_Generic:Conn_01x04", "OLED 0.96 128x64 I2C", "pocket-digital:OLED_0.96in_128x64_I2C_4pin",
-           {"1": D3, "2": "GND", "3": "I2C_SCL", "4": "I2C_SDA"}, w=20)
+        b.part("SW", "Switch:SW_Push", f"{n} TSF-1266", TACT, {"1": f"BTN_{n}", "2": "GND"}, w=20)
+    # pin order as listed for 1.47" ST7789 modules (DFRobot DFR0995); the GMT147SPI sample decides
+    b.part("DS", "Connector_Generic:Conn_01x08", "GMT147SPI 1.47in 172x320", "pocket-digital:LCD_GMT147SPI",
+           {"1": D3, "2": "GND", "3": "LCD_SCK", "4": "LCD_MOSI", "5": "LCD_CS", "6": "LCD_RES",
+            "7": "LCD_DC", "8": "LCD_BLK"}, w=20)
     b.c("10u", D3, "GND", C1206)
 
     b.block("Прапорці живлення: шини, які в символах не мають «виходу живлення» (GND, вихід 3,3 V Teensy, VBUS, "

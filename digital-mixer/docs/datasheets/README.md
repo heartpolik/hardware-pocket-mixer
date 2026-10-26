@@ -12,4 +12,4 @@ Datasheets, на які посилається документація цифр
 | [tp4056.pdf](tp4056.pdf) | NanJing Top Power TP4056, лінійний заряд 1S 1 A | заряд ([02](../02-components.md), п. 4) | sparkfun.com |
 | [bourns-pec09.pdf](bourns-pec09.pdf) | Bourns PEC09, енкодер 9 мм, rev. 09/19 | порівняння енкодерів ([02](../02-components.md), п. 3) | bourns.com |
 | [tpa6132a2.pdf](tpa6132a2.pdf) | TI TPA6132A2, підсилювач навушників DirectPath, WQFN-16 | навушники ([03](../03-schematic.md)) | ti.com |
-| [kailh-choc-pg1350.pdf](kailh-choc-pg1350.pdf) | Kailh PG1350 (CPG135001D01), креслення й характеристики | кнопки Mute і функцій ([03](../03-schematic.md)) | adafruit.com (копія Kailh) |
+| [kailh-choc-pg1350.pdf](kailh-choc-pg1350.pdf) | Kailh PG1350 (CPG135001D01), креслення й характеристики | розглянуто (DM13, скасовано DM16) | adafruit.com (копія Kailh) |

@@ -16,13 +16,13 @@ teensy_vin = 100           # mA at 600 MHz (PJRC)
 dig_3v3 = {                # from the Teensy 3.3 V pin (max 250 mA, third-party spec tables)
     "PCM1865 IOVDD x2": 2 * 10,        # pcm1865.pdf p. 14, 4-ch active
     "PCM5102A DVDD x3": 3 * 8,         # pcm5102a.pdf p. 10: 99 mW - 22 mA * 3.3 V -> ~8 mA
-    "OLED 0.96": 15,                   # analog-mixer 12-parts: 12/20 mA
+    "GMT147SPI 1.47 TFT + backlight": 25,   # ESTIMATE: no datasheet; 3 white LEDs in parallel (DFR0995)
 }
 ana_3v3 = {                # LP5907 3.3 V (max 250 mA, dropout <= 250 mV @ 250 mA SOT-23)
     "PCM1865 AVDD x2": 2 * 31,         # pcm1865.pdf p. 14
     "PCM5102A AVDD+CPVDD x3": 3 * 22,  # pcm5102a.pdf p. 10
 }
-rail_other = {"headphone amp": 20, "SK6812 x8, dim": 40}   # ESTIMATE
+rail_other = {"headphone amp": 20}   # ESTIMATE; no addressable LEDs since DM18
 
 i_rail = teensy_vin + sum(dig_3v3.values()) + sum(ana_3v3.values()) + sum(rail_other.values())
 p_rail = i_rail / 1000 * RAIL

@@ -13,7 +13,7 @@ flowchart LR
     T --> DAC["3 × PCM5102A"] --> OUT(["MAIN, AUX,<br/>навушники"])
     T <-->|"USB HS: 8 вх / 2 вих,<br/>MIDI"| PC(["DAW"])
     T --> SD[("microSD<br/>рекордер")]
-    UI["Фейдери, 12 енкодерів,<br/>кнопки, OLED"] <--> T
+    UI["Фейдери, 12 енкодерів,<br/>кнопки, дисплей 1,47″"] <--> T
 ```
 
 | Документ | Зміст |
@@ -27,6 +27,6 @@ flowchart LR
 | [docs/datasheets/](docs/datasheets/README.md) | Datasheets цього підпроєкту |
 
 З аналогового [Rev A](../analog-mixer/README.md) переносимо деталі там, де вони підходять:
-джеки, вимикач, USB-C, модуль заряджання, TPS62933O (5 V), OLED, SK6812, енкодер EC12D.
+джеки CUI SJ-43514, USB-C GCT USB4085, захист USBLC6-2SC6, MBR0530 і AO3401A (load sharing).
 
 Ліцензія — [CERN-OHL-S-2.0+](../LICENSE), як і весь репозиторій.
