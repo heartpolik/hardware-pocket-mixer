@@ -93,7 +93,7 @@ AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-S v2 for applicabl
 conditions.
 
 Source location (original): https://github.com/stahlnow/mixerli
-Source location (this project): _TBD — указати після публікації репозиторію._
+Source location (this project): https://github.com/heartpolik/hardware-pocket-mixer
 
 Згідно з розд. 4 CERN-OHL-S v2, на PCB має бути видно source location.
 Повний текст ліцензії: [LICENSE](../LICENSE).
