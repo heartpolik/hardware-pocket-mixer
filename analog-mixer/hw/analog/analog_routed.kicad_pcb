@@ -74052,6 +74052,42 @@
 		(layer "Edge.Cuts")
 		(uuid "7f8300d0-d027-4bb2-be18-c88495237348")
 	)
+	(gr_text "hardware-pocket-mixer Rev A  CERN-OHL-S-2.0+"
+		(at 81.45 150.1 0)
+		(layer "B.SilkS")
+		(uuid "b0fe133c-c99a-40ea-a127-2985cd7fa143")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "github.com/heartpolik/hardware-pocket-mixer"
+		(at 81.45 151.9 0)
+		(layer "B.SilkS")
+		(uuid "b4dc73d2-ae2f-4d1c-9b7b-c3db542e1880")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "based on github.com/stahlnow/mixerli"
+		(at 81.45 153.7 0)
+		(layer "B.SilkS")
+		(uuid "f25475fe-501f-4315-9ac0-99d513cf921f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
 	(via
 		(at 89.106 124.0228)
 		(size 0.6)

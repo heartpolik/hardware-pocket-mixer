@@ -45,6 +45,7 @@ $PY hw/pcb/route_pcb.py digital --passes 25      # ~1 хв  -> digital_routed.ki
 $PY hw/pcb/route_pcb.py analog --resume --passes 10   # дотрасувати лише відкриті з'єднання
 $PY hw/pcb/fix_pcb.py analog                     # окремо: очищення й зшивка без трасування
 $PY hw/pcb/add_holes.py analog                   # отвори M2 (D57) на розведеній платі, доріжки не чіпає
+(cd hw/pcb && $PY add_silk.py analog)            # адреса джерел на шовкографії (D9), лише текст
 $PY hw/pcb/audio_review.py --svg docs/mech/audio-review.svg   # огляд аудіотракту (п. 4.1), плату не змінює
 $PY hw/pcb/patch_route.py hw/analog/analog_routed.kicad_pcb NET xa ya xb yb   # закрити один розрив
 $PY hw/pcb/panel.py                              # -> hw/panel/panel.kicad_pcb
@@ -312,6 +313,13 @@ PTH 1271 + 257 = 1528, пазів 22 + 2 = 24, NPTH 36 + 4 = 40.
   ±12 V), **≥ 10 V на цифровій** (≤ 5 V). Це запас під просідання ємності X7R від постійної напруги
   (`ПРИПУЩЕННЯ`, не з datasheet);
 - UEP — UEP1E100MDD / UEP1E470MED, 25 V (D44).
+
+**Адреса джерел на шовкографії (D9, CERN-OHL-S-2.0 розд. 4)** — три рядки висотою 1 мм:
+назва й ліцензія, `github.com/heartpolik/hardware-pocket-mixer`, `based on github.com/stahlnow/mixerli`.
+Аналогова — знизу біля переднього краю (центр 61,45; 131,9), цифрова — згори біля лівого краю
+(32,7; 13,15). Місця знайдено скриптом: без площадок, courtyard і чужої шовкографії; перехідні
+закриті маскою. Позиції — `build_pcb.ATTRIB`, на розведені плати ставить `add_silk.py`. DRC: нових
+зауважень немає; у Gerber панелі текст перевірено рендером.
 
 Номери для замовлення мікросхем і механіки — у [09](09-sourcing.md) і [12](12-parts.md);
 у BOM їх немає. **Не в BOM:** сам модуль IP2326 (на платі лише гребінка J11), акумулятор 2S,

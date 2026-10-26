@@ -89,7 +89,7 @@ def main():
 
     # KiKit refuses to merge project rules of two boards; both come from hw/sch/kisch.py
     # project_files() and are identical, so the analog project is the single source.
-    panel.sourcePaths = {p for p in panel.sourcePaths if "analog" in str(p)}
+    panel.sourcePaths = {p for p in panel.sourcePaths if Path(p).name.startswith("analog")}
     panel.vCutSettings.clearance = mm(VCUT_CLEAR)
     # JLCPCB reads V-cuts only from the outline layer (help answer 871). On Edge.Cuts inside KiCad the
     # line breaks the outline (zones stop filling), so it lives on User.1 and fab.py merges User.1 into

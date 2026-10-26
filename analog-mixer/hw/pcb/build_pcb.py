@@ -79,6 +79,33 @@ def add_mount_holes(board, which):
             pad.SetNet(gnd)
 
 
+# --- source location on the silkscreen (CERN-OHL-S-2.0 s. 4, D9) -----------------------------
+# Block centre (board mm) and side; spots found free of pads, courtyards and silk on the routed
+# boards (vias are tented). On a fresh placement they may need moving.
+ATTRIB = {"analog": ("B", 61.45, 131.9), "digital": ("F", 32.7, 13.15)}
+ATTRIB_LINES = ("hardware-pocket-mixer Rev A  CERN-OHL-S-2.0+",
+                "github.com/heartpolik/hardware-pocket-mixer",
+                "based on github.com/stahlnow/mixerli")
+ATTRIB_H, ATTRIB_PITCH = 1.0, 1.8      # text height and line pitch, mm
+
+
+def add_attribution(board, which):
+    """Put ATTRIB_LINES on `board` (replaces an earlier block)."""
+    for d in list(board.GetDrawings()):
+        if isinstance(d, pcbnew.PCB_TEXT) and d.GetText() in ATTRIB_LINES:
+            board.Delete(d)
+    side, x, y = ATTRIB[which]
+    for i, line in enumerate(ATTRIB_LINES):
+        t = pcbnew.PCB_TEXT(board)
+        t.SetText(line)
+        t.SetLayer(pcbnew.F_SilkS if side == "F" else pcbnew.B_SilkS)
+        t.SetTextSize(pcbnew.VECTOR2I(mm(ATTRIB_H), mm(ATTRIB_H)))
+        t.SetTextThickness(mm(0.15))
+        t.SetMirrored(side == "B")
+        t.SetPosition(pt(x, y + (i - 1) * ATTRIB_PITCH))
+        board.Add(t)
+
+
 # --- big bipolar capacitors (Nichicon UEP, lying, D44), docs/mech/topology-v4.svg ----------
 # Each cap sits next to the connection it serves: input caps under their own jack (bottom side;
 # the battery leaves the rear strip y < BATT_Y0 free), output caps of MAIN/SEND under the digital
@@ -652,6 +679,7 @@ def analog():
     if leftovers:
         leftovers = pcb.pack(leftovers, 1.0, 1.0, W - 1.0, D - 1.0, placed)
     add_mount_holes(pcb.board, "analog")
+    add_attribution(pcb.board, "analog")
     sock = next(r for r, c in comps.items() if "PinSocket_2x12" in c["fp"])
     for pad in pcb.fps[sock].Pads():
         SOCKET[pad.GetNumber()] = pad_xy(pcb.fps[sock], pad.GetNumber())
@@ -718,6 +746,7 @@ def digital():
     left = pcb.place_near(rest, placed, (1.0, 1.0, W - 1.0, DIG_Y1 - 0.5), rails, lambda r: (90.0, 12.0),
                           extra=off_board + hole_rects("digital"), decap=decap)
     add_mount_holes(pcb.board, "digital")
+    add_attribution(pcb.board, "digital")
     pcb.save(HW / "digital" / "digital.kicad_pcb")
     return len(pcb.fps), left
 
