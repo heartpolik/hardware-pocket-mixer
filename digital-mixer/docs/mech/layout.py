@@ -23,16 +23,17 @@ LCD = (20.96, 44.0)
 JACK = (10.8, 17.6)                       # SJ-43514, body front-back, plug from the rear
 TEENSY = (17.78, 60.96)
 USBC = (10.6, 10.3)
-BATT = (60.0, 50.0)                       # 3000 mAh pouch ~8 x 50 x 60 - ОРІЄНТИР, not chosen yet
+BATT = (50.0, 60.0)                       # 3000 mAh pouch ~8 x 50 x 60 - ОРІЄНТИР, not chosen yet
 
+GAP = 4.0                                 # free space between rows for fingers (3-5 mm asked)
 xs = [M + P / 2 + i * P for i in range(4)]          # channel centres
-y_enc = [M + 7.5 + k * 15.0 for k in range(3)]       # three encoders, 15 mm pitch
-y_mute = y_enc[-1] + 7.5 + 1.0 + TACT[1] / 2
-y_fader = y_mute + TACT[1] / 2 + 1.5 + FADER[1] / 2
+y_enc = [M + ENC[1] / 2 + k * (ENC[1] + GAP) for k in range(3)]
+y_fader = y_enc[-1] + ENC[1] / 2 + GAP + FADER[1] / 2
+y_mute = y_fader + FADER[1] / 2 + GAP + TACT[1] / 2           # Mute under the fader, at the front
 x_m0 = M + 4 * P + 2.0                               # master section
 W_M = 28.0
 W = x_m0 + W_M + M
-D = y_fader + FADER[1] / 2 + M
+D = y_mute + TACT[1] / 2 + M
 xm = x_m0 + W_M / 2
 
 
@@ -73,29 +74,32 @@ def top():
         o += rect(x, y_fader, *FADER, "fader", f"F{i}", "35 мм")
     y_lcd = M + LCD[1] / 2
     o += rect(xm, y_lcd, *LCD, "oled", "LCD", "1,47″ 172×320")
-    y_me = y_lcd + LCD[1] / 2 + 2.0 + ENC[1] / 2
+    y_me = y_lcd + LCD[1] / 2 + GAP + ENC[1] / 2
     o += rect(xm, y_me, *ENC, "enc", "MASTER", "з кнопкою")
-    y_b = y_me + ENC[1] / 2 + 6.5
-    grid = (("FX I", -7, 0), ("FX II", 7, 0), ("AUX", -7, 11), ("CUE", 7, 11), ("SHIFT", -7, 22))
+    y_b = y_me + ENC[1] / 2 + GAP + CAP[1] / 2
+    step = CAP[1] + GAP
+    grid = (("FX I", -7, 0), ("FX II", 7, 0), ("AUX", -7, step), ("CUE", 7, step), ("SHIFT", -7, 2 * step))
     for name, dx, dy in grid:
         o += rect(xm + dx, y_b + dy, *TACT, "choc")
         o += rect(xm + dx, y_b + dy, *CAP, "cap", name)
-    o += rect(xm + 7, y_b + 22, *LATCH, "edge", "ON", "7×7")
+    o += rect(xm + 7, y_b + 2 * step, *LATCH, "edge", "ON", "7×7")
     return o
 
 
 def bottom():
     o = []
-    names = ["IN1", "IN2", "IN3", "IN4", "MAIN", "AUX", "PH"]
-    jx = [M + 6.5 + 14.5 * i for i in range(7)]          # all on the rear edge, 14.5 mm pitch
+    names = ["IN1", "IN2", "IN3", "IN4", "MAIN", "AUX"]
+    jx = [M + 6.5 + 14.5 * i for i in range(6)]          # rear edge, 14.5 mm pitch
     for x, n in zip(jx, names):
         o += rect(x, JACK[1] / 2, *JACK, "jack", n)
+    o += rect(xm, D - JACK[1] / 2, *JACK, "jack", "PHONES", "фронт")   # front edge, as in Rev A
     o += rect(M + TEENSY[0] / 2 + 1, D - TEENSY[1] / 2, *TEENSY, "teensy", "Teensy 4.1", "microSD →")
-    o += rect(W - USBC[1] / 2, 72.0, USBC[1], USBC[0], "edge", "USB")
-    o += rect(56.0, D - 4 - BATT[1] / 2, *BATT, "batt", "LiPo 1S", "3000 mAh, ~8 мм")
-    o += rect(52.0, 29.5, 56.0, 15.0, "zone", "АЦП ×2, ЦАП ×3,", "навушники")
-    o += rect(W - 12.5, 31.0, 18.0, 18.0, "zone", "заряд,", "BB, LDO")
-    o += rect(W - 12.5, 53.0, 18.0, 18.0, "zone", "MCP23017", "×2")
+    o += rect(W - USBC[1] / 2, 29.5, USBC[1], USBC[0], "edge", "USB")
+    o += rect(50.0, D - 4 - BATT[1] / 2, *BATT, "batt", "LiPo 1S", "3000 mAh, ~8 мм")
+    o += rect(48.0, 29.5, 48.0, 15.0, "zone", "АЦП ×2,", "ЦАП ×3")
+    o += rect(84.0, 29.5, 16.0, 15.0, "zone", "заряд,", "BB, LDO")
+    o += rect(84.0, 52.0, 16.0, 18.0, "zone", "MCP23017", "×2")
+    o += rect(84.0, 74.0, 16.0, 12.0, "zone", "TPA6132", "навушн.")
     return o
 
 
