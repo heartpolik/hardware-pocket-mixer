@@ -20,6 +20,8 @@ flowchart LR
 |---|---|
 | [docs/00-research.md](docs/00-research.md) | TX-6, варіанти архітектури, канали й USB, живлення, функції, ризики |
 | [docs/01-spec.md](docs/01-spec.md) | **ТЗ Rev 1:** функціонал, керування, роз'єми, ТТХ |
+| [docs/02-components.md](docs/02-components.md) | Фейдери, енкодери, живлення 1S, монтаж Teensy, AliExpress чи JLCPCB |
+| [docs/calc/](docs/calc/power.py) | Розрахунок живлення |
 | [docs/decisions.md](docs/decisions.md) | Журнал рішень цифрового підпроєкту (DM1…) |
 | [docs/datasheets/](docs/datasheets/README.md) | Datasheets цього підпроєкту |
 
