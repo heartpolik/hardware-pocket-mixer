@@ -142,7 +142,8 @@ def main():
                 board.Delete(z)
     else:
         for t in list(board.GetTracks()):
-            board.Remove(t)
+            if not t.IsLocked():                       # pre-routed blocks (build_pcb.py) stay
+                board.Remove(t)
         for z in list(board.Zones()):
             board.Remove(z)
         if a.layers == 4:

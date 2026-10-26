@@ -87,12 +87,13 @@ def teensy41_smd():
         f.smd(str(i + 1), x, 7.62, 1.7, 1.7, shape="circle", paste=False)
         f.smd(str(48 - i), x, -7.62, 1.7, 1.7, shape="circle", paste=False)
     # window 1..5 mm from the USB end, where the PJRC card back shows the USB device pads and the
-    # VIN/VUSB trace (position from the photo - ОРІЄНТИР); wire pads just past the USB end
+    # VIN/VUSB trace (position from the photo - ОРІЄНТИР); wire pads beside it, over the module
     wx0, wx1 = -30.48 + 1.0, -30.48 + 5.0
     f.rect(wx0, -5.0, wx1, 5.0, "Edge.Cuts", 0.1)
     for num, y, name in (("49", -2.54, "VUSB"), ("66", 0.0, "D-"), ("67", 2.54, "D+")):
-        f.smd(num, -30.48 - 1.6, y, 1.6, 1.4, side="B", paste=False)
-        f.text(-30.48 - 4.2, y, name, "B.SilkS", 0.7)
+        f.smd(num, wx1 + 1.6, y, 1.6, 1.4, side="B", paste=False)
+        f.items.append(f'\t(fp_text user "{name}" (at {fmt(wx1 + 4.2)} {fmt(y)}) (layer "B.SilkS") '
+                       '(effects (font (size 0.8 0.8) (thickness 0.12)) (justify mirror)))')
     f.rect(-30.48, -8.89, 30.48, 8.89, "F.Fab", FAB)
     f.rect(-30.48 - 0.7, -3.75, -30.48 + 5.0, 3.75, "F.Fab", FAB)   # micro-USB, 7.5 wide (PJRC)
     f.text(25.0, 0, "SD", "F.Fab", 1.0)
@@ -100,7 +101,6 @@ def teensy41_smd():
     f.line(-30.48, 8.89, 30.48, 8.89, "F.SilkS", SILK)
     f.text(-29.21, 5.6, "1", "F.SilkS", 0.8)
     f.rect(-31.43, -9.14, 30.73, 9.14, "F.CrtYd", CRT)
-    f.rect(-33.0, -3.6, -30.7, 3.6, "B.CrtYd", CRT)          # wire pads, other side
     return f.write(-10.5, 10.5)
 
 
@@ -140,7 +140,9 @@ def tsf1266():
            "(seller drawing, P.C.B mounting pattern)", "tact switch 6x6 SMD TSF-1266", attr="smd")
     for num, x in (("1", -3.0), ("2", 3.0)):
         f.smd(num, x, 0, 2.0, 2.0)
-    f.body(-3.0, -3.0, 3.0, 3.0)
+    f.rect(-3.0, -3.0, 3.0, 3.0, "F.Fab", FAB)
+    f.line(-1.9, -3.0, 1.9, -3.0, "F.SilkS", SILK)
+    f.line(-1.9, 3.0, 1.9, 3.0, "F.SilkS", SILK)
     f.rect(-4.25, -3.25, 4.25, 3.25, "F.CrtYd", CRT)
     return f.write(-4.2, 4.2)
 

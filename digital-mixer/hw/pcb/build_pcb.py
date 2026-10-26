@@ -54,10 +54,10 @@ def pad_xy(fp, num):
     return pcbnew.ToMM(p.GetPosition().x) - OX, pcbnew.ToMM(p.GetPosition().y) - OY
 
 
-def at_edge(pcb, ref, along, edge, outward, front_pad, bottom, overhang=0.0):
+def at_edge(pcb, ref, along, edge, outward, front_pad, bottom, overhang=0.0, inner=False, long_axis=True):
     """Edge part (jack, USB-C, Teensy): rotation that puts `front_pad` on the side of `outward`
-    ('-y' rear, '+y' front, '+x' right) of the courtyard centre, courtyard edge `overhang` past the
-    board edge, centred at `along` on the other axis."""
+    ('-y' rear, '+y' front, '+x' right, '-x' left) of the courtyard centre (`inner`: on the other
+    side), courtyard edge `overhang` past the board edge, centred at `along` on the other axis."""
     axis, sign = {"-y": ("y", -1), "+y": ("y", 1), "+x": ("x", 1), "-x": ("x", -1)}[outward]
     fp = pcb.fps[ref]
     for rot in (0, 90, 180, 270):
@@ -66,8 +66,12 @@ def at_edge(pcb, ref, along, edge, outward, front_pad, bottom, overhang=0.0):
         px, py = pad_xy(fp, front_pad)
         c = ((l + r) / 2, (t + b) / 2)
         d = (px - c[0], py - c[1])
-        long_ok = (r - l) < (b - t) if axis == "y" else (r - l) > (b - t)
-        if long_ok and (d[1] if axis == "y" else d[0]) * sign > 0:
+        long_ok = not long_axis or ((r - l) < (b - t) if axis == "y" else (r - l) > (b - t))
+        if not long_axis:                           # square-ish part: the pad row lies across the edge normal
+            pads = [pad_xy(fp, p.GetNumber()) for p in fp.Pads() if p.GetNumber().startswith("A")]
+            spread = (max(x for x, _ in pads) - min(x for x, _ in pads), max(y for _, y in pads) - min(y for _, y in pads))
+            long_ok = spread[1] > spread[0] if axis == "x" else spread[0] > spread[1]
+        if long_ok and (d[1] if axis == "y" else d[0]) * sign * (-1 if inner else 1) > 0:
             break
     else:
         raise RuntimeError(f"{ref}: no rotation faces {outward}")
@@ -78,6 +82,62 @@ def at_edge(pcb, ref, along, edge, outward, front_pad, bottom, overhang=0.0):
     else:
         dx = (-overhang - l) if sign < 0 else (edge + overhang - r)
         fp.Move(pcbnew.VECTOR2I(mm(dx), mm(along - (t + b) / 2)))
+
+
+def put_pad(pcb, ref, num, x, y, rot, bottom=True):
+    """Place `ref` so that its pad `num` lands on (x, y)."""
+    pcb.place(ref, 0, 0, rot, bottom)
+    px, py = pad_xy(pcb.fps[ref], num)
+    pcb.fps[ref].Move(pcbnew.VECTOR2I(mm(x - px), mm(y - py)))
+
+
+def track(pcb, net, pts, width, layer=pcbnew.B_Cu):
+    for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+        t = pcbnew.PCB_TRACK(pcb.board)
+        t.SetStart(K.pt(x1, y1))
+        t.SetEnd(K.pt(x2, y2))
+        t.SetWidth(mm(width))
+        t.SetLayer(layer)
+        t.SetNet(pcb.net(net))
+        t.SetLocked(True)                    # kept by route_pcb.py, exported to Freerouting as fixed
+        pcb.board.Add(t)
+
+
+def converter_block(pcb, comps, placed):
+    """TPS63802 (U, already placed) with L, Cin, 2 x Cout as in the datasheet layout example:
+    inductor right of pins 9 (L1) / 7 (L2), input cap at pin 10 (VIN), output caps at pin 6 (VOUT),
+    every loop a few mm; the short connections are pre-routed and locked. Returns the refs."""
+    u = next(r for r, c in comps.items() if c["value"] == "TPS63802")
+    lref = next(r for r, c in comps.items() if c["value"].startswith("0.47u"))
+    cin = max((r for r, c in comps.items() if c["value"] == "10u" and
+               {n.lstrip("/") for n in c["pins"].values()} == {"VSYS", "GND"}), key=lambda r: int(r[1:]))
+    couts = sorted(r for r, c in comps.items() if c["value"] == "22u")
+    fp = pcb.fps[u]
+    p = {n: pad_xy(fp, n) for n in ("6", "7", "8", "9", "10")}
+    xr = p["9"][0] + 0.45                     # right edge of the right pad column
+    rx = xr + 0.6                             # risers of L1 / L2, clear of VIN / VOUT going straight out
+    # inductor: pads (0.98 x 3.4 rotated) as horizontal strips above / below, right of the risers
+    lx = rx + 0.125 + 0.2 + 1.7
+    put_pad(pcb, lref, "1", lx, p["9"][1] + 1.2, 90)
+    if pad_xy(pcb.fps[lref], "2")[1] > pad_xy(pcb.fps[lref], "1")[1]:
+        put_pad(pcb, lref, "1", lx, p["9"][1] + 1.2, 270)
+    l1, l2 = pad_xy(pcb.fps[lref], "1"), pad_xy(pcb.fps[lref], "2")
+    # input cap below the inductor strip, output caps above
+    put_pad(pcb, cin, "1" if comps[cin]["pins"]["1"].endswith("VSYS") else "2", xr - 0.2, l1[1] + 2.4, 0)
+    cy = l2[1] - 2.4
+    for c in couts:
+        put_pad(pcb, c, "1" if comps[c]["pins"]["1"].endswith("+4V2") else "2", xr - 0.2, cy, 0)
+        cy -= 2.6
+    placed |= {lref, cin, *couts}
+    vin = pad_xy(pcb.fps[cin], next(n for n, v in comps[cin]["pins"].items() if v.endswith("VSYS")))
+    vo = [pad_xy(pcb.fps[c], next(n for n, v in comps[c]["pins"].items() if v.endswith("+4V2"))) for c in couts]
+    track(pcb, "/BB_L1", [p["9"], (rx, p["9"][1]), (rx, l1[1]), (l1[0], l1[1])], 0.25)
+    track(pcb, "/BB_L2", [p["7"], (rx, p["7"][1]), (rx, l2[1]), (l2[0], l2[1])], 0.25)
+    track(pcb, "/VSYS", [p["10"], (p["10"][0], vin[1])], 0.25)
+    track(pcb, "/VSYS", [(p["10"][0], vin[1]), vin], 0.5)
+    track(pcb, "/+4V2", [p["6"], (p["6"][0], vo[0][1])], 0.25)
+    track(pcb, "/+4V2", [(p["6"][0], vo[0][1]), vo[0], vo[1]], 0.5)
+    return [lref, cin, *couts]
 
 
 def find_holes(pcb, corners, clear=0.3):
@@ -146,11 +206,11 @@ def main():
         elif "TSF-1266" in fpn:
             b = next(x for x in n if x.startswith(("MUTE", "BTN_")))
             if b.startswith("MUTE"):
-                put_c(ref, L.xs[int(b[4]) - 1], L.y_mute)
+                put_c(ref, L.xs[int(b[4]) - 1] + L.MUTE_DX[int(b[4]) - 1], L.y_mute)
             else:
                 put_c(ref, *btn_xy[b[4:]])
         elif "Latching" in fpn:
-            put_c(ref, L.xm + 7, y_b + 2 * step)
+            put_c(ref, *L.LATCH_XY)
         elif "GMT147" in fpn:
             put_c(ref, L.xm, y_lcd)
 
@@ -166,13 +226,17 @@ def main():
             if key:
                 at_edge(pcb, ref, jx[key], 0.0, "-y", "1", True, 0.5)
             elif t == "PH_L":
-                at_edge(pcb, ref, (L.xs[3] + L.xm - 7.0) / 2, D, "+y", "1", True, 0.5)   # pegs between M4 and SHIFT
+                at_edge(pcb, ref, L.PH_X, D, "+y", "1", True, 0.5)          # pegs between Mute 1 and Mute 2
             placed.add(ref)
         elif "Teensy41" in fpn:
-            at_edge(pcb, ref, L.T_Y0 + L.TEENSY[0] / 2, 0.0, "-x", "25", True, 0.0)   # microSD end left
+            at_edge(pcb, ref, L.T_Y0 + L.TEENSY[0] / 2, W, "+x", "25", True, 0.0)    # microSD end right
             placed.add(ref)
         elif "USB4085" in fpn:
-            at_edge(pcb, ref, 12.0, W, "+x", "SH", True, 3.05)     # Rev A: board edge at local y 6.1
+            # GCT USB4085: contact rows at local y 0 / 1.35 inside, PCB edge line at local y 6.1,
+            # courtyard to 9.15 -> 3.05 past the edge (as in Rev A)
+            pcb.place(ref, 0, 0, 0, True)
+            # front edge next to the Teensy USB end (D+/D- short for 480 Mbit/s), left of PHONES
+            at_edge(pcb, ref, L.USB_X, D, "+y", "A1", True, 3.05, inner=True, long_axis=False)
             placed.add(ref)
 
     # ---------------------------------------------------------------- mounting holes (reserved first)
@@ -207,17 +271,20 @@ def main():
         elif v == "TP4056":
             put_ic(ref, xm - 6.0, y0 + 9.0, 0)
         elif v == "TPS63802":
-            put_ic(ref, xm + 6.0, y0 + 3.0, 0)
+            put_ic(ref, xm + 6.0, y0 + 13.5, 0)       # output caps clear of the display standoff holes
         elif v == "LP5907MFX-3.3":
             put_ic(ref, xm - 6.0, y0 + 2.0, 0)
         elif v == "USBLC6-2SC6":
-            put_ic(ref, W - 8.0, y0 + 2.0, 0)
+            put_ic(ref, L.USB_X, D - 14.0, 0)
         elif "LiPo" in v:                       # through-hole: clear of the top courtyards as well
             top = [crt_box(pcb.fps[r]) for r in placed if not pcb.fps[r].IsFlipped()]
             if not pcb.put_free(ref, L.BATT_C[0] + L.BATT[0] / 2 + 3.0, L.BATT_C[1], 90, True, placed,
                                 extra=[BATT_ZONE] + keep + top):
                 raise RuntimeError("no room for the battery connector")
             placed.add(ref)
+
+    # ---------------------------------------------------------------- buck-boost block (TI SLVSEU9D 10.2)
+    conv = converter_block(pcb, comps, placed)
 
     # ---------------------------------------------------------------- bottom: passives
     rest = [r for r in pcb.fps if r not in placed]

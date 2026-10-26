@@ -43,6 +43,13 @@ D = max(y_mute + TACT[1] / 2 + M, T_Y0 + TEENSY[0] + 0.5)
 xm = x_m0 + W_M / 2
 BATT_C = (M + 2 * P, (y0 + T_Y0) / 2)                # under channels 1-4, foam over the pins
 JX = [M + 6.5 + 14.0 * i for i in range(7)]          # rear jacks IN1-4, MAIN, AUX, MIDI
+# front band: Teensy against the right edge (microSD in the right wall), its far end under the
+# electronics of the right column; USB-C left of the Teensy USB end, PHONES between Mute 1 and 2
+T_X0 = W - TEENSY[1]
+USB_X = T_X0 - 1.5 - USBC[0] / 2
+PH_X = (xs[0] + xs[1]) / 2
+MUTE_DX = (0.0, 0.0, -2.5, 0.0)                      # Mute 3 clear of the Teensy window
+LATCH_XY = (xm + 13.0, y0 + LCD[1] + GAP + ENC[1] / 2)    # power switch beside the master encoder (THT)
 
 
 # inline styles: some SVG renderers ignore <style>
@@ -77,8 +84,8 @@ def top():
     for i, x in enumerate(xs, 1):
         for k, y in enumerate(y_enc, 1):
             o += rect(x, y, *ENC, "enc", f"E{i}.{k}")
-        o += rect(x, y_mute, *TACT, "choc")
-        o += rect(x, y_mute, *CAP, "cap", f"M{i}")
+        o += rect(x + MUTE_DX[i - 1], y_mute, *TACT, "choc")
+        o += rect(x + MUTE_DX[i - 1], y_mute, *CAP, "cap", f"M{i}")
         o += rect(x, y_fader, *FADER, "fader", f"F{i}", "35 мм")
     y_lcd = y0 + LCD[1] / 2
     o += rect(xm, y_lcd, *LCD, "oled", "LCD", "1,47″ 172×320")
@@ -90,7 +97,7 @@ def top():
     for name, dx, dy in grid:
         o += rect(xm + dx, y_b + dy, *TACT, "choc")
         o += rect(xm + dx, y_b + dy, *CAP, "cap", name)
-    o += rect(xm + 7, y_b + 2 * step, *LATCH, "edge", "ON", "7×7")
+    o += rect(*LATCH_XY, *LATCH, "edge", "ON", "7×7")
     return o
 
 
@@ -100,9 +107,9 @@ def bottom():
     jx = JX
     for x, n in zip(jx, names):
         o += rect(x, JACK[1] / 2, *JACK, "jack", n)
-    o += rect((xs[3] + xm - 7) / 2, D - JACK[1] / 2, *JACK, "jack", "PHONES", "фронт")   # front edge, as in Rev A
-    o += rect(TEENSY[1] / 2, T_Y0 + TEENSY[0] / 2, TEENSY[1], TEENSY[0], "teensy", "← microSD  Teensy 4.1")
-    o += rect(W - USBC[1] / 2, 12.0, USBC[1], USBC[0], "edge", "USB")
+    o += rect(PH_X, D - JACK[1] / 2, *JACK, "jack", "PHONES", "фронт")   # front edge, as in Rev A
+    o += rect(T_X0 + TEENSY[1] / 2, T_Y0 + TEENSY[0] / 2, TEENSY[1], TEENSY[0], "teensy", "Teensy 4.1  microSD →")
+    o += rect(USB_X, D - USBC[1] / 2, USBC[0], USBC[1], "edge", "USB")
     o += rect(BATT_C[0], BATT_C[1], *BATT, "batt", "LiPo 1S", "3000 мАг, під виводами — прокладка")
     o += rect(xm, y0 + 8.0, W_M, 14.0, "zone", "заряд, BB,", "LDO, ESD")
     o += rect(xm, y0 + 32.0, W_M, 30.0, "zone", "АЦП ×2,", "ЦАП ×3")

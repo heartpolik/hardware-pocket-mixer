@@ -151,7 +151,7 @@ def build():
 
     # ================================================================ power
     b.block("Заряд 1S (DM11): TP4056, R_PROG 2,4k → 0,5 A; TEMP на GND — без NTC. CHRG / STDBY — світлодіоди", 1)
-    b.part("U", "Battery_Management:TP4056-42-ESOP8", "TP4056", "Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm_ThermalVias",
+    b.part("U", "Battery_Management:TP4056-42-ESOP8", "TP4056", "Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm",
            {"V_{CC}": "VBUS", "CE": "VBUS", "TEMP": "GND", "PROG": "CHG_PROG", "GND": "GND", "EPAD": "GND",
             "BAT": "BAT+", "~{CHRG}": "CHG_LED_R", "~{STDBY}": "CHG_LED_G"}, w=30)
     b.c("10u", "VBUS", "GND", C1206)
@@ -254,7 +254,7 @@ def build():
 
     b.block("Навушники TPA6132A2 (рис. 27, несиметричний вхід): G0 = G1 = GND → −6 dB (2,1 Vrms ЦАП → ≈1 Vrms); "
             "EN від Teensy. QFN — лише при передзбиранні JLCPCB (DM7)", 0)
-    b.part("U", "Amplifier_Audio:TPA6132A2RTE", "TPA6132A2", "Package_DFN_QFN:WQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias", {
+    b.part("U", "Amplifier_Audio:TPA6132A2RTE", "TPA6132A2", "Package_DFN_QFN:WQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm", {
         "INL-": "HP_INL", "INL+": "GND", "INR-": "HP_INR", "INR+": "GND", "OUTL": "PH_L", "OUTR": "PH_R",
         "G0": "GND", "G1": "GND", "EN": "HP_EN", "VDD": RAIL, "HPVDD": "HP_HPVDD", "HPVSS": "HP_HPVSS",
         "CPP": "HP_CPP", "CPN": "HP_CPN", "PGND": "GND", "SGND": "GND", "EP": "GND"}, w=40)
