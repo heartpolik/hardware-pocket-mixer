@@ -48,8 +48,6 @@
 | [ao3401a.pdf](ao3401a.pdf) | AOS AO3401A, P-MOSFET −30 V, SOT-23, rev 3.1 | ключ живлення (D51) | aosmd.com |
 | [sungmun-ssi-10.pdf](sungmun-ssi-10.pdf) | Sungmun SSI-10 (колишня BSI-10), слайд THT, 12 V 0,5 A | розглянуто для вимикача (D51) | LCSC |
 | [sungmun-ssi-nsi-10-catalog.pdf](sungmun-ssi-nsi-10-catalog.pdf) | Sungmun SSI / NSI-10 / NSI-20, каталог: варіанти H, S, HS | розглянуто (D51): NSI-10HS має повзунок угору | elitaliaweb.it |
-| [pcm1865.pdf](pcm1865.pdf) | TI PCM186x, SLAS831D, АЦП 4 канали, TSSOP-30 | дослідження цифрового варіанту ([16](../16-digital.md)) | ti.com |
-| [pcm5102a.pdf](pcm5102a.pdf) | TI PCM510xA, ЦАП стерео 2,1 Vrms, TSSOP-20 | дослідження цифрового варіанту ([16](../16-digital.md)) | ti.com |
 
 ## Ще не знайдено
 

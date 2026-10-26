@@ -17,11 +17,11 @@ fp-info-cache
 .pio/
 build/
 sdkconfig.old
-docs/sim/models/
+**/docs/sim/models/
 __pycache__/
-hw/pcb/tools/*.jar
-hw/*/route/
+**/hw/pcb/tools/*.jar
+**/hw/*/route/
 .venv-cq/
-hw/mech/analog.step
-hw/mech/digital.step
+**/hw/mech/analog.step
+**/hw/mech/digital.step
 .history/
