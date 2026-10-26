@@ -72,6 +72,8 @@ flowchart LR
 | [calc/](docs/calc/), [sim/](docs/sim/) | Скрипти розрахунків (Python) і симуляцій (ngspice) |
 | [hw/lib/](hw/lib/README.md) | Бібліотека KiCad: футпринти з креслень |
 | [14-kicad.md](docs/14-kicad.md) | Крок E: як згенеровано схеми й плати, стан ERC/DRC |
+| [15-3d.md](docs/15-3d.md) | 3D-моделі й збірка |
+| [16-digital.md](docs/16-digital.md) | Дослідження: цифровий мікшер з USB-аудіо (на зразок TX-6) |
 | [datasheets/](docs/datasheets/README.md) | Усі datasheets проєкту |
 
 ## Походження та ліцензія
