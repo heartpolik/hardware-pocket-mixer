@@ -126,8 +126,8 @@ def build():
         # display GMT147SPI on SPI0: SCK 13, MOSI 11, CS 10, DC 40, RES 41, backlight PWM 28; SHIFT 29
         "35": "LCD_SCK", "13": "LCD_MOSI", "12": "LCD_CS", "32": "LCD_DC", "33": "LCD_RES", "20": "LCD_BLK",
         "21": "BTN_SHIFT",
-        # DAC soft mute, headphone enable
-        "28": "DAC_XSMT", "29": "HP_EN",
+        # DAC soft mute, headphone enable, MIDI OUT (Serial8 TX = pin 35)
+        "28": "DAC_XSMT", "29": "HP_EN", "27": "MIDI_TX",
     }, w=60)
     b.c("10u", RAIL, "GND", C1206)
     b.c("10u", D3, "GND", C1206)
@@ -266,6 +266,13 @@ def build():
     b.c("1u", "HP_CPP", "HP_CPN")
     b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", "PHONES SJ-43514-SMT", JACK,
            {"T": "PH_L", "R1": "PH_R", "R2": "GND", "S": "GND"}, w=30)
+
+    b.block("MIDI OUT, TRS Type A (DM20): кінчик = DIN 5 (через RC 10 Ω від UART), кільце = DIN 4 (RA 33 Ω "
+            "від +3,3 V), гільза = DIN 2 / GND. Значення для 3,3 V — MIDI 1.0 Electrical Spec Update, рис. 1", 0)
+    b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", "MIDI OUT SJ-43514-SMT", JACK,
+           {"T": "MIDI_SINK", "R1": "MIDI_SRC", "R2": "GND", "S": "GND"}, w=30)
+    b.part("R", "Device:R", "33 0.5W", "Resistor_SMD:R_2010_5025Metric", {"1": D3, "2": "MIDI_SRC"})
+    b.part("R", "Device:R", "10 0.25W", "Resistor_SMD:R_1206_3216Metric", {"1": "MIDI_TX", "2": "MIDI_SINK"})
 
     # ================================================================ controls
     for k in (1, 2):

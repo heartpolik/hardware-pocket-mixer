@@ -88,8 +88,8 @@ def top():
 
 def bottom():
     o = []
-    names = ["IN1", "IN2", "IN3", "IN4", "MAIN", "AUX"]
-    jx = [M + 6.5 + 14.5 * i for i in range(6)]          # rear edge, 14.5 mm pitch
+    names = ["IN1", "IN2", "IN3", "IN4", "MAIN", "AUX", "MIDI"]
+    jx = [M + 6.5 + 14.5 * i for i in range(7)]          # rear edge, 14.5 mm pitch
     for x, n in zip(jx, names):
         o += rect(x, JACK[1] / 2, *JACK, "jack", n)
     o += rect(xm, D - JACK[1] / 2, *JACK, "jack", "PHONES", "фронт")   # front edge, as in Rev A

@@ -52,6 +52,7 @@ flowchart LR
 | Майстер-енкодер | 0 A, 1 B, 2 кнопка | EC11 з кнопкою |
 | Дисплей (SPI) | 13 SCK, 11 MOSI, 10 CS, 40 DC, 41 RES, 28 BLK (ШІМ — `ПЕРЕВІРИТИ`) | GMT147SPI |
 | Кнопки | 29 SHIFT; FX I, FX II, AUX, CUE — на вільних GPA7 / GPB7 обох MCP23017 | TSF-1266 |
+| MIDI OUT | 35 (Serial8 TX) | джек TRS Type A |
 | Керування | 36 XSMT (м'ют ЦАП), 37 EN навушників | 10k на GND — тиша до старту прошивки |
 | Живлення | VIN = +4V2, VUSB = VBUS, 3V3 — вихід на цифру | **перемичку VIN–VUSB розрізати** |
 | USB | площадки D+ / D− знизу (66 / 67 символу) | USB-C через USBLC6 |
@@ -71,6 +72,7 @@ flowchart LR
 | TP4056 | R_PROG 2,4k → 500 mA; TEMP на GND; CHRG / STDBY — червоний / зелений LED від VBUS | [datasheet](datasheets/tp4056.pdf) |
 | Кнопки | TSF-1266, 6 × 6 × 5 мм SMT, на GND, внутрішні підтяжки MCP23017 / Teensy | [оголошення](https://parts4laptops.eu/en/microbuttons/3291-microbutton-tact-switch-tsf-1266-6x6x5mm-smt-mounting.html); креслення — `ПЕРЕВІРИТИ` |
 | Живлення | кнопка з фіксацією 7 × 7, DPDT: одна група — EN = VSYS / GND, друга вільна; струм лише EN | рейтинги в продавців 50–100 mA ([Swiclick](https://www.swiclick.com/product/dpdt-77mm-self-locking-tactile-pushbutton-switch/)) |
+| MIDI OUT | TRS Type A: кінчик = DIN 5 через 10 Ω від TX, кільце = DIN 4 через 33 Ω від +3,3 V, гільза = GND; для 3,3 V — 33 Ω 0,5 W і 10 Ω 0,25 W | [MIDI 1.0 Electrical Spec Update](datasheets/midi-electrical-spec-update.pdf), рис. 1; розводка TRS — [MIDI Association](https://midi.org/specification-for-use-of-trs-connectors-with-midi-devices) |
 | Дисплей | GMT147SPI: ST7789, SPI, живлення 3,3 V від Teensy; порядок 8 виводів — як у DFR0995, `ПЕРЕВІРИТИ` на зразку | [DFRobot](https://wiki.dfrobot.com/dfr0995/), [jence](https://jence.com/index.php?route=product%2Fproduct&product_id=1303) |
 
 ## 4. Макет розташування
@@ -82,7 +84,7 @@ flowchart LR
 - **Згори** — лише керування: 4 смуги по 18 мм: 3 енкодери EC11, фейдер 35 мм і під ним Mute
   (TSF-1266) біля переднього краю; між рядами 4 мм для пальців (DM19). Праворуч вертикальний дисплей 21 × 44 мм, майстер-енкодер, кнопки FX I, FX II, AUX,
   CUE, SHIFT і кнопка живлення 7 × 7 поруч з ними.
-- **Знизу** — 6 джеків (IN1–4, MAIN, AUX) уздовж заднього краю з кроком 14,5 мм (під енкодерами —
+- **Знизу** — 7 джеків (IN1–4, MAIN, AUX, MIDI OUT) уздовж заднього краю з кроком 14,5 мм (під енкодерами —
   глибину не додають), PHONES — на передньому торці, як у Rev A,
   Teensy 4.1 уздовж лівого краю microSD до переднього торця (DM12), USB-C на правому торці, кодеки,
   живлення, MCP23017, акумулятор 3000 mAh під фейдерами.

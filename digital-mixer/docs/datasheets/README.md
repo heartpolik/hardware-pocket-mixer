@@ -13,3 +13,4 @@ Datasheets, на які посилається документація цифр
 | [bourns-pec09.pdf](bourns-pec09.pdf) | Bourns PEC09, енкодер 9 мм, rev. 09/19 | порівняння енкодерів ([02](../02-components.md), п. 3) | bourns.com |
 | [tpa6132a2.pdf](tpa6132a2.pdf) | TI TPA6132A2, підсилювач навушників DirectPath, WQFN-16 | навушники ([03](../03-schematic.md)) | ti.com |
 | [kailh-choc-pg1350.pdf](kailh-choc-pg1350.pdf) | Kailh PG1350 (CPG135001D01), креслення й характеристики | розглянуто (DM13, скасовано DM16) | adafruit.com (копія Kailh) |
+| [midi-electrical-spec-update.pdf](midi-electrical-spec-update.pdf) | MMA CA-033, MIDI 1.0 Electrical Specification Update (2014) | MIDI OUT 3,3 V ([03](../03-schematic.md)) | midi.org |
