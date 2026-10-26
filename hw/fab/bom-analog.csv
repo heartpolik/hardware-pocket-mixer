@@ -1,0 +1,65 @@
+Плата,К-сть,Номінал,Footprint,Тип,Позначення
+analog,12,10u BP,diy-mixer:CP_Nichicon_UEP_D5.0_L11.0_P2.00_Horizontal,"Nichicon UEP1E100MDD, 25 V (D44)","C1,C2,C8,C9,C15,C16,C22,C23,C29,C30,C40,C41"
+analog,59,100n,Capacitor_SMD:C_0805_2012Metric,"X7R, ≥ 25 V (шини ±12 V)","C3,C4,C5,C6,C7,C10,C11,C12,C13,C14,C17,C18,C19,C20,C21,C24,C25,C26,C27,C28,C31,C32,C33,C34,C35,C36,C37,C42,C43,C44,C45,C46,C47,C48,C51,C52,C53,C54,C59,C60,C61,C62,C70,C71,C72,C73,C74,C75,C76,C77,C78,C79,C80,C81,C82,C83,C84,C93,C95"
+analog,2,39p C0G,Capacitor_SMD:C_0805_2012Metric,C0G,"C38,C39"
+analog,4,47u BP,diy-mixer:CP_Nichicon_UEP_D6.3_L11.0_P2.50_Horizontal,"Nichicon UEP1E470MED, 25 V (10-passives)","C49,C50,C56,C58"
+analog,2,150p C0G,Capacitor_SMD:C_0805_2012Metric,C0G,"C55,C57"
+analog,7,0.33u,Capacitor_SMD:C_0805_2012Metric,"X7R, ≥ 25 V (шини ±12 V)","C63,C64,C65,C66,C67,C68,C69"
+analog,1,10p C0G,Capacitor_SMD:C_0805_2012Metric,C0G,C85
+analog,2,4.7u 25V,Capacitor_SMD:C_1206_3216Metric,X7R,"C86,C90"
+analog,3,10u 25V,Capacitor_SMD:C_1206_3216Metric,X7R,"C87,C91,C94"
+analog,2,22u 25V,Capacitor_SMD:C_1206_3216Metric,X7R,"C88,C92"
+analog,1,1u 25V,Capacitor_SMD:C_0805_2012Metric,X7R,C89
+analog,2,22u 10V,Capacitor_SMD:C_1206_3216Metric,X7R,"C96,C97"
+analog,24,1N4148W,Diode_SMD:D_SOD-123,,"D1,D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13,D14,D15,D16,D17,D18,D19,D20,D21,D22,D23,D24"
+analog,2,MBR0530,Diode_SMD:D_SOD-123,,"D25,D26"
+analog,5,SJ-43514-SMT,diy-mixer:CUI_SJ-43514-SMT_TRRS_Horizontal,,"J1,J2,J3,J4,J5"
+analog,1,SJ-43514-SMT MAIN,diy-mixer:CUI_SJ-43514-SMT_TRRS_Horizontal,,J6
+analog,1,SJ-43514-SMT SEND,diy-mixer:CUI_SJ-43514-SMT_TRRS_Horizontal,,J7
+analog,1,SJ-43514-SMT PHONES,diy-mixer:CUI_SJ-43514-SMT_TRRS_Horizontal,,J8
+analog,1,PBS-24 до цифрової плати,Connector_PinSocket_2.54mm:PinSocket_2x12_P2.54mm_Vertical,,J9
+analog,1,GCT USB4085,Connector_USB:USB_C_Receptacle_GCT_USB4085,,J10
+analog,1,"Модуль IP2326: VBUS, GND, BAT+, GND",Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,,J11
+analog,1,10u SRN4018-100M,Inductor_SMD:L_Bourns-SRN4018,,L1
+analog,1,2x10u CLS62-100,diy-mixer:L_Sumida_CLS62,,L2
+analog,1,4.7u SRN4018-4R7M,Inductor_SMD:L_Bourns-SRN4018,,L3
+analog,1,AO3401A,Package_TO_SOT_SMD:SOT-23,,Q1
+analog,22,1M,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R1,R2,R3,R4,R16,R17,R18,R19,R31,R32,R33,R34,R46,R47,R48,R49,R61,R62,R63,R64,R74,R75"
+analog,48,10k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R5,R6,R7,R8,R10,R11,R20,R21,R22,R23,R25,R26,R35,R36,R37,R38,R40,R41,R50,R51,R52,R53,R55,R56,R65,R66,R67,R68,R77,R78,R81,R82,R85,R86,R87,R90,R91,R92,R112,R126,R140,R154,R168,R176,R184,R187,R190,R196"
+analog,26,100k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R9,R24,R39,R54,R69,R76,R80,R84,R89,R94,R100,R106,R114,R120,R128,R134,R142,R148,R156,R162,R170,R178,R186,R191,R198,R199"
+analog,8,22k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R12,R13,R27,R28,R42,R43,R57,R58"
+analog,8,20k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R14,R15,R29,R30,R44,R45,R59,R60"
+analog,2,76.8k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R70,R71"
+analog,2,38.3k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R72,R73"
+analog,4,100,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R79,R83,R88,R93"
+analog,4,10,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R95,R96,R97,R98"
+analog,12,374k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R99,R105,R113,R119,R127,R133,R141,R147,R155,R161,R169,R177"
+analog,24,330,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R101,R104,R107,R110,R115,R118,R121,R124,R129,R132,R135,R138,R143,R146,R149,R152,R157,R160,R163,R166,R171,R174,R179,R182"
+analog,12,953k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R102,R108,R116,R122,R130,R136,R144,R150,R158,R164,R172,R180"
+analog,12,200k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R103,R109,R117,R123,R131,R137,R145,R151,R159,R165,R173,R181"
+analog,5,634k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R111,R125,R139,R153,R167"
+analog,2,412k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R175,R183"
+analog,1,249k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96",R185
+analog,2,5.1k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R188,R189"
+analog,1,113k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96",R192
+analog,1,13.3k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96",R193
+analog,2,2.2,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96","R194,R197"
+analog,1,84.5k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96",R195
+analog,1,53.6k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96",R200
+analog,1,10.2k,Resistor_SMD:R_0805_2012Metric,"товстоплівковий 1 %, E96",R201
+analog,7,RS451121400A 10k B,diy-mixer:Alps_RS451121400A_Fader_Dual_45mm,,"RV1,RV4,RV7,RV10,RV13,RV14,RV15"
+analog,4,RK14K124003H 10k B detent,diy-mixer:Alps_RK14K124_Vertical_Tone,,"RV2,RV5,RV8,RV11"
+analog,4,RK14K12D 50k A,diy-mixer:Alps_RK14K12D_Vertical_Volume,,"RV3,RV6,RV9,RV12"
+analog,1,RK14K12D 50k A PHONES,diy-mixer:Alps_RK14K12D_Vertical_Volume,,RV16
+analog,5,CTS 204-121ST,diy-mixer:CTS_204-121ST_DIP_SPDT_1pos_SMD,,"SW1,SW3,SW5,SW7,SW9"
+analog,6,Cherry MX,Button_Switch_Keyboard:SW_Cherry_MX_1.00u_PCB,,"SW2,SW4,SW6,SW8,SW10,SW11"
+analog,1,MSK12C02 вимикач живлення,diy-mixer:SW_Slide_SPDT_SHOUHAN_MSK12C02_RightAngle,,SW12
+analog,12,OPA1678,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,"U1,U3,U5,U7,U9,U11,U13,U14,U15,U16,U17,U18"
+analog,6,DG413,Package_SO:SOIC-16_3.9x9.9mm_P1.27mm,,"U2,U4,U6,U8,U10,U12"
+analog,6,TL064AC,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,,"U19,U20,U21,U22,U23,U24"
+analog,1,MCP23017-E/SO,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,,U25
+analog,1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,,U26
+analog,1,CH340N,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,U27
+analog,1,LT1930ES5,Package_TO_SOT_SMD:SOT-23-5,,U28
+analog,1,LT1931ES5,Package_TO_SOT_SMD:SOT-23-5,,U29
+analog,1,TPS62933O,Package_TO_SOT_SMD:SOT-583-8,,U30

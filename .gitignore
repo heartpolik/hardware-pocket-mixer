@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# KiCad
+*.bak
+*-bak
+*-backups/
+*.kicad_prl
+*.lck
+\#auto_saved_files\#
+_autosave-*
+fp-info-cache
+*.kicad_sch-bak
+*.kicad_pcb-bak
+
+# Firmware (PlatformIO / ESP-IDF)
+.pio/
+build/
+sdkconfig.old
+docs/sim/models/
+__pycache__/
+hw/pcb/tools/*.jar
+hw/*/route/
+.venv-cq/
+hw/mech/analog.step
+hw/mech/digital.step
+.history/

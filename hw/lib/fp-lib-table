@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "diy-mixer")(type "KiCad")(uri "${KIPRJMOD}/../lib/diy-mixer.pretty")(options "")(descr "Project footprints generated from datasheets (hw/lib/gen_footprints.py)"))
+)

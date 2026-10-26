@@ -1,0 +1,5 @@
+(version 1)
+
+(rule "thermal: one spoke is enough"
+	(condition "A.Type == 'Pad'")
+	(constraint min_resolved_spokes 1))
