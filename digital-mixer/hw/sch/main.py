@@ -305,15 +305,15 @@ def build():
         b.part("SW", "Switch:SW_Push", f"Mute {ch} TSF-1266", TACT, {"1": f"MUTE{ch}", "2": "GND"}, w=20)
 
     b.block("Майстер: енкодер EC11 з кнопкою, кнопки FX I, FX II, AUX, CUE, SHIFT (TSF-1266); "
-            "дисплей GMT147SPI 1,47\" 172×320 ST7789, SPI (DM18) — порядок виводів модуля ПЕРЕВІРИТИ", 2)
+            "дисплей GMT147SPI 1,47\" 172×320 ST7789P3, SPI, на гребінці (DM18, DM23); виводи — за кресленням продавця", 2)
     b.part("SW", "Device:RotaryEncoder_Switch", "EC11 master", ENC_SW,
            {"A": "ENC_M_A", "B": "ENC_M_B", "C": "GND", "S1": "ENC_M_SW", "S2": "GND"}, w=20)
     for n in ("FX1", "FX2", "AUX", "CUE", "SHIFT"):
         b.part("SW", "Switch:SW_Push", f"{n} TSF-1266", TACT, {"1": f"BTN_{n}", "2": "GND"}, w=20)
-    # pin order as listed for 1.47" ST7789 modules (DFRobot DFR0995); the GMT147SPI sample decides
+    # pin order from the GMT147SPI seller drawing ("Interface information", docs/datasheets)
     b.part("DS", "Connector_Generic:Conn_01x08", "GMT147SPI 1.47in 172x320", "pocket-digital:LCD_GMT147SPI",
-           {"1": D3, "2": "GND", "3": "LCD_SCK", "4": "LCD_MOSI", "5": "LCD_CS", "6": "LCD_RES",
-            "7": "LCD_DC", "8": "LCD_BLK"}, w=20)
+           {"1": "GND", "2": D3, "3": "LCD_SCK", "4": "LCD_MOSI", "5": "LCD_RES", "6": "LCD_DC",
+            "7": "LCD_CS", "8": "LCD_BLK"}, w=20)
     b.c("10u", D3, "GND", C1206)
 
     b.block("Прапорці живлення: шини, які в символах не мають «виходу живлення» (GND, вихід 3,3 V Teensy, VBUS, "

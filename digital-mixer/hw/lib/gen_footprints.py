@@ -1,0 +1,197 @@
+"""Generate the project footprints (hw/lib/pocket-digital.pretty).
+
+Run: python3 hw/lib/gen_footprints.py   (from digital-mixer/)
+Every footprint names its source in `descr`. Three parts have no drawing yet (TSF-1266, the 7 x 7
+self-locking switch, the GMT147SPI header): their footprints are PLACEHOLDERS, marked so in the
+name of the descr, and must be replaced from a drawing or a measured sample before any order.
+Helper class as in analog-mixer/hw/lib/gen_footprints.py.
+"""
+from pathlib import Path
+
+OUT = Path(__file__).parent / "pocket-digital.pretty"
+SILK, FAB, CRT = 0.12, 0.10, 0.05
+PLACEHOLDER = "PLACEHOLDER - НЕ ПЕРЕВІРЕНО, замінити за кресленням або виміром до замовлення. "
+
+
+def fmt(v):
+    return f"{v:.4f}".rstrip("0").rstrip(".") if isinstance(v, float) else str(v)
+
+
+class FP:
+    def __init__(self, name, descr, tags, attr="through_hole", flags=""):
+        self.name, self.descr, self.tags, self.attr, self.flags = name, descr, tags, attr, flags
+        self.items = []
+
+    def line(self, x1, y1, x2, y2, layer, w):
+        self.items.append(f'\t(fp_line (start {fmt(x1)} {fmt(y1)}) (end {fmt(x2)} {fmt(y2)}) '
+                          f'(stroke (width {w}) (type solid)) (layer "{layer}"))')
+
+    def rect(self, x1, y1, x2, y2, layer, w):
+        self.items.append(f'\t(fp_rect (start {fmt(x1)} {fmt(y1)}) (end {fmt(x2)} {fmt(y2)}) '
+                          f'(stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
+
+    def circle(self, cx, cy, r, layer, w):
+        self.items.append(f'\t(fp_circle (center {fmt(cx)} {fmt(cy)}) (end {fmt(cx + r)} {fmt(cy)}) '
+                          f'(stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
+
+    def text(self, x, y, s, layer, size=1.0):
+        self.items.append(f'\t(fp_text user "{s}" (at {fmt(x)} {fmt(y)}) (layer "{layer}") '
+                          f'(effects (font (size {size} {size}) (thickness {size * 0.15:.3f}))))')
+
+    def body(self, x1, y1, x2, y2, pad=0.25):
+        self.rect(x1, y1, x2, y2, "F.Fab", FAB)
+        self.rect(x1, y1, x2, y2, "F.SilkS", SILK)
+        self.rect(x1 - pad, y1 - pad, x2 + pad, y2 + pad, "F.CrtYd", CRT)
+
+    def tht(self, num, x, y, size, drill, shape="circle"):
+        self.items.append(f'\t(pad "{num}" thru_hole {shape} (at {fmt(x)} {fmt(y)}) (size {fmt(size)} {fmt(size)}) '
+                          f'(drill {fmt(drill)}) (layers "*.Cu" "*.Mask"))')
+
+    def npth(self, x, y, drill):
+        self.items.append(f'\t(pad "" np_thru_hole circle (at {fmt(x)} {fmt(y)}) '
+                          f'(size {fmt(drill)} {fmt(drill)}) (drill {fmt(drill)}) (layers "*.Cu" "*.Mask"))')
+
+    def smd(self, num, x, y, w, h, side="F", shape="roundrect", paste=True):
+        layers = f'"{side}.Cu" ' + (f'"{side}.Paste" ' if paste else "") + f'"{side}.Mask"'
+        extra = " (roundrect_rratio 0.15)" if shape == "roundrect" else ""
+        self.items.append(f'\t(pad "{num}" smd {shape} (at {fmt(x)} {fmt(y)}) (size {fmt(w)} {fmt(h)}) '
+                          f'(layers {layers}){extra})')
+
+    def write(self, ref_y, val_y):
+        s = [f'(footprint "{self.name}"', '\t(version 20241229)', '\t(generator "pocket-digital-gen")',
+             '\t(layer "F.Cu")', f'\t(descr "{self.descr}")', f'\t(tags "{self.tags}")',
+             f'\t(property "Reference" "REF**" (at 0 {fmt(ref_y)} 0) (layer "F.SilkS") '
+             '(effects (font (size 1 1) (thickness 0.15))))',
+             f'\t(property "Value" "{self.name}" (at 0 {fmt(val_y)} 0) (layer "F.Fab") '
+             '(effects (font (size 1 1) (thickness 0.15))))',
+             f'\t(attr {self.attr}{self.flags})']
+        OUT.mkdir(exist_ok=True)
+        (OUT / f"{self.name}.kicad_mod").write_text("\n".join(s + self.items + [")"]) + "\n")
+        return self.name
+
+
+def teensy41_smd():
+    """Teensy 4.1 lying flat, its plated holes soldered onto SMD pads from above (as the SuperMini
+    in Rev A, D59). PJRC dimensions_teensy41.png: board 60.96 x 17.78, rows 15.24 apart, pitch 2.54,
+    first pin 1.27 from the USB end, micro-USB 0.7 past the board. Origin = module centre, USB to -X,
+    bottom row (GND, 0..12, 3V3, 24..32 = pads 1..24) at +Y, top row (33..41, GND, 13..23, 3V3, GND,
+    VIN = pads 25..48) at -Y - numbering of the XenGi symbol. Placed on the bottom side of the main
+    board: the Teensy's own top (SD socket, PJRC card) then faces down and the SD end is put at the
+    board edge (DM12). The flat bottom of the Teensy lies on the board: a window under the USB end
+    gives access to its USB device pads (VUSB, D-, D+, PJRC card back) and to the VIN/VUSB trace that
+    must be cut; pads 49, 66, 67 on the other side of the main board take short wires through it."""
+    f = FP("Teensy41_SMD",
+           "Teensy 4.1 soldered flat: SMD pads under the module holes (2 x 24, rows 15.24, pitch 2.54, "
+           "first pin 1.27 from the USB end) - PJRC dimensions_teensy41.png. Window for wires to the USB "
+           "device pads; wire pads VUSB / D- / D+ on the opposite side.",
+           "Teensy 4.1 module SMD", attr="smd")
+    for i in range(24):
+        x = -29.21 + i * 2.54
+        f.smd(str(i + 1), x, 7.62, 1.7, 1.7, shape="circle", paste=False)
+        f.smd(str(48 - i), x, -7.62, 1.7, 1.7, shape="circle", paste=False)
+    wx0, wx1 = -30.48 + 1.6, -30.48 + 7.6            # window under the USB end (inside the pin rows)
+    f.rect(wx0, -5.0, wx1, 5.0, "Edge.Cuts", 0.1)
+    for num, y, name in (("49", -2.54, "VUSB"), ("66", 0.0, "D-"), ("67", 2.54, "D+")):
+        f.smd(num, wx1 + 1.6, y, 1.6, 1.4, side="B", paste=False)
+        f.text(wx1 + 4.0, y, name, "B.SilkS", 0.7)
+    f.rect(-30.48, -8.89, 30.48, 8.89, "F.Fab", FAB)
+    f.rect(-30.48 - 0.7, -3.75, -30.48 + 5.0, 3.75, "F.Fab", FAB)   # micro-USB, 7.5 wide (PJRC)
+    f.text(25.0, 0, "SD", "F.Fab", 1.0)
+    f.line(-30.48, -8.89, 30.48, -8.89, "F.SilkS", SILK)
+    f.line(-30.48, 8.89, 30.48, 8.89, "F.SilkS", SILK)
+    f.text(-29.21, 5.6, "1", "F.SilkS", 0.8)
+    f.rect(-31.43, -9.14, 30.73, 9.14, "F.CrtYd", CRT)
+    return f.write(-10.5, 10.5)
+
+
+def vson_hr10():
+    """TI DLA0010A (TPS63802), EXAMPLE BOARD LAYOUT p. 36: pins 1-5 left, pads 0.6 x 0.25 at
+    x -0.9; pins 6, 7, 9, 10 right, 0.9 x 0.25 at x +0.75; pin 8 (GND) 1.3 x 0.25 from x -0.1 to 1.2;
+    pitch 0.5, pin 1 and 10 at y -1.0. Origin = package centre."""
+    f = FP("Texas_VSON-HR-10_2x3mm_P0.5mm", "TI DLA0010A VSON-HR-10 2 x 3 mm, land pattern example "
+           "(TPS63802 SLVSEU9D p. 36)", "VSON-HR DLA0010A TPS63802", attr="smd")
+    for i in range(5):
+        f.smd(str(i + 1), -0.9, -1.0 + i * 0.5, 0.6, 0.25)
+    for num, y in (("10", -1.0), ("9", -0.5), ("7", 0.5), ("6", 1.0)):
+        f.smd(num, 0.75, y, 0.9, 0.25)
+    f.smd("8", 0.55, 0.0, 1.3, 0.25)
+    f.rect(-1.0, -1.5, 1.0, 1.5, "F.Fab", FAB)
+    f.circle(-1.45, -1.3, 0.1, "F.SilkS", SILK)
+    f.rect(-1.45, -1.75, 1.45, 1.75, "F.CrtYd", CRT)
+    return f.write(-2.5, 2.5)
+
+
+def xfl4015():
+    """Coilcraft XFL4015, Document 769-2 rev. 03/10/26, recommended land pattern: two pads
+    0.98 x 3.4, 2.37 apart; body 4.0 x 4.0."""
+    f = FP("L_Coilcraft_XFL4015", "Coilcraft XFL4015 4 x 4 x 1.5 mm, recommended land pattern (Doc 769-2)",
+           "inductor Coilcraft XFL4015", attr="smd")
+    for num, x in (("1", -1.675), ("2", 1.675)):
+        f.smd(num, x, 0, 0.98, 3.4)
+    f.body(-2.0, -2.0, 2.0, 2.0)
+    return f.write(-3.2, 3.2)
+
+
+def tsf1266():
+    """PLACEHOLDER: TSF-1266 6 x 6 x 5 mm SMT tact (seller listing only, no drawing). Pads copied
+    from KiCad SW_SPST_PTS645Sx43SMTR92 (C&K PTS645 SMT, a common 6 x 6 gull-wing pattern)."""
+    f = FP("SW_TSF-1266_6x6mm_SMD", PLACEHOLDER + "TSF-1266 6x6x5 SMT tact; pads as C&K PTS645 SMT "
+           "(KiCad SW_SPST_PTS645Sx43SMTR92)", "tact switch 6x6 SMD placeholder", attr="smd")
+    for num, x, y in (("1", -3.98, -2.25), ("1", 3.98, -2.25), ("2", -3.98, 2.25), ("2", 3.98, 2.25)):
+        f.smd(num, x, y, 1.55, 1.3)
+    f.body(-3.0, -3.0, 3.0, 3.0, pad=0.25)
+    f.rect(-4.9, -3.25, 4.9, 3.25, "F.CrtYd", CRT)
+    f.text(0, 0, "PH", "F.Fab", 0.8)
+    return f.write(-4.2, 4.2)
+
+
+def latch_7x7():
+    """PLACEHOLDER: 7 x 7 self-locking DPDT, 6 pins (sellers: two rows of three; pitch not found).
+    Assumed 2 rows x 3, pitch 2.0, rows 5.0 apart, drill 0.8; pins 1-3 / 4-6 = poles A/B/C of
+    Switch:SW_DPDT_x2 - roles to be set from the drawing."""
+    f = FP("SW_Push_Latching_DPDT_7x7mm", PLACEHOLDER + "7x7 self-locking DPDT 6-pin, assumed 2 x 3 "
+           "pitch 2.0, rows 5.0", "push switch latching DPDT 7x7 placeholder")
+    for i in range(3):
+        f.tht(str(i + 1), -2.0 + i * 2.0, -2.5, 1.4, 0.8, "rect" if i == 0 else "circle")
+        f.tht(str(i + 4), -2.0 + i * 2.0, 2.5, 1.4, 0.8)
+    f.body(-3.5, -3.5, 3.5, 3.5)
+    f.text(0, 0, "PH", "F.Fab", 0.8)
+    return f.write(-4.6, 4.6)
+
+
+def lcd_gmt147():
+    """PLACEHOLDER: GMT147SPI 1.47in module on its pin header (DM18, DM23). Seller drawing (top part):
+    PCB 20.96 x 44, T 1.2, module 2.76 thick, connecting seat 2.5 high at the end with the two
+    mounting holes; pins 1 GND, 2 VDD, 3 SCL, 4 SDA, 5 RES, 6 DC, 7 CS, 8 BL. Header pitch, its
+    position and the holes are not in the part of the drawing seen yet: 8 x 2.54 assumed centred at
+    that end, 1.5 from it."""
+    f = FP("LCD_GMT147SPI", PLACEHOLDER + "GMT147SPI 1.47in 172x320 module 20.96 x 44, header 1x8 P2.54 "
+           "assumed at a short end", "LCD ST7789 GMT147SPI placeholder")
+    for i in range(8):
+        f.tht(str(i + 1), -8.89 + i * 2.54, -22.0 + 1.5, 1.7, 1.0, "rect" if i == 0 else "circle")
+    f.body(-10.48, -22.0, 10.48, 22.0)
+    f.rect(-8.7, -16.2 + 1.5, 8.7, 16.2 + 1.5, "F.Fab", FAB)     # active area 17.39 x 32.35 (Waveshare), approx
+    return f.write(-23.2, 23.2)
+
+
+def mounting_hole_m2():
+    """As analog-mixer/hw/lib/gen_footprints.py mounting_hole_m2 (D57): KiCad MountingHole_2.2mm_M2_Pad
+    pad and drill, courtyard r 2.45 on both sides for a standoff, nut or screw head."""
+    f = FP("MountingHole_2.2mm_M2_Pad_Standoff_2Side",
+           "M2 mounting hole, plated, pad 4.4, drill 2.2 (as KiCad MountingHole_2.2mm_M2_Pad). "
+           "Courtyard r 2.45 on F and B.", "mountinghole M2 standoff",
+           flags=" board_only exclude_from_pos_files exclude_from_bom")
+    f.items.append('\t(pad "1" thru_hole circle (at 0 0) (size 4.4 4.4) (drill 2.2) (layers "*.Cu" "*.Mask") '
+                   '(zone_connect 2))')
+    f.circle(0, 0, 2.45, "F.CrtYd", CRT)
+    f.circle(0, 0, 2.45, "B.CrtYd", CRT)
+    return f.write(-3.2, 3.2)
+
+
+def main():
+    print("\n".join([teensy41_smd(), vson_hr10(), xfl4015(), tsf1266(), latch_7x7(), lcd_gmt147(),
+                     mounting_hole_m2()]))
+
+
+if __name__ == "__main__":
+    main()

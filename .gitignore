@@ -25,3 +25,4 @@ __pycache__/
 **/hw/mech/analog.step
 **/hw/mech/digital.step
 .history/
+**/hw/pcb/build/

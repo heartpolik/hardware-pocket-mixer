@@ -11,7 +11,7 @@ from pathlib import Path
 
 OUT = Path(__file__).with_name("layout.svg")
 S = 4.0                                   # px per mm
-M = 3.0                                   # board edge margin
+M = 6.0                                   # board edge margin: room for the M2 corner holes (DM23)
 P = 18.0                                  # channel pitch: EC11E courtyard 16.8 + gap
 
 FADER = (10.1, 36.1)                      # PTA2043 courtyard (w, d), long side front-back
