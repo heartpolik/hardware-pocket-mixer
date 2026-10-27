@@ -12,4 +12,5 @@
 	(fp_rect (start -2 -2) (end 2 2) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))
 	(fp_rect (start -2 -2) (end 2 2) (stroke (width 0.12) (type solid)) (fill no) (layer "F.SilkS"))
 	(fp_rect (start -2.25 -2.25) (end 2.25 2.25) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+	(model "${KIPRJMOD}/../lib/pocket-digital.3dshapes/L_Coilcraft_XFL4015.step")
 )

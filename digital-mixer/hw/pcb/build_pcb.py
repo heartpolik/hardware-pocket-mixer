@@ -3,9 +3,10 @@
 Run with KiCad's Python (from digital-mixer/):
   /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3 hw/pcb/build_pcb.py
 
-Mechanical parts at the positions of docs/mech/layout.py (top: controls; bottom: jacks, Teensy,
-electronics, battery zone), ICs by hand next to their connectors, passives by pcbkit.place_near
-(connectivity, decoupling caps at their IC pins) on the bottom side outside the battery zone.
+Mechanical parts at the positions of docs/mech/layout.py (layout C, DM25: top - controls and the
+display; bottom - jacks, USB-C, Teensy, electronics, battery zone), ICs by hand next to their
+connectors, passives by common/pcbkit.place_near (connectivity, decoupling caps at their IC pins) on
+the bottom side outside the battery zone.
 M2 mounting holes (DM23) go to the free spots nearest to the corners. No routing here.
 """
 import importlib.util
@@ -30,6 +31,14 @@ MOUNT_FP = "pocket-digital:MountingHole_2.2mm_M2_Pad_Standoff_2Side"
 MOUNT_R = 2.45
 BATT_ZONE = (L.BATT_C[0] - L.BATT[0] / 2 - 0.5, L.BATT_C[1] - L.BATT[1] / 2 - 0.5,
              L.BATT_C[0] + L.BATT[0] / 2 + 0.5, L.BATT_C[1] + L.BATT[1] / 2 + 0.5)
+MODEL_OVERRIDE = {
+    "USB_C_Receptacle_GCT_USB4110": "OWN/USB_C_Receptacle_GCT_USB4110.step",
+    "Potentiometer_Bourns_PTA2043_Single_Slide": "OWN/Potentiometer_Bourns_PTA2043_Single_Slide.step",
+    "JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal": "OWN/JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal.step",
+    # TP4056: same SOIC-8 body, only the exposed pad differs
+    "SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm":
+        "${KICAD10_3DMODEL_DIR}/Package_SO.3dshapes/SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.81mm.step",
+}
 RAILS = {"GND", "+3V3", "+3V3A", "+4V2", "VSYS", "VBUS", "BAT+"}
 
 
@@ -144,7 +153,11 @@ def converter_block(pcb, comps, placed):
 def find_holes(pcb, corners, clear=0.3):
     """Free spot nearest to each corner: hole courtyard r 2.45 + clear from every courtyard (both
     sides: a standoff or screw head sits on each) and from the board edge."""
-    boxes = [crt_box(fp) for fp in pcb.fps.values()]
+    boxes, shapes = [], []                            # courtyard bboxes; polygons tested exactly
+    for fp in pcb.fps.values():
+        fp.BuildCourtyardCaches()
+        c = fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd)
+        (shapes.append((crt_box(fp), c)) if c.OutlineCount() else boxes.append(crt_box(fp)))
     for fp in pcb.fps.values():                       # THT pads poke through to the other side
         for p in fp.Pads():
             if p.GetAttribute() == pcbnew.PAD_ATTRIB_PTH:
@@ -162,6 +175,9 @@ def find_holes(pcb, corners, clear=0.3):
                 if not (rr <= x <= W - rr and rr <= y <= D - rr):
                     continue
                 if any(x + rr > l and x - rr < r and y + rr > t and y - rr < b for l, t, r, b in boxes):
+                    continue
+                if any(x + rr > l and x - rr < r and y + rr > t and y - rr < b and c.Collide(K.pt(x, y), mm(rr))
+                       for (l, t, r, b), c in shapes):
                     continue
                 d = math.hypot(x - cx, y - cy)
                 if best is None or d < best[0]:
@@ -186,58 +202,55 @@ def main():
         at_center(pcb, ref, *a, **k)
         placed.add(ref)
 
-    # ---------------------------------------------------------------- top: controls
-    y_lcd = L.y0 + L.LCD[1] / 2
-    y_me = y_lcd + L.LCD[1] / 2 + L.GAP + L.ENC[1] / 2
-    y_b = y_me + L.ENC[1] / 2 + L.GAP + L.CAP[1] / 2
-    step = L.CAP[1] + L.GAP
-    btn_xy = {"FX1": (L.xm - 7, y_b), "FX2": (L.xm + 7, y_b), "AUX": (L.xm - 7, y_b + step),
-              "CUE": (L.xm + 7, y_b + step), "SHIFT": (L.xm - 7, y_b + 2 * step)}
+    # ---------------------------------------------------------------- top: controls (layout C, DM25)
+    btn_y = dict(zip(("AUX", "FX1", "FX2", "SHIFT"), L.Y_BTN))
     for ref, c in comps.items():
         fpn, n = c["fp"], nets(ref)
-        if "EC11E-Switch" in fpn:
-            put_c(ref, L.xm, y_me)
-        elif "EC11E" in fpn:                                   # ENC<ch>_<k>_A
-            a = next(x for x in n if x.startswith("ENC") and x.endswith("_A"))
-            ch, k = int(a[3]), int(a.split("_")[1])
-            put_c(ref, L.xs[ch - 1], L.y_enc[k - 1])
+        if "EC12SY" in fpn:
+            if "ENC_M_A" in n:
+                put_c(ref, L.xr, L.Y_TOP)
+            else:                                              # ENC<ch>_<k>_A
+                a = next(x for x in n if x.startswith("ENC") and x.endswith("_A"))
+                ch, k = int(a[3]), int(a.split("_")[1])
+                put_c(ref, L.xs[ch - 1], L.y_enc[k - 1])
         elif "PTA2043" in fpn:
             ch = int(next(x for x in n if x.startswith("FADER"))[5])
             put_c(ref, L.xs[ch - 1], L.y_fader, 90)
         elif "TSF-1266" in fpn:
             b = next(x for x in n if x.startswith(("MUTE", "BTN_")))
             if b.startswith("MUTE"):
-                put_c(ref, L.xs[int(b[4]) - 1] + L.MUTE_DX[int(b[4]) - 1], L.y_mute)
+                put_c(ref, L.xs[int(b[4]) - 1], L.y_mute)
             else:
-                put_c(ref, *btn_xy[b[4:]])
+                put_c(ref, L.xr, btn_y[b[4:]])
         elif "Latching" in fpn:
-            put_c(ref, *L.LATCH_XY)
+            put_c(ref, L.X_ON, L.Y_TOP)
         elif "GMT147" in fpn:
-            put_c(ref, L.xm, y_lcd)
+            # landscape; header on the left, its pins between the IN1 and IN2 jacks underneath
+            for rot in (90, 270):
+                put_c(ref, L.X_LCD, L.Y_TOP, rot)
+                if pad_xy(pcb.fps[ref], "1")[0] < L.X_LCD:
+                    break
 
     # ---------------------------------------------------------------- bottom: edges
-    rear = ["IN1", "IN2", "IN3", "IN4", "MAIN", "AUX", "MIDI"]
-    jx = dict(zip(rear, L.JX))
+    outs = {"MAIN_L": 0, "AUX_L": 1, "MIDI_SINK": 2, "PH_L": 3}
     for ref, c in comps.items():
         fpn, p = c["fp"], {k: v.lstrip("/") for k, v in c["pins"].items()}
         if "SJ-43514" in fpn:
             t = p.get("2", "")
-            key = {"IN1_T": "IN1", "IN2_T": "IN2", "IN3_T": "IN3", "IN4_T": "IN4", "MAIN_L": "MAIN",
-                   "AUX_L": "AUX", "MIDI_SINK": "MIDI"}.get(t)
-            if key:
-                at_edge(pcb, ref, jx[key], 0.0, "-y", "1", True, 0.5)
-            elif t == "PH_L":
-                at_edge(pcb, ref, L.PH_X, D, "+y", "1", True, 0.5)          # pegs between Mute 1 and Mute 2
+            if t.startswith("IN"):
+                at_edge(pcb, ref, L.xs[int(t[2]) - 1], 0.0, "-y", "1", True, 0.5)
+            else:
+                at_edge(pcb, ref, L.y_out[outs[t]], W, "+x", "1", True, 0.5)
             placed.add(ref)
         elif "Teensy41" in fpn:
-            at_edge(pcb, ref, L.T_Y0 + L.TEENSY[0] / 2, W, "+x", "25", True, 0.0)    # microSD end right
+            at_edge(pcb, ref, L.T_X, D, "+y", "25", True, 0.0)              # microSD end at the front
             placed.add(ref)
-        elif "USB4085" in fpn:
-            # GCT USB4085: contact rows at local y 0 / 1.35 inside, PCB edge line at local y 6.1,
-            # courtyard to 9.15 -> 3.05 past the edge (as in Rev A)
+        elif "USB4110" in fpn:
+            # GCT USB4110 (all SMD): PCB edge line at local y 3.675 (KiCad footprint), courtyard to
+            # 4.18 -> 0.505 past the edge; rear wall under MASTER (DM25)
             pcb.place(ref, 0, 0, 0, True)
-            # front edge next to the Teensy USB end (D+/D- short for 480 Mbit/s), left of PHONES
-            at_edge(pcb, ref, L.USB_X, D, "+y", "A1", True, 3.05, inner=True, long_axis=False)
+            at_edge(pcb, ref, L.USB_X, 0.0, "-y", "A1", True, 0.505, inner=True, long_axis=False)
+
             placed.add(ref)
 
     # ---------------------------------------------------------------- mounting holes (reserved first)
@@ -245,43 +258,67 @@ def main():
     keep = [(x - MOUNT_R - 0.3, y - MOUNT_R - 0.3, x + MOUNT_R + 0.3, y + MOUNT_R + 0.3)
             for _, x, y in filter(None, holes.values())]
 
-    # ---------------------------------------------------------------- bottom: ICs (right column)
-    xm, y0 = L.xm, L.y0
-
+    # ---------------------------------------------------------------- bottom: ICs
+    # power by the USB-C (rear right), DACs and the headphone amp between the Teensy and the output
+    # jacks, ADCs under the faders next to the Teensy, expanders under the Mute row (layout C)
     def put_ic(ref, x, y, rot):
         if not pcb.put_free(ref, x, y, rot, True, placed, extra=[BATT_ZONE] + keep):
             raise RuntimeError(f"no room for {ref} near ({x}, {y})")
         placed.add(ref)
 
+    xp = L.xs[-1] + 2.0                       # the strip right of the battery
     ic_at = {"PCM1865": [], "PCM5102A": [], "MCP23017-E/SO": []}
     for ref, c in comps.items():
         if c["value"] in ic_at:
             ic_at[c["value"]].append(ref)
+    yf = L.y_fader
     for ref, x in zip(sorted(ic_at["PCM1865"], key=lambda r: min(n for n in nets(r) if n.startswith("ADC"))),
-                      (xm - 7.0, xm + 7.0)):
-        put_ic(ref, x, y0 + 24.0, 90)
+                      (L.xs[2] - 2.0, L.xs[3] - 1.0)):
+        put_ic(ref, x, yf, 0)
     for ref in ic_at["PCM5102A"]:
         name = next(x for x in nets(ref) if x.endswith("_CAPP")).split("_")[0]
-        put_ic(ref, xm + {"MAIN": -9.0, "AUX": 0.0, "CUE": 9.0}[name], y0 + 40.0, 90)
-    for ref, y in zip(sorted(ic_at["MCP23017-E/SO"]), (y0 + 56.0, y0 + 70.0)):
-        put_ic(ref, xm, y, 0)
+        put_ic(ref, xp + 3.0, {"MAIN": 41.0, "AUX": 53.0, "CUE": 65.0}[name], 90)
+    # #1, #2 (channel encoders 1-2, 3-4) left to right, #3 (encoder switches, AUX / FX buttons) nearest
+    # the right column
+    mcp = sorted(ic_at["MCP23017-E/SO"], key=lambda r: next(n for n in nets(r) if n.startswith("MCP")))
+    for ref, x in zip(mcp, (L.xs[0] + 6.0, L.xs[1] + 8.0, L.xs[2] + 8.0)):
+        put_ic(ref, x, L.y_mute + 1.0, 270)          # pins 1-14 (GPB, SCL / SDA) inward, not at the edge
     for ref, c in comps.items():
         v = c["value"]
         if v == "TPA6132A2":
-            put_ic(ref, xm, D - 24.0, 0)
+            # clear of the Teensy end; 180 deg: OUTL / OUTR face the PHONES jack, so they do not cross
+            # the supply pin 14 next to them
+            put_ic(ref, L.T_X - 8.0, L.y_out[3] + 2.0, 180)
         elif v == "TP4056":
-            put_ic(ref, xm - 6.0, y0 + 9.0, 0)
+            put_ic(ref, L.USB_X - 13.0, 12.0, 0)
         elif v == "TPS63802":
-            put_ic(ref, xm + 6.0, y0 + 13.5, 0)       # output caps clear of the display standoff holes
+            put_ic(ref, xp + 0.0, 27.0, 0)
         elif v == "LP5907MFX-3.3":
-            put_ic(ref, xm - 6.0, y0 + 2.0, 0)
+            put_ic(ref, L.xs[2] + 9.0, yf, 0)
         elif v == "USBLC6-2SC6":
-            put_ic(ref, L.USB_X, D - 14.0, 0)
-        elif "LiPo" in v:                       # through-hole: clear of the top courtyards as well
-            top = [crt_box(pcb.fps[r]) for r in placed if not pcb.fps[r].IsFlipped()]
-            if not pcb.put_free(ref, L.BATT_C[0] + L.BATT[0] / 2 + 3.0, L.BATT_C[1], 90, True, placed,
-                                extra=[BATT_ZONE] + keep + top):
-                raise RuntimeError("no room for the battery connector")
+            put_ic(ref, L.USB_X - 7.0, 8.0, 0)
+        elif "LiPo" in v:
+            put_ic(ref, L.BATT_C[0] + L.BATT[0] / 2 + 4.0, L.BATT_C[1] + 10.0, 90)
+
+    # headphone amp input caps right at its IN- pins (WQFN 0.5 pitch: no room to reach them later)
+    tpa = next(r for r, c in comps.items() if c["value"] == "TPA6132A2")
+    for ref, c in comps.items():
+        hp = next((n for n in nets(ref) if n in ("HP_INL", "HP_INR")), None)
+        if hp and ref != tpa:
+            x, y = next((x, y) for n, x, y in pcb.pads_of(tpa) if n == hp)
+            if not pcb.put_free(ref, x, y, 0, True, placed, extra=[BATT_ZONE] + keep, reach=6.0):
+                raise RuntimeError(f"no room for {ref} at the headphone amp")
+            placed.add(ref)
+
+    # series resistors of the I2S / TDM clocks right at their Teensy pins (DM29)
+    teensy = next(r for r, c in comps.items() if "Teensy41" in c["fp"])
+    for ref, c in comps.items():
+        ns = nets(ref)
+        src = next((n for n in ns if n.endswith("_T") and n[:-2] in ns), None)
+        if src:
+            x, y = next((x, y) for n, x, y in pcb.pads_of(teensy) if n == src)
+            if not pcb.put_free(ref, x, y, 0, True, placed, extra=[BATT_ZONE] + keep, reach=8.0):
+                raise RuntimeError(f"no room for {ref} at the Teensy")
             placed.add(ref)
 
     # ---------------------------------------------------------------- buck-boost block (TI SLVSEU9D 10.2)
@@ -290,11 +327,18 @@ def main():
     # ---------------------------------------------------------------- bottom: passives
     rest = [r for r in pcb.fps if r not in placed]
     decap = {r: c["decouples"] for r, c in comps.items() if c.get("decouples") and r in pcb.fps}
-    left = pcb.place_near(rest, placed, (1.0, 1.0, W - 1.0, D - 1.0), RAILS, lambda r: (L.xm, D / 2),
+    left = pcb.place_near(rest, placed, (1.0, 1.0, W - 1.0, D - 1.0), RAILS, lambda r: (L.xs[-1], D / 2),
                           extra=[BATT_ZONE] + keep, decap=decap)
     if left:
         left = pcb.pack(left, 1.0, 1.0, W - 1.0, D - 1.0, placed | set(rest) - set(left),
                         extra=[BATT_ZONE] + keep)
+
+    # stock footprints whose KiCad model is not shipped: ours (hw/lib/gen_3d.py) or one of the same body
+    own = "${KIPRJMOD}/../lib/pocket-digital.3dshapes/"
+    for fp in pcb.fps.values():
+        name = fp.GetFPID().GetLibItemName().wx_str()
+        if name in MODEL_OVERRIDE and fp.Models().size():
+            fp.Models()[0].m_Filename = MODEL_OVERRIDE[name].replace("OWN/", own)
 
     gnd = pcb.net("/GND")
     for name, spot in holes.items():

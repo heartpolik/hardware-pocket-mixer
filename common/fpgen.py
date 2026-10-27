@@ -38,6 +38,10 @@ class FP:
         self.items.append(f'\t(fp_text user "{s}" (at {fmt(x)} {fmt(y)}) (layer "{layer}") '
                           f'(effects (font (size {size} {size}) (thickness {size * 0.15:.3f}))))')
 
+    def poly(self, pts, layer, w):
+        xy = " ".join(f"(xy {fmt(x)} {fmt(y)})" for x, y in pts)
+        self.items.append(f'\t(fp_poly (pts {xy}) (stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
+
     def body(self, x1, y1, x2, y2, pad=0.25):
         """Fab outline, silk outline, courtyard around the body."""
         self.rect(x1, y1, x2, y2, "F.Fab", FAB)

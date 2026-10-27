@@ -42,9 +42,10 @@ def teensy41_smd():
         x = -29.21 + i * 2.54
         f.smd(str(i + 1), x, 7.62, 1.7, 1.7, shape="circle", paste=False)
         f.smd(str(48 - i), x, -7.62, 1.7, 1.7, shape="circle", paste=False)
-    # window 1..5 mm from the USB end, where the PJRC card back shows the USB device pads and the
-    # VIN/VUSB trace (position from the photo - ОРІЄНТИР); wire pads beside it, over the module
-    wx0, wx1 = -30.48 + 1.0, -30.48 + 5.0
+    # window 1.5..5.5 mm from the USB end, where the PJRC card back shows the USB device pads and the
+    # VIN/VUSB trace (position from the photo - ОРІЄНТИР); 1.5 keeps it off the FX II button pads above
+    # (layout C, DM25); wire pads beside it, over the module
+    wx0, wx1 = -30.48 + 1.5, -30.48 + 5.5
     f.rect(wx0, -5.0, wx1, 5.0, "Edge.Cuts", 0.1)
     for num, y, name in (("49", -2.54, "VUSB"), ("66", 0.0, "D-"), ("67", 2.54, "D+")):
         f.smd(num, wx1 + 1.6, y, 1.6, 1.4, side="B", paste=False)
@@ -103,18 +104,64 @@ def tsf1266():
     return f.write(-4.2, 4.2)
 
 
-def latch_7x7():
-    """7 x 7 self-locking DPDT push switch, seller drawing (docs/datasheets/push-latching-dpdt-*):
-    6 x d1 holes, 2 rows of 3, pitch 2.0, rows 5.0 apart; body 7 x 7, 12.3 high (latched 11.0). The
-    middle pin of each row is the common (filled dot of the circuit diagram): pins 1-2-3 / 4-5-6 =
-    A-B-C of Switch:SW_DPDT_x2 per pole, B = common."""
-    f = FP("SW_Push_Latching_DPDT_7x7mm", "7x7 self-locking DPDT push switch, 6 pins d1, pitch 2.0, rows 5.0 "
-           "(seller drawing); middle pin of each row common", "push switch latching DPDT 7x7")
-    for i in range(3):
-        f.tht(str(i + 1), -2.0 + i * 2.0, -2.5, 1.6, 1.0, "rect" if i == 0 else "circle")
-        f.tht(str(i + 4), -2.0 + i * 2.0, 2.5, 1.6, 1.0)
-    f.body(-3.5, -3.5, 3.5, 3.5)
-    return f.write(-4.6, 4.6)
+def latch_smd():
+    """5.8 x 5.8 self-locking DPDT push switch, SMD, seller drawing
+    (docs/datasheets/push-latching-dpdt-5.8mm-smd-drawing.png): body 5.8 x 5.8, 10.5 high (plunger
+    3.5 x 2.9, 4.8 above the body); 2 rows of 3 legs, pitch 2.0, leg 0.6 wide, 8.3 / 9.3 tip to tip
+    (side / bottom view). Pins top row 3-2-1, bottom row 6-5-4 (left to right, top view); FREE 1-2,
+    4-5, PUSH (latched) 2-3, 5-6 - 2 and 5 are the commons. No land pattern on the drawing: pads
+    1.0 x 2.0 from the body edge (2.9) to 4.9, past both tip values - ОРІЄНТИР."""
+    f = FP("SW_Push_Latching_DPDT_5.8mm_SMD", "5.8x5.8 self-locking DPDT push switch SMD, 2 x 3 legs pitch 2.0 "
+           "(seller drawing); 2 and 5 common, latched 2-3 / 5-6; pads 1.0 x 2.0 at +-3.9 - verify",
+           "push switch latching DPDT SMD 5.8mm", attr="smd")
+    for i, (top, bot) in enumerate((("3", "6"), ("2", "5"), ("1", "4"))):
+        f.smd(top, -2.0 + i * 2.0, -3.9, 1.0, 2.0)
+        f.smd(bot, -2.0 + i * 2.0, 3.9, 1.0, 2.0)
+    f.rect(-2.9, -2.9, 2.9, 2.9, "F.Fab", FAB)
+    f.rect(-1.45, -1.75, 1.45, 1.75, "F.Fab", FAB)              # plunger
+    for x in (-2.9, 2.9):
+        f.line(x, -2.6, x, 2.6, "F.SilkS", SILK)
+    f.text(3.6, -3.9, "1", "F.SilkS", 0.6)
+    f.rect(-3.15, -5.15, 3.15, 5.15, "F.CrtYd", CRT)
+    return f.write(-6.0, 6.0)
+
+
+def ec12sy_smd():
+    """EC12SY-H6-17.5F5.0-24C24P-SMD-612 encoder with push switch, seller drawing
+    (docs/datasheets/ec12sy-smd-encoder-drawing.png, "Mounting hole detail"): A / C / B pads
+    pitch 2.5 along the bottom, S1 / S2 5.0 apart along the top, 5 pads 1.3 x 3.5, 20.0 over both
+    rows; 2 side lugs 3.0 x 5.0, 18.0 over both; body 12.5 x 13.2, height 6, shaft d6 (flat),
+    17.5 above the PCB (L), bushing d6.8. Locating holes d1.5 and d1.2 on the lug axis at 2.0 left
+    and 2.5 right of the centre - the drawing is not to scale and the dimension lines are
+    ambiguous: ПЕРЕВІРИТИ on a sample. Lugs centred on the body (drawing: ~0.2 above) - ПРИПУЩЕННЯ.
+    Origin = shaft axis, S1 / S2 toward -Y."""
+    f = FP("RotaryEncoder_EC12SY_SMD", "EC12SY SMD rotary encoder with switch, 24 detents (seller drawing); "
+           "pads 1.3 x 3.5, lugs 3.0 x 5.0; locating holes d1.5 / d1.2 - verify on a sample",
+           "rotary encoder SMD EC12 switch", attr="smd")
+    for num, x in (("S1", -2.5), ("S2", 2.5)):
+        f.smd(num, x, -8.25, 1.3, 3.5)
+    for num, x in (("A", -2.5), ("C", 0.0), ("B", 2.5)):
+        f.smd(num, x, 8.25, 1.3, 3.5)
+    for x in (-7.5, 7.5):
+        f.smd("MP", x, 0.0, 3.0, 5.0)
+    f.npth(-2.0, 0.0, 1.5)
+    f.npth(2.5, 0.0, 1.2)
+    f.rect(-6.25, -6.6, 6.25, 6.6, "F.Fab", FAB)
+    f.circle(0, 0, 3.0, "F.Fab", FAB)
+    # silk: body outline where it clears the pads by 0.2
+    for x in (-6.25, 6.25):
+        f.line(x, -6.6, x, -2.7, "F.SilkS", SILK)
+        f.line(x, 2.7, x, 6.6, "F.SilkS", SILK)
+    for y in (-6.6, 6.6):
+        f.line(-5.8, y, -3.35, y, "F.SilkS", SILK)
+        f.line(3.35, y, 5.8, y, "F.SilkS", SILK)
+    f.text(-4.6, -8.25, "S1", "F.SilkS", 0.6)
+    f.text(-4.6, 8.25, "A", "F.SilkS", 0.6)
+    # courtyard follows the pads: the corners stay free (M2 hole next to MASTER, DM25)
+    q = [(3.4, -10.25), (3.4, -6.85), (6.5, -6.85), (6.5, -2.75), (9.25, -2.75)]   # right half, top
+    q += [(x, -y) for x, y in reversed(q)]                                          # right half, bottom
+    f.poly(q + [(-x, -y) for x, y in q], "F.CrtYd", CRT)                            # left half
+    return f.write(-11.2, 11.2)
 
 
 def lcd_gmt147():
@@ -153,7 +200,7 @@ def mounting_hole_m2():
 
 
 def main():
-    print("\n".join([teensy41_smd(), vson_hr10(), xfl4015(), tsf1266(), latch_7x7(), lcd_gmt147(),
+    print("\n".join([teensy41_smd(), vson_hr10(), xfl4015(), tsf1266(), latch_smd(), ec12sy_smd(), lcd_gmt147(),
                      mounting_hole_m2()]))
 
 

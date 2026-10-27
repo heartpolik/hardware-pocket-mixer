@@ -13,4 +13,5 @@
 	(fp_line (start -1.9 -3) (end 1.9 -3) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
 	(fp_line (start -1.9 3) (end 1.9 3) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
 	(fp_rect (start -4.25 -3.25) (end 4.25 3.25) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+	(model "${KIPRJMOD}/../lib/pocket-digital.3dshapes/SW_TSF-1266_6x6mm_SMD.step")
 )

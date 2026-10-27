@@ -236,8 +236,10 @@ class Sheet:
         Path(path).write_text("\n".join(out) + "\n")
 
 
-def project_files(folder, name, power=()):
-    """<name>.kicad_pro (rules, net classes: `power` nets -> Power class), .kicad_dru, lib tables."""
+def project_files(folder, name, power=(), dru="", board_rules=None, severities=None, track=0.2):
+    """<name>.kicad_pro (rules, net classes: `power` nets -> Power class), .kicad_dru (+ project
+    rules `dru`), lib tables. `board_rules` / `severities`: project overrides of the board constraints
+    and of DRC check severities; `track`: Default net class track width."""
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     pro = folder / f"{name}.kicad_pro"
@@ -247,15 +249,17 @@ def project_files(folder, name, power=()):
     rules = cfg.setdefault("board", {}).setdefault("design_settings", {}).setdefault("rules", {})
     rules.update({"min_clearance": 0.15, "min_copper_edge_clearance": 0.2,
                   "min_track_width": 0.15, "min_via_diameter": 0.5, "min_through_hole_diameter": 0.3})
+    rules.update(board_rules or {})
+    cfg["board"]["design_settings"].setdefault("rule_severities", {}).update(severities or {})
     cfg["net_settings"] = {"classes": [
-        {"name": "Default", "priority": 2147483647, "clearance": 0.15, "track_width": 0.2,
+        {"name": "Default", "priority": 2147483647, "clearance": 0.15, "track_width": track,
          "via_diameter": 0.6, "via_drill": 0.3},
         {"name": "Power", "priority": 0, "clearance": 0.15, "track_width": 0.5,
          "via_diameter": 0.8, "via_drill": 0.4}],
         "netclass_patterns": [{"netclass": "Power", "pattern": n} for n in power],
         "meta": {"version": 4}}
     pro.write_text(json.dumps(cfg, indent=2) + "\n")
-    rules_file(folder, name)
+    rules_file(folder, name, dru)
     for t in ("fp-lib-table", "sym-lib-table"):
         src = LIB_DIR / t
         (folder / t).write_text(src.read_text())
@@ -272,5 +276,5 @@ DRU = """(version 1)
 """
 
 
-def rules_file(folder, name):
-    (Path(folder) / f"{name}.kicad_dru").write_text(DRU)
+def rules_file(folder, name, extra=""):
+    (Path(folder) / f"{name}.kicad_dru").write_text(DRU + extra)

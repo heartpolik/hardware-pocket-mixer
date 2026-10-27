@@ -107,6 +107,43 @@ def edge_keepouts(board, outline=1.0, cutout=0.45):
     return areas
 
 
+HOLE_KEEP_NAME = "hole clearance"
+
+
+def hole_keepouts(board, clear, skip=()):
+    """Copper keepout (tracks, vias, pours) around every NPTH hole: octagon of radius drill / 2 +
+    `clear`, all copper layers, pads allowed. Kept on the board (DRC and manual edits see it), so the
+    hole clearance holds without a board-wide minimum - `skip`: footprints (library item names)
+    whose own holes sit closer to their pads by design. Returns the rule areas."""
+    import math
+    areas = []
+    for fp in board.GetFootprints():
+        if fp.GetFPID().GetLibItemName().wx_str() in skip:
+            continue
+        for p in fp.Pads():
+            if p.GetAttribute() != pcbnew.PAD_ATTRIB_NPTH:
+                continue
+            c = p.GetPosition()
+            r = mm(pcbnew.ToMM(p.GetDrillSize().x) / 2 + clear) / math.cos(math.pi / 8)
+            z = pcbnew.ZONE(board)
+            z.SetIsRuleArea(True)
+            z.SetZoneName(HOLE_KEEP_NAME)
+            z.SetDoNotAllowTracks(True)
+            z.SetDoNotAllowVias(True)
+            z.SetDoNotAllowPads(False)
+            z.SetDoNotAllowFootprints(False)
+            z.SetDoNotAllowZoneFills(True)
+            z.SetLayerSet(pcbnew.LSET.AllCuMask())
+            ol = z.Outline()
+            ol.NewOutline()
+            for k in range(8):
+                a = math.pi / 8 + k * math.pi / 4
+                ol.Append(int(c.x + r * math.cos(a)), int(c.y + r * math.sin(a)))
+            board.Add(z)
+            areas.append(z)
+    return areas
+
+
 def gnd_name(board):
     for n in ("/GND", "GND"):
         if board.FindNet(n):
@@ -114,9 +151,9 @@ def gnd_name(board):
     raise RuntimeError("no GND net")
 
 
-def route(src, layers=2, passes=40, resume=False, outline=1.0, setup=None):
+def route(src, layers=2, passes=40, resume=False, outline=1.0, setup=None, hole_keep=0.0, hole_skip=()):
     """Route `src` into <src>_routed.kicad_pcb. `setup(board)`: project hook after the layer
-    setup (extra rule areas kept on the board)."""
+    setup (extra rule areas kept on the board); `hole_keep` > 0: hole_keepouts() with that clearance."""
     src = Path(src)
     out = src.with_name(src.stem + "_routed.kicad_pcb")
     work = src.parent / "route"
@@ -148,6 +185,8 @@ def route(src, layers=2, passes=40, resume=False, outline=1.0, setup=None):
             zone(board, pcbnew.In1_Cu, gnd)
     if setup:
         setup(board)
+    if hole_keep and not any(z.GetZoneName() == HOLE_KEEP_NAME for z in board.Zones()):
+        print("hole keepouts:", len(hole_keepouts(board, hole_keep, hole_skip)))
     fences = edge_keepouts(board, outline=outline)
     board.BuildConnectivity()
     if not pcbnew.ExportSpecctraDSN(board, str(dsn)):
@@ -185,8 +224,11 @@ def main():
     ap.add_argument("--passes", type=int, default=40)
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--edge", type=float, default=1.0, help="edge fence width, mm (half of it inside)")
+    ap.add_argument("--hole-keep", type=float, default=0.0, help="copper keepout around NPTH holes, mm")
+    ap.add_argument("--hole-skip", default="", help="footprints (library names, comma-separated) left out")
     a = ap.parse_args()
-    route(a.board, a.layers, a.passes, a.resume, a.edge)
+    route(a.board, a.layers, a.passes, a.resume, a.edge, hole_keep=a.hole_keep,
+          hole_skip=tuple(s for s in a.hole_skip.split(",") if s))
 
 
 if __name__ == "__main__":

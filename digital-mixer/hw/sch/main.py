@@ -1,6 +1,6 @@
 """Main board schematic of the digital mixer (hw/main/main.kicad_sch).
 
-Sources: docs/01-spec.md, 02-components.md, decisions DM1-DM12, datasheets in docs/datasheets
+Sources: docs/01-spec.md, 02-components.md, decisions DM1-DM29, datasheets in docs/datasheets
 (typical applications: PCM186x fig. 66, PCM510xA fig. 33, TPA6132A2 fig. 27, TPS63802 sect. 10).
 Run from digital-mixer/:  python3 hw/sch/main.py
 """
@@ -17,10 +17,9 @@ C1206 = "Capacitor_SMD:C_1206_3216Metric"
 CP_IN = "Capacitor_SMD:CP_Elec_4x5.4"
 JACK = "pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal"     # Rev A part, footprint copied at PCB stage
 FADER = "Potentiometer_THT:Potentiometer_Bourns_PTA2043_Single_Slide"
-ENC = "Rotary_Encoder:RotaryEncoder_Alps_EC11E_Vertical_H20mm"
-ENC_SW = "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm"
+ENC = "pocket-digital:RotaryEncoder_EC12SY_SMD"                # EC12SY SMD with push switch (DM26)
 TACT = "pocket-digital:SW_TSF-1266_6x6mm_SMD"                  # 6 x 6 x 5 SMT tact (DM16), drawing / sample TBD
-LATCH = "pocket-digital:SW_Push_Latching_DPDT_7x7mm"           # self-locking 7 x 7 DPDT (DM17), drawing TBD
+LATCH = "pocket-digital:SW_Push_Latching_DPDT_5.8mm_SMD"       # self-locking 5.8 mm DPDT SMD (DM27)
 
 A3 = "+3V3A"          # LP5907: analog supplies of the codecs
 D3 = "+3V3"           # Teensy 3.3 V pin: digital supplies, display, pull-ups
@@ -113,12 +112,12 @@ def build():
         "1": "GND", "34": "GND", "47": "GND", "52": "GND",
         "66": "USB_DN", "67": "USB_DP",
         # SAI1 -> 3 x PCM5102A (I2S, AudioOutputI2SHex): BCLK1 21, LRCLK1 20, OUT1A 7, OUT1B 32, OUT1C 9
-        "43": "DAC_BCK", "42": "DAC_LRCK", "9": "DAC_MAIN", "24": "DAC_AUX", "11": "DAC_CUE",
+        "43": "DAC_BCK_T", "42": "DAC_LRCK_T", "9": "DAC_MAIN", "24": "DAC_AUX", "11": "DAC_CUE",
         # SAI2 <- 2 x PCM1865 (TDM, 8 slots): BCLK2 4, LRCLK2 3, IN2 5, MCLK2 33
-        "6": "ADC_BCK", "5": "ADC_LRCK", "7": "ADC_DOUT", "25": "ADC_MCLK",
+        "6": "ADC_BCK_T", "5": "ADC_LRCK_T", "7": "ADC_DOUT", "25": "ADC_MCLK_T",
         # I2C0: codecs; I2C2: expanders
         "40": "I2C_SDA", "41": "I2C_SCL", "17": "I2C2_SDA", "16": "I2C2_SCL",
-        "22": "MCP1_INT", "23": "MCP2_INT",
+        "22": "MCP1_INT", "23": "MCP2_INT", "44": "MCP3_INT",
         # faders A0-A3, battery A14
         "36": "FADER1", "37": "FADER2", "38": "FADER3", "39": "FADER4", "30": "VBAT_SENSE",
         # master encoder, function buttons
@@ -133,6 +132,8 @@ def build():
     b.c("10u", D3, "GND", C1206)
     for n in ("I2C_SDA", "I2C_SCL", "I2C2_SDA", "I2C2_SCL"):
         b.r("4.7k", D3, n)
+    for n in ("DAC_BCK", "DAC_LRCK", "ADC_BCK", "ADC_LRCK", "ADC_MCLK"):
+        b.r("33", f"{n}_T", n)               # series termination at the source (DM29), next to the Teensy
     b.r("10k", "DAC_XSMT", "GND")            # DACs muted until the firmware is up
     b.r("10k", "HP_EN", "GND")               # headphone amp off until then
     b.r("100k", "VSYS", "VBAT_SENSE")        # 4.7 V max -> 2.35 V at A14
@@ -140,8 +141,8 @@ def build():
     b.c("100n", "VBAT_SENSE", "GND")
 
     # ================================================================ USB-C
-    b.block("USB-C (GCT USB4085, з Rev A): аудіо, MIDI, заряд. CC 5,1k — пристрій-споживач; ESD USBLC6", 0)
-    b.part("J", "Connector:USB_C_Receptacle_USB2.0_16P", "GCT USB4085", "Connector_USB:USB_C_Receptacle_GCT_USB4085",
+    b.block("USB-C (GCT USB4110-GF-A, повністю SMD — під MASTER, DM25): аудіо, MIDI, заряд. CC 5,1k — пристрій-споживач; ESD USBLC6", 0)
+    b.part("J", "Connector:USB_C_Receptacle_USB2.0_16P", "GCT USB4110-GF-A", "Connector_USB:USB_C_Receptacle_GCT_USB4110",
            {"VBUS": "VBUS", "GND": "GND", "CC1": "CC1", "CC2": "CC2", "D+": "USB_C_DP", "D-": "USB_C_DN",
             "SBU1": None, "SBU2": None, "SHIELD": "GND"}, w=40)
     b.r("5.1k", "CC1", "GND")
@@ -161,8 +162,8 @@ def build():
     b.r("1k", "VBUS", "CHG_LED_RA")
     b.part("D", "Device:LED", "green", "LED_SMD:LED_0805_2012Metric", {"1": "CHG_LED_G", "2": "CHG_LED_GA"})
     b.r("1k", "VBUS", "CHG_LED_GA")
-    b.part("J", "Connector_Generic:Conn_01x02", "LiPo 1S 3000 mAh (з платою захисту)",
-           "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical", {"1": "BAT+", "2": "GND"}, w=20)
+    b.part("J", "Connector_Generic_MountingPin:Conn_01x02_MountingPin", "LiPo 1S 3000 mAh (з платою захисту)",
+           "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal", {"1": "BAT+", "2": "GND", "MP": "GND"}, w=20)
 
     b.block("Load sharing (02, п. 4): від USB — через діод, акумулятор відключає P-MOSFET (затвор = VBUS)", 1)
     b.part("D", "Diode:MBR0530", "MBR0530", "Diode_SMD:D_SOD-123", {"A": "VBUS", "K": "VSYS"}, w=12)
@@ -172,7 +173,7 @@ def build():
     b.c("10u", "VSYS", "GND", C1206)
 
     b.block("Buck-boost TPS63802 → +4V2 (DM11). R1/R2 = 665k/91k → 4,15 V (VFB 0,5 V, табл. 10-5); "
-            "L 0,47 µH XFL4015; C 10 µF вх., 2×22 µF вих. (>3,6 V). Вимикач — кнопка з фіксацією 7×7 на EN (DM17)", 1)
+            "L 0,47 µH XFL4015; C 10 µF вх., 2×22 µF вих. (>3,6 V). Вимикач — кнопка з фіксацією 5,8 мм на EN (DM27)", 1)
     b.part("U", "pocket-digital:TPS63802", "TPS63802", "pocket-digital:Texas_VSON-HR-10_2x3mm_P0.5mm",
            {"VIN": "VSYS", "EN": "PWR_EN", "MODE": "GND", "L1": "BB_L1", "L2": "BB_L2", "AGND": "GND",
             "GND": "GND", "VOUT": RAIL, "FB": "BB_FB", "PG": None}, w=40)
@@ -183,10 +184,10 @@ def build():
     b.c("22u", RAIL, "GND", C1206)
     b.r("665k", RAIL, "BB_FB")
     b.r("91k", "BB_FB", "GND")
-    # one pole: common -> EN, NO -> VSYS, NC -> GND; the second pole is spare. Pin roles (A/B/C vs
-    # NO/common/NC) to be fixed with the switch drawing - ПЕРЕВІРИТИ.
-    b.part("SW", "Switch:SW_DPDT_x2", "Power 7x7 DPDT self-lock", LATCH,
-           {"1": "VSYS", "2": "PWR_EN", "3": "GND", "4": None, "5": None, "6": None}, units=(1, 2), w=20)
+    # one pole: common 2 -> EN; latched (PUSH) 2-3 -> VSYS, released (FREE) 1-2 -> GND (seller
+    # drawing); the second pole is spare
+    b.part("SW", "Switch:SW_DPDT_x2", "Power 5.8mm DPDT self-lock SMD", LATCH,
+           {"1": "GND", "2": "PWR_EN", "3": "VSYS", "4": None, "5": None, "6": None}, units=(1, 2), w=20)
     b.r("100k", "PWR_EN", "GND")                                 # EN never floats while switching
 
     b.block("LP5907 3,3 V — аналог кодеків (+3V3A): < 6,5 µVrms, 250 mA; навантаження 128 mA (calc/power.py)", 1)
@@ -260,10 +261,12 @@ def build():
         "CPP": "HP_CPP", "CPN": "HP_CPN", "PGND": "GND", "SGND": "GND", "EP": "GND"}, w=40)
     b.c("1u", "CUE_L", "HP_INL")
     b.c("1u", "CUE_R", "HP_INR")
-    b.c("2.2u", RAIL, "GND")
-    b.c("2.2u", "HP_HPVDD", "GND")
-    b.c("1u", "HP_HPVSS", "GND")
-    b.c("1u", "HP_CPP", "HP_CPN")
+    # supply and charge-pump caps at their pins (fig. 27): placed as decoupling caps of the amp
+    tpa = b.last_ic
+    b.c("2.2u", RAIL, "GND", fields={"Decouples": tpa})
+    b.c("2.2u", "HP_HPVDD", "GND", fields={"Decouples": tpa})
+    b.c("1u", "HP_HPVSS", "GND", fields={"Decouples": tpa})
+    b.c("1u", "HP_CPP", "HP_CPN", fields={"Decouples": tpa})
     b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", "PHONES SJ-43514-SMT", JACK,
            {"T": "PH_L", "R1": "PH_R", "R2": "GND", "S": "GND"}, w=30)
 
@@ -277,9 +280,9 @@ def build():
     # ================================================================ controls
     for k in (1, 2):
         chs = (1, 2) if k == 1 else (3, 4)
-        b.block(f"MCP23017 #{k} (I²C2, 0x2{k - 1}): енкодери каналів {chs[0]}, {chs[1]} (A/B), Mute, кнопки FX/AUX/CUE (GPx7); "
+        b.block(f"MCP23017 #{k} (I²C2, 0x2{k - 1}): енкодери каналів {chs[0]}, {chs[1]} (A/B), Mute; GPx7 вільні; "
                 "внутрішні підтяжки 100k, INTA/INTB дзеркальні → один INT", 2)
-        spare = {(1, "A"): "BTN_FX1", (1, "B"): "BTN_FX2", (2, "A"): "BTN_AUX", (2, "B"): "BTN_CUE"}
+        spare = {(1, "A"): None, (1, "B"): None, (2, "A"): None, (2, "B"): None}
         pins = {"V_{DD}": D3, "V_{SS}": "GND", "SCK": "I2C2_SCL", "SDA": "I2C2_SDA", "~{RESET}": D3,
                 "A0": "GND" if k == 1 else D3, "A1": "GND", "A2": "GND",
                 "INTA": f"MCP{k}_INT", "INTB": None, "NC": None}
@@ -293,22 +296,36 @@ def build():
                pins, w=50)
         b.decouple(D3)
 
+    b.block("MCP23017 #3 (I²C2, 0x22): кнопки 12 енкодерів каналів (DM28: натискання — фільтр / компресор, "
+            "скидання значення) і кнопки AUX, FX I, FX II (GPA6, GPA7, GPB6) — найближчий до правої колонки; GPB7 вільний", 2)
+    pins = {"V_{DD}": D3, "V_{SS}": "GND", "SCK": "I2C2_SCL", "SDA": "I2C2_SDA", "~{RESET}": D3,
+            "A0": "GND", "A1": D3, "A2": "GND", "INTA": "MCP3_INT", "INTB": None, "NC": None}
+    for half, chs in zip("AB", ((1, 2), (3, 4))):
+        for i, (ch, e) in enumerate((c, e) for c in chs for e in range(3)):
+            pins[f"GP{half}{i}"] = f"ENC{ch}_{e + 1}_SW"
+        pins[f"GP{half}6"] = pins[f"GP{half}7"] = None
+    pins.update({"GPA6": "BTN_AUX", "GPA7": "BTN_FX1", "GPB6": "BTN_FX2"})
+    b.part("U", "Interface_Expansion:MCP23017x-x-SO", "MCP23017-E/SO", "Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm",
+           pins, w=50)
+    b.decouple(D3)
+
     for ch in (1, 2, 3, 4):
-        b.block(f"Канал {ch}: 3 енкодери EC11 (шари EQ / посили / канал, DM6), фейдер 35 мм (DM8), "
+        b.block(f"Канал {ch}: 3 енкодери EC12SY SMD з кнопкою (шари EQ / посили / канал, DM6, DM26), фейдер 35 мм (DM8), "
                 "Mute — тактова кнопка TSF-1266 (DM16)", 2)
         for e in range(3):
-            b.part("SW", "Device:RotaryEncoder", f"EC11 ch{ch}.{e + 1}", ENC,
-                   {"A": f"ENC{ch}_{e + 1}_A", "B": f"ENC{ch}_{e + 1}_B", "C": "GND"}, w=20)
+            b.part("SW", "Device:RotaryEncoder_Switch_MP", f"EC12SY ch{ch}.{e + 1}", ENC,
+                   {"A": f"ENC{ch}_{e + 1}_A", "B": f"ENC{ch}_{e + 1}_B", "C": "GND",
+                    "S1": f"ENC{ch}_{e + 1}_SW", "S2": "GND", "MP": "GND"}, w=20)
         b.part("RV", "Device:R_Potentiometer", "PTA2043 10k B", FADER,
                {"1": "GND", "2": f"FADER{ch}", "3": D3}, w=20)
         b.c("100n", f"FADER{ch}", "GND")
         b.part("SW", "Switch:SW_Push", f"Mute {ch} TSF-1266", TACT, {"1": f"MUTE{ch}", "2": "GND"}, w=20)
 
-    b.block("Майстер: енкодер EC11 з кнопкою, кнопки FX I, FX II, AUX, CUE, SHIFT (TSF-1266); "
+    b.block("Майстер: енкодер EC12SY з кнопкою, кнопки AUX, FX I, FX II, SHIFT (TSF-1266; CUE = SHIFT + Mute, DM28); "
             "дисплей GMT147SPI 1,47\" 172×320 ST7789P3, SPI, на гребінці (DM18, DM23); виводи — за кресленням продавця", 2)
-    b.part("SW", "Device:RotaryEncoder_Switch", "EC11 master", ENC_SW,
-           {"A": "ENC_M_A", "B": "ENC_M_B", "C": "GND", "S1": "ENC_M_SW", "S2": "GND"}, w=20)
-    for n in ("FX1", "FX2", "AUX", "CUE", "SHIFT"):
+    b.part("SW", "Device:RotaryEncoder_Switch_MP", "EC12SY master", ENC,
+           {"A": "ENC_M_A", "B": "ENC_M_B", "C": "GND", "S1": "ENC_M_SW", "S2": "GND", "MP": "GND"}, w=20)
+    for n in ("FX1", "FX2", "AUX", "SHIFT"):
         b.part("SW", "Switch:SW_Push", f"{n} TSF-1266", TACT, {"1": f"BTN_{n}", "2": "GND"}, w=20)
     # pin order from the GMT147SPI seller drawing ("Interface information", docs/datasheets)
     b.part("DS", "Connector_Generic:Conn_01x08", "GMT147SPI 1.47in 172x320", "pocket-digital:LCD_GMT147SPI",
