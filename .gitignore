@@ -29,3 +29,4 @@ common/tools/*.jar
 **/hw/pcb/build/
 # GCT drawings are marked confidential (no redistribution): kept locally, link in the README
 digital-mixer/docs/datasheets/gct-usb4110.pdf
+common/tools/ibom/

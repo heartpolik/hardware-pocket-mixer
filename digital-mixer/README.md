@@ -23,6 +23,7 @@ flowchart LR
 | [docs/02-components.md](docs/02-components.md) | Фейдери, енкодери, живлення 1S, монтаж Teensy, AliExpress чи JLCPCB |
 | [docs/03-schematic.md](docs/03-schematic.md) | **Принципова схема** (KiCad, [PDF](hw/main/main.pdf)), виводи Teensy, макет розташування |
 | [docs/04-pcb.md](docs/04-pcb.md) | **Плата:** чотиришарова 104,5 × 136,5 мм (компоновка C), розведена, DRC 0 порушень, 0 розривів |
+| [docs/05-fab.md](docs/05-fab.md) | **Виготовлення:** Gerber, BOM, файли PCBA для JLCPCB, [інтерактивний BOM](docs/ibom/ibom.html), порядок ручного монтажу |
 | [docs/calc/](docs/calc/power.py) | Розрахунок живлення |
 | [docs/decisions.md](docs/decisions.md) | Журнал рішень цифрового підпроєкту (DM1…) |
 | [docs/datasheets/](docs/datasheets/README.md) | Datasheets цього підпроєкту |

@@ -14,6 +14,7 @@
 | `rip_near.py` | знімає доріжки одного кола біля точки, щоб провести їх заново (`patch_route.py --width`) | вручну |
 | `fpgen.py` | клас `FP`: запис `.kicad_mod` | `hw/lib/gen_footprints.py` обох підпроєктів |
 | `cq3d.py` | CadQuery-хелпери (коробка, циліндр, вивід, збереження STEP) | `hw/lib/gen_3d.py` обох підпроєктів |
+| `tools/ibom/` | InteractiveHtmlBom 2.12 для Python KiCad (у git не кладемо): `…/bin/python3 -m pip install --target common/tools/ibom InteractiveHtmlBom` | `digital-mixer/hw/pcb/fab.py` |
 | `tools/` | Freerouting 2.4.1 (`freerouting-2.4.1.jar`, у git не кладемо, 64 МБ: [реліз](https://github.com/freerouting/freerouting/releases/tag/v2.4.1)) | `route_pcb.py` |
 
 Запуск — з теки підпроєкту, як описано в його документації; Python KiCad для `pcbnew`
