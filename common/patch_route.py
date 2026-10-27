@@ -87,6 +87,8 @@ def main():
     ap.add_argument("--width", type=float, default=None)
     ap.add_argument("--margin", type=float, default=6.0)
     ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--ignore", default="", help="NET[,NET...]: route through their tracks (at a cost) and "
+                    "remove the segments in the way - route those nets again afterwards")
     ap.add_argument("--avoid", default="", help="REF[,REF...]:mm - keep B.Cu / In2 tracks this far from "
                     "these parts (e.g. the converter inductors: L1,L2,L3:3)")
     a = ap.parse_args()
@@ -125,7 +127,10 @@ def main():
     # blocked cells for a track centre / a via centre, per layer
     block = {L: set() for L in LAYERS}
     vblock = set()
-    others = [t for t in board.GetTracks() if t.GetNetname() != net]
+    ignore = {n if n.startswith("/") else "/" + n for n in a.ignore.split(",") if n}
+    soft = {L: set() for L in LAYERS}               # cells under the tracks of ignored nets
+    ripped = [t for t in board.GetTracks() if t.GetNetname() in ignore and t.GetBoundingBox().Intersects(win)]
+    others = [t for t in board.GetTracks() if t.GetNetname() != net and t.GetNetname() not in ignore]
     others += [p for f in board.GetFootprints() for p in f.Pads() if p.GetNetname() != net]
     for it in others:
         if not it.GetBoundingBox().Intersects(win):
@@ -135,6 +140,10 @@ def main():
                 block[L] |= cells(poly_of(it, L, clr + w / 2))
         if any(it.IsOnLayer(L) for L in LAYERS):
             vblock |= cells(poly_of(it, next(L for L in LAYERS if it.IsOnLayer(L)), clr + vd / 2))
+    for it in ripped:
+        for L in LAYERS:
+            if it.IsOnLayer(L):
+                soft[L] |= cells(poly_of(it, L, clr + w / 2))
     for f in board.GetFootprints():                 # holes of own-net pads too: no via in a hole
         for p in f.Pads():
             if p.GetDrillSize().x > 0 and p.GetNetname() == net and p.GetBoundingBox().Intersects(win):
@@ -242,7 +251,7 @@ def main():
                 if L2 != L:
                     nbrs.append(((L2, i, j), VIA_COST))
         for t, c in nbrs:
-            ng = g + c
+            ng = g + c + (0.5 if (t[1], t[2]) in soft[t[0]] else 0.0)
             if ng < best.get(t, 1e9):
                 best[t] = ng
                 prev[t] = s
@@ -311,6 +320,22 @@ def main():
           f"{length:.1f} mm, layers {sorted({board.GetLayerName(t.GetLayer()) for t in new if t.GetClass() == 'PCB_TRACK'})}")
     if a.dry:
         return
+    used = {L: set() for L in LAYERS}               # track centre cells of the new copper
+    vused = set()                                   # its via centre cells (all layers)
+    for s in path:
+        used[s[0]].add((s[1], s[2]))
+    for s in vias:
+        vused.add((s[1], s[2]))
+    gone = set()
+    for it in ripped:
+        for L in LAYERS:
+            if it.IsOnLayer(L) and (cells(poly_of(it, L, clr + w / 2)) & used[L] or
+                                    cells(poly_of(it, L, clr + vd / 2)) & vused):
+                gone.add(it.GetNetname())
+                board.Remove(it)
+                break
+    if gone:
+        print("removed segments of:", ", ".join(sorted(gone)), "- route them again")
     for t in new:
         board.Add(t)
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())

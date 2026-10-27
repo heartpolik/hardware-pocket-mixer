@@ -237,8 +237,9 @@ def build():
             "OUTL": f"{name}_OL", "OUTR": f"{name}_OR", "AVDD": A3, "AGND": "GND", "DEMP": "GND", "FLT": "GND",
             "SCK": "GND", "BCK": "DAC_BCK", "DIN": data, "LRCK": "DAC_LRCK", "FMT": "GND", "XSMT": "DAC_XSMT",
             "LDOO": f"{name}_LDOO", "DGND": "GND", "DVDD": D3}, w=50)
-        b.c("2.2u", f"{name}_CAPP", f"{name}_CAPM")
-        b.c("2.2u", f"{name}_VNEG", "GND")
+        dac = b.last_ic                     # charge-pump caps right at their pins (fig. 33)
+        b.c("2.2u", f"{name}_CAPP", f"{name}_CAPM", fields={"Decouples": dac})
+        b.c("2.2u", f"{name}_VNEG", "GND", fields={"Decouples": dac})
         b.decouple(A3, A3, D3)              # CPVDD, AVDD, DVDD
         b.c("10u", A3, "GND", C1206)
         b.c("10u", D3, "GND", C1206)
@@ -247,7 +248,8 @@ def build():
         b.newrow()
         for s in "LR":
             out = f"{name}_{s}" if name != "CUE" else f"CUE_{s}"
-            b.r("470", f"{name}_O{s}", out)
+            b.part("R", "Device:R", "470", R0805, {"1": f"{name}_O{s}", "2": out},
+                   fields={"Decouples": dac})       # output RC at the DAC pins (fig. 33)
             b.c("2.2n", out, "GND")
         if name != "CUE":
             b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", f"{name} OUT SJ-43514-SMT", JACK,

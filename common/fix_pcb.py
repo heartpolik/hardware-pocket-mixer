@@ -49,6 +49,12 @@ def cleanup(board, gnd):
     def on_pad(net, layer, pos):
         return any(p.IsOnLayer(layer) and p.HitTest(pos) for p in pads.get(net, ()))
 
+    def on_via(t, pos):
+        """A track end inside a via of its net (patch_route ends on its grid, not at the centre)."""
+        return any(v.m_Uuid.AsString() != t.m_Uuid.AsString() and
+                   (v.GetPosition() - pos).EuclideanNorm() <= v.GetWidth(pcbnew.F_Cu) // 2
+                   for v in vias.get(t.GetNetCode(), ()))
+
     def on_segment(p, segs):
         """T-junction: `p` lies on another segment (within its half width)."""
         for a, b, hw in segs:
@@ -60,7 +66,12 @@ def cleanup(board, gnd):
         return False
 
     removed = 0
+    vias = {}
     while True:
+        vias.clear()                             # rebuilt each pass: the previous one deleted some
+        for v in board.GetTracks():
+            if v.GetClass() == "PCB_VIA":
+                vias.setdefault(v.GetNetCode(), []).append(v)
         items = [t for t in board.GetTracks() if t.GetNetCode() != gnd]
         ends, seen, dead, segs = {}, set(), [], {}
         for t in items:
@@ -84,6 +95,8 @@ def cleanup(board, gnd):
             uid = t.m_Uuid.AsString()
             others = ends.get(key(t.GetNetCode(), layer, pos), set()) - {uid} - gone
             if others or on_pad(t.GetNetCode(), layer, pos):
+                return True
+            if t.GetClass() != "PCB_VIA" and on_via(t, pos):
                 return True
             return on_segment(pos, [(a, b, w) for a, b, w, u in segs.get((t.GetNetCode(), layer), ())
                                     if u != uid and u not in gone])
@@ -204,6 +217,47 @@ def stitch(board, gnd):
                 add_via(board, gnd, p)
                 have.append(p)
                 frag += 1
+    # fallback for fragments that still have no anchor: a via where it fits the fragment and clears
+    # every other-net item on all layers (other GND pours may be absent there - their copper is the
+    # same net), and no keepout forbids vias
+    others = [t for t in board.GetTracks() if t.GetNetCode() != gnd]
+    others += [p for p in board.GetPads() if p.GetNetCode() != gnd]
+    keepouts = [z for z in board.Zones() if z.GetIsRuleArea() and z.GetDoNotAllowVias()]
+    edges = inside_edges(board)
+    clr = mm(0.15 + VIA_D / 2)
+    for layer, ps in polys.items():
+        for i in range(ps.OutlineCount()):
+            if any(ps.Contains(a, i) for a in have):
+                continue
+            frag_ps = pcbnew.SHAPE_POLY_SET()
+            frag_ps.AddOutline(ps.Outline(i))
+            frag_ps.Inflate(-mm(VIA_D / 2), pcbnew.CORNER_STRATEGY_ROUND_ALL_CORNERS, mm(0.005))
+            if frag_ps.IsEmpty():
+                continue
+            fb = frag_ps.BBox()
+            l, tp, r, bt = fb.GetLeft() - clr, fb.GetTop() - clr, fb.GetRight() + clr, fb.GetBottom() + clr
+            near = []
+            for o in others:
+                ob = o.GetBoundingBox()
+                if ob.GetRight() >= l and ob.GetLeft() <= r and ob.GetBottom() >= tp and ob.GetTop() <= bt:
+                    near.append(o)
+            for x in range(fb.GetLeft(), fb.GetRight() + 1, step):
+                done = False
+                for y in range(fb.GetTop(), fb.GetBottom() + 1, step):
+                    p = pcbnew.VECTOR2I(x, y)
+                    if not frag_ps.Contains(p) or not edges.Contains(p):
+                        continue
+                    if any(o.HitTest(p, clr) for o in near):
+                        continue
+                    if any(z.Outline().Contains(p) for z in keepouts):
+                        continue
+                    add_via(board, gnd, p)
+                    have.append(p)
+                    frag += 1
+                    done = True
+                    break
+                if done:
+                    break
     grid = 0
     pitch = mm(STITCH_PITCH)
     for x in range(bb.GetLeft(), bb.GetRight(), pitch):
@@ -223,6 +277,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("board")
     ap.add_argument("--edge-keep", type=float, default=EDGE_KEEP)
+    ap.add_argument("--no-cleanup", action="store_true", help="after manual patches: refill and stitch only")
     a = ap.parse_args()
     EDGE_KEEP = a.edge_keep
     path = Path(a.board)
@@ -230,8 +285,9 @@ def main():
     gnd = next(board.FindNet(n) for n in ("/GND", "GND") if board.FindNet(n)).GetNetCode()
 
     print("stitching vias removed:", drop_stitching(board, gnd))
-    print("dangling removed:", cleanup(board, gnd))
-    print("widened:", widen(board))
+    if not a.no_cleanup:
+        print("dangling removed:", cleanup(board, gnd))
+        print("widened:", widen(board))
     fill(board)
     print("stitching vias (fragments, grid):", stitch(board, gnd))
     fill(board)

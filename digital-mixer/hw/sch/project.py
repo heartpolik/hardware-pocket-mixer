@@ -16,8 +16,8 @@ POWER = ["/VBUS", "/VSYS", "/BAT+", "/+4V2", "/BB_L1", "/BB_L2", "/+3V3", "/+3V3
 # track rules from .kicad_dru here - checked 27.10.2026).
 BOARD_RULES = {"min_hole_clearance": 0.15}
 RULES = ""
-# signals 0.15 (power 0.5): 2 layers around TSSOP / WQFN at 0.5 pitch need the room
-TRACK = 0.15
+# signals 0.2 (power 0.5), as Rev A: 4 layers (DM31) leave room around the 0.5-pitch packages
+TRACK = 0.2
 SEVERITIES = {
     # locating pegs under parts of the other side: SJ-43514 pegs reach 0.8 below the jack (CUI
     # drawing), USB4110 pegs 0.63 - neither comes through the 1.6 board (checked per case, 04-pcb.md)
