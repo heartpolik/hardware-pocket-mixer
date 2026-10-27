@@ -1,68 +1,68 @@
-К-сть,Номінал,Footprint,Тип,Партномер,LCSC,Монтаж,Позначення
-23,10u,Capacitor_SMD:C_1206_3216Metric,"X7R, ≥ 10 V (шини ≤ 5 V)",,,JLCPCB,"C1,C2,C4,C5,C6,C7,C11,C18,C20,C23,C30,C32,C35,C41,C42,C44,C52,C53,C55,C63,C64,C66,C82"
-28,100n,Capacitor_SMD:C_0805_2012Metric,"X7R / C0G, ≥ 10 V",,,JLCPCB,"C3,C17,C19,C21,C22,C29,C31,C33,C34,C38,C39,C40,C43,C49,C50,C51,C54,C60,C61,C62,C65,C75,C76,C77,C78,C79,C80,C81"
-2,22u,Capacitor_SMD:C_1206_3216Metric,"X7R, ≥ 10 V (шини ≤ 5 V)",,,JLCPCB,"C8,C9"
-7,1u,Capacitor_SMD:C_0805_2012Metric,"X7R, ≥ 10 V (шини ≤ 5 V)",,,JLCPCB,"C10,C16,C28,C69,C70,C73,C74"
-8,10u 16V,Capacitor_SMD:CP_Elec_4x5.4,"алюмінієвий SMD 4 × 5,4",,,JLCPCB,"C12,C13,C14,C15,C24,C25,C26,C27"
-8,2.2u,Capacitor_SMD:C_0805_2012Metric,"X7R, ≥ 10 V (шини ≤ 5 V)",,,JLCPCB,"C36,C37,C47,C48,C58,C59,C71,C72"
-6,2.2n,Capacitor_SMD:C_0805_2012Metric,"X7R / C0G, ≥ 10 V",,,JLCPCB,"C45,C46,C56,C57,C67,C68"
-1,red,LED_SMD:LED_0805_2012Metric,світлодіод 0805,,,JLCPCB,D1
-1,green,LED_SMD:LED_0805_2012Metric,світлодіод 0805,,,JLCPCB,D2
-1,MBR0530,Diode_SMD:D_SOD-123,,MBR0530 (JSCJ),C77336,JLCPCB,D3
+К-сть,Номінал,Footprint,Виробник,Партномер,Опис,Монтаж,Позначення
+23,10u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31B106KAHNNNE,MLCC 10 uF 25 V X7R 1206,NextPCB,"C1,C2,C4,C5,C6,C7,C11,C18,C20,C23,C30,C32,C35,C41,C42,C44,C52,C53,C55,C63,C64,C66,C82"
+28,100n,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21B104KBCNNNC,MLCC 100 nF 50 V X7R 0805,NextPCB,"C3,C17,C19,C21,C22,C29,C31,C33,C34,C38,C39,C40,C43,C49,C50,C51,C54,C60,C61,C62,C65,C75,C76,C77,C78,C79,C80,C81"
+2,22u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31A226KAHNNNE,MLCC 22 uF 25 V X5R 1206,NextPCB,"C8,C9"
+7,1u,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21B105KAFNNNE,MLCC 1 uF 25 V X7R 0805,NextPCB,"C10,C16,C28,C69,C70,C73,C74"
+8,10u 16V,Capacitor_SMD:CP_Elec_4x5.4,Panasonic,EEE-1CA100SR,Al electrolytic 10 uF 16 V 4x5.4 SMD,NextPCB,"C12,C13,C14,C15,C24,C25,C26,C27"
+8,2.2u,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21B225KAFNNNE,MLCC 2.2 uF 25 V X7R 0805,NextPCB,"C36,C37,C47,C48,C58,C59,C71,C72"
+6,2.2n,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21C222JBFNNNE,MLCC 2.2 nF 50 V C0G 0805,NextPCB,"C45,C46,C56,C57,C67,C68"
+1,red,LED_SMD:LED_0805_2012Metric,Lite-On,LTST-C171KRKT,LED red 0805,NextPCB,D1
+1,green,LED_SMD:LED_0805_2012Metric,Lite-On,LTST-C171KGKT,LED green 0805,NextPCB,D2
+1,MBR0530,Diode_SMD:D_SOD-123,JSCJ,MBR0530,"Schottky 30 V 0.5 A, SOD-123",NextPCB,D3
 1,GMT147SPI 1.47in 172x320,pocket-digital:LCD_GMT147SPI,,,,"вручну: THT, гребінка дисплея",DS1
-1,GCT USB4110-GF-A,Connector_USB:USB_C_Receptacle_GCT_USB4110,,USB4110-GF-A,ПЕРЕВІРИТИ,JLCPCB,J1
-1,LiPo 1S 3000 mAh (з платою захисту),Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal,,S2B-PH-SM4-TB(LF)(SN),C295747,JLCPCB,J2
-1,IN1 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J3
-1,IN2 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J4
-1,IN3 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J5
-1,IN4 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J6
-1,MAIN OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J7
-1,AUX OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J8
-1,PHONES SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J9
-1,MIDI OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,,SJ-43514-SMT-TR,C4992301 — ПЕРЕВІРИТИ (запас малий),"вручну: джек (у LCSC мало) — або JLCPCB, якщо є",J10
-1,0.47u XFL4015-471ME,pocket-digital:L_Coilcraft_XFL4015,,XFL4015-471MEC,C18221164,JLCPCB,L1
-1,AO3401A,Package_TO_SOT_SMD:SOT-23,,AO3401A (AOS),C15127,JLCPCB,Q1
-4,4.7k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R1,R2,R3,R4"
-7,33,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R5,R6,R7,R8,R9,R31,R40"
-10,10k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R10,R11,R24,R26,R28,R30,R33,R35,R37,R39"
-12,100k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R12,R13,R19,R22,R23,R25,R27,R29,R32,R34,R36,R38"
-2,5.1k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R14,R15"
-1,2.4k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,R16
-2,1k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R17,R18"
-1,665k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,R20
-1,91k,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,R21
-6,470,Resistor_SMD:R_0805_2012Metric,товстоплівковий 1 %,,,JLCPCB,"R41,R42,R43,R44,R45,R46"
-1,33 0.5W,Resistor_SMD:R_2010_5025Metric,"товстоплівковий 1 %, 0,5 W",,,JLCPCB,R47
-1,10 0.25W,Resistor_SMD:R_1206_3216Metric,"товстоплівковий 1 %, 0,25 W",,,JLCPCB,R48
+1,GCT USB4110-GF-A,Connector_USB:USB_C_Receptacle_GCT_USB4110,GCT,USB4110-GF-A,"USB-C 2.0 receptacle, SMT",NextPCB,J1
+1,LiPo 1S 3000 mAh (з платою захисту),Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal,JST,S2B-PH-SM4-TB(LF)(SN),"PH 2-pin side entry, SMT",NextPCB,J2
+1,IN1 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J3
+1,IN2 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J4
+1,IN3 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J5
+1,IN4 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J6
+1,MAIN OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J7
+1,AUX OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J8
+1,PHONES SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J9
+1,MIDI OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J10
+1,0.47u XFL4015-471ME,pocket-digital:L_Coilcraft_XFL4015,Coilcraft,XFL4015-471MEC,"inductor 0.47 uH 6.6 A, 4x4x1.5",NextPCB,L1
+1,AO3401A,Package_TO_SOT_SMD:SOT-23,Alpha & Omega,AO3401A,"P-MOSFET 30 V 4 A, SOT-23",NextPCB,Q1
+4,4.7k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-074K7L,resistor 4.7 k 1% 0805,NextPCB,"R1,R2,R3,R4"
+7,33,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-0733RL,resistor 33 R 1% 0805,NextPCB,"R5,R6,R7,R8,R9,R31,R40"
+10,10k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-0710KL,resistor 10 k 1% 0805,NextPCB,"R10,R11,R24,R26,R28,R30,R33,R35,R37,R39"
+12,100k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-07100KL,resistor 100 k 1% 0805,NextPCB,"R12,R13,R19,R22,R23,R25,R27,R29,R32,R34,R36,R38"
+2,5.1k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-075K1L,resistor 5.1 k 1% 0805,NextPCB,"R14,R15"
+1,2.4k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-072K4L,resistor 2.4 k 1% 0805,NextPCB,R16
+2,1k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-071KL,resistor 1 k 1% 0805,NextPCB,"R17,R18"
+1,665k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-07665KL,resistor 665 k 1% 0805 - ПЕРЕВІРИТИ part number,NextPCB,R20
+1,91k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-0791KL,resistor 91 k 1% 0805,NextPCB,R21
+6,470,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-07470RL,resistor 470 R 1% 0805,NextPCB,"R41,R42,R43,R44,R45,R46"
+1,33 0.5W,Resistor_SMD:R_2010_5025Metric,Yageo,RC2010FK-0733RL,resistor 33 R 1% 0.75 W 2010,NextPCB,R47
+1,10 0.25W,Resistor_SMD:R_1206_3216Metric,Yageo,RC1206FR-0710RL,resistor 10 R 1% 0.5 W 1206,NextPCB,R48
 4,PTA2043 10k B,Potentiometer_THT:Potentiometer_Bourns_PTA2043_Single_Slide,,,,"вручну: THT, фейдер","RV1,RV2,RV3,RV4"
-1,Power 5.8mm DPDT self-lock SMD,pocket-digital:SW_Push_Latching_DPDT_5.8mm_SMD,,,,вручну: верхній бік (DM27),SW1
+1,Power 5.8mm DPDT self-lock SMD,pocket-digital:SW_Push_Latching_DPDT_5.8mm_SMD,,,,"вручну: верхній бік, AliExpress (DM27)",SW1
 1,EC12SY ch1.1,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW2
 1,EC12SY ch1.2,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW3
 1,EC12SY ch1.3,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW4
-1,Mute 1 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW5
+1,Mute 1 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW5
 1,EC12SY ch2.1,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW6
 1,EC12SY ch2.2,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW7
 1,EC12SY ch2.3,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW8
-1,Mute 2 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW9
+1,Mute 2 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW9
 1,EC12SY ch3.1,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW10
 1,EC12SY ch3.2,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW11
 1,EC12SY ch3.3,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW12
-1,Mute 3 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW13
+1,Mute 3 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW13
 1,EC12SY ch4.1,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW14
 1,EC12SY ch4.2,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW15
 1,EC12SY ch4.3,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW16
-1,Mute 4 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW17
+1,Mute 4 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW17
 1,EC12SY master,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW18
-1,FX1 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW19
-1,FX2 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW20
-1,AUX TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW21
-1,SHIFT TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,вручну: верхній бік,SW22
+1,FX1 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW19
+1,FX2 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW20
+1,AUX TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW21
+1,SHIFT TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW22
 1,Teensy 4.1,pocket-digital:Teensy41_SMD,,,,"вручну: модуль Teensy 4.1 (DM12), після перевірки живлення",U1
-1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,,USBLC6-2SC6 (ST),C7519,JLCPCB,U2
-1,TP4056,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm,,TP4056-42-ESOP8,C16581,JLCPCB,U3
-1,TPS63802,pocket-digital:Texas_VSON-HR-10_2x3mm_P0.5mm,,TPS63802DLAR,ПЕРЕВІРИТИ,JLCPCB,U4
-1,LP5907MFX-3.3,Package_TO_SOT_SMD:SOT-23-5,,LP5907MFX-3.3/NOPB,C80670,JLCPCB,U5
-2,PCM1865,Package_SO:TSSOP-30_4.4x7.8mm_P0.5mm,,PCM1865DBTR,C181312,JLCPCB,"U6,U7"
-3,PCM5102A,Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm,,PCM5102APWR,C107671,JLCPCB,"U8,U9,U10"
-1,TPA6132A2,Package_DFN_QFN:WQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm,,TPA6132A2RTER,C69901,JLCPCB,U11
-3,MCP23017-E/SO,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,,MCP23017-E/SO,C47023,JLCPCB,"U12,U13,U14"
+1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,STMicroelectronics,USBLC6-2SC6,"USB ESD protection, SOT-23-6",NextPCB,U2
+1,TP4056,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm,TOP POWER ASIC,TP4056-42-ESOP8,"Li-ion charger 1 A, ESOP-8",NextPCB,U3
+1,TPS63802,pocket-digital:Texas_VSON-HR-10_2x3mm_P0.5mm,Texas Instruments,TPS63802DLAR,"buck-boost 2 A, VSON-HR-10 2x3",NextPCB,U4
+1,LP5907MFX-3.3,Package_TO_SOT_SMD:SOT-23-5,Texas Instruments,LP5907MFX-3.3/NOPB,"LDO 3.3 V 250 mA low noise, SOT-23-5",NextPCB,U5
+2,PCM1865,Package_SO:TSSOP-30_4.4x7.8mm_P0.5mm,Texas Instruments,PCM1865DBTR,"ADC 4ch 24 bit TDM, TSSOP-30 (LCSC: NRND; alt. PCM1865QDBTRQ1)",NextPCB,"U6,U7"
+3,PCM5102A,Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm,Texas Instruments,PCM5102APWR,"DAC stereo 32 bit I2S, TSSOP-20",NextPCB,"U8,U9,U10"
+1,TPA6132A2,Package_DFN_QFN:WQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm,Texas Instruments,TPA6132A2RTER,"headphone amp DirectPath, WQFN-16 3x3",NextPCB,U11
+3,MCP23017-E/SO,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,Microchip,MCP23017-E/SO,"I2C 16-bit I/O expander, SOIC-28W",NextPCB,"U12,U13,U14"

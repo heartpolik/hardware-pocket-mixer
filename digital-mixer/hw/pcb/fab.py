@@ -1,20 +1,22 @@
-"""Fabrication outputs of the main board (hw/main/main_routed.kicad_pcb), docs/05-fab.md:
+"""Fabrication outputs of the main board (hw/main/main_routed.kicad_pcb) for NextPCB, docs/05-fab.md:
 
   python3 hw/pcb/fab.py            (plain Python 3; calls kicad-cli and KiCad's Python for the iBOM)
 
 Writes hw/fab/:
   gerber/, main-gerber.zip   Gerber (4 copper layers, Protel extensions) + Excellon drill (PTH / NPTH)
-  bom.csv                    every part, grouped by value + footprint: part number, LCSC, who mounts it
-  jlc/bom-jlc.csv            JLCPCB PCBA BOM - only the parts JLCPCB places (Comment, Designator, ...)
-  jlc/cpl-jlc.csv            JLCPCB placement file for the same parts
-and docs/ibom/ibom.html - InteractiveHtmlBom (as mixerli documentation/ibom/ibom.html), with the part
-number, LCSC code and the mounting column. InteractiveHtmlBom: common/tools/ibom (pip --target, see
-common/README.md).
+  bom.csv                    every part, grouped by value + footprint: manufacturer, part number, who mounts it
+  nextpcb/bom-nextpcb.csv    NextPCB PCBA BOM: Designator, Quantity, Manufacturer, Manufacturer Part
+                             Number, Description, Package, Procurement Type (DNP = mounted by hand), Customer Note
+  nextpcb/centroid-nextpcb.csv (+ .zip)  pick and place of the parts NextPCB places (mm, Top / Bottom)
+  nextpcb/assembly-top.pdf, assembly-bottom.pdf   assembly drawings (fab + silk + outline)
+and docs/ibom/ibom.html - InteractiveHtmlBom (as mixerli documentation/ibom/ibom.html). InteractiveHtmlBom:
+common/tools/ibom (pip --target, see common/README.md).
 
-Part numbers / LCSC codes: only those checked on lcsc.com / jlcpcb.com (27.10.2026, links in
-docs/05-fab.md); the rest is ПЕРЕВІРИТИ, generic passives are left to JLCPCB's BOM matching.
+Part numbers: only those found on distributor pages (27.10.2026, links in docs/05-fab.md); the rest is
+ПЕРЕВІРИТИ with the full specification in Customer Note.
 """
 import csv
+import json
 import os
 import shutil
 import subprocess
@@ -25,6 +27,7 @@ from pathlib import Path
 HW = Path(__file__).resolve().parents[1]
 ROOT = HW.parents[1]
 FAB = HW / "fab"
+OUT = FAB / "nextpcb"
 PCB = HW / "main" / "main_routed.kicad_pcb"
 SCH = HW / "main" / "main.kicad_sch"
 IBOM_DIR = HW.parent / "docs" / "ibom"
@@ -34,33 +37,55 @@ IBOM = ROOT / "common" / "tools" / "ibom"
 LAYERS = ["F.Cu", "In1.Cu", "In2.Cu", "B.Cu", "F.Mask", "B.Mask", "F.Paste", "B.Paste",
           "F.Silkscreen", "B.Silkscreen", "Edge.Cuts"]
 
-# value -> (manufacturer part number, LCSC code)
+# value -> (manufacturer, part number, description)
 PARTS = {
-    "PCM1865": ("PCM1865DBTR", "C181312"),        # LCSC: not recommended for new designs; alt PCM1865QDBTRQ1 C2667266
-    "PCM5102A": ("PCM5102APWR", "C107671"),
-    "TPA6132A2": ("TPA6132A2RTER", "C69901"),
-    "TPS63802": ("TPS63802DLAR", "ПЕРЕВІРИТИ"),
-    "TP4056": ("TP4056-42-ESOP8", "C16581"),
-    "LP5907MFX-3.3": ("LP5907MFX-3.3/NOPB", "C80670"),
-    "MCP23017-E/SO": ("MCP23017-E/SO", "C47023"),
-    "USBLC6-2SC6": ("USBLC6-2SC6 (ST)", "C7519"),
-    "AO3401A": ("AO3401A (AOS)", "C15127"),
-    "MBR0530": ("MBR0530 (JSCJ)", "C77336"),
-    "0.47u XFL4015-471ME": ("XFL4015-471MEC", "C18221164"),
-    "GCT USB4110-GF-A": ("USB4110-GF-A", "ПЕРЕВІРИТИ"),
-    "LiPo 1S 3000 mAh (з платою захисту)": ("S2B-PH-SM4-TB(LF)(SN)", "C295747"),
+    "PCM1865": ("Texas Instruments", "PCM1865DBTR", "ADC 4ch 24 bit TDM, TSSOP-30 (LCSC: NRND; alt. PCM1865QDBTRQ1)"),
+    "PCM5102A": ("Texas Instruments", "PCM5102APWR", "DAC stereo 32 bit I2S, TSSOP-20"),
+    "TPA6132A2": ("Texas Instruments", "TPA6132A2RTER", "headphone amp DirectPath, WQFN-16 3x3"),
+    "TPS63802": ("Texas Instruments", "TPS63802DLAR", "buck-boost 2 A, VSON-HR-10 2x3"),
+    "TP4056": ("TOP POWER ASIC", "TP4056-42-ESOP8", "Li-ion charger 1 A, ESOP-8"),
+    "LP5907MFX-3.3": ("Texas Instruments", "LP5907MFX-3.3/NOPB", "LDO 3.3 V 250 mA low noise, SOT-23-5"),
+    "MCP23017-E/SO": ("Microchip", "MCP23017-E/SO", "I2C 16-bit I/O expander, SOIC-28W"),
+    "USBLC6-2SC6": ("STMicroelectronics", "USBLC6-2SC6", "USB ESD protection, SOT-23-6"),
+    "AO3401A": ("Alpha & Omega", "AO3401A", "P-MOSFET 30 V 4 A, SOT-23"),
+    "MBR0530": ("JSCJ", "MBR0530", "Schottky 30 V 0.5 A, SOD-123"),
+    "0.47u XFL4015-471ME": ("Coilcraft", "XFL4015-471MEC", "inductor 0.47 uH 6.6 A, 4x4x1.5"),
+    "GCT USB4110-GF-A": ("GCT", "USB4110-GF-A", "USB-C 2.0 receptacle, SMT"),
+    "LiPo 1S 3000 mAh (з платою захисту)": ("JST", "S2B-PH-SM4-TB(LF)(SN)", "PH 2-pin side entry, SMT"),
 }
-JACK = ("SJ-43514-SMT-TR", "C4992301 — ПЕРЕВІРИТИ (запас малий)")
-
-# who mounts it: JLCPCB places every SMD part of the bottom side except these (by footprint)
+JACK = ("Same Sky (CUI)", "SJ-43514-SMT-TR", "3.5 mm TRRS jack, SMT")
+# (value, footprint suffix) -> (manufacturer, part number, description)
+PASSIVES = {
+    ("10u", "C_1206"): ("Samsung", "CL31B106KAHNNNE", "MLCC 10 uF 25 V X7R 1206"),
+    ("100n", "C_0805"): ("Samsung", "CL21B104KBCNNNC", "MLCC 100 nF 50 V X7R 0805"),
+    ("22u", "C_1206"): ("Samsung", "CL31A226KAHNNNE", "MLCC 22 uF 25 V X5R 1206"),
+    ("1u", "C_0805"): ("Samsung", "CL21B105KAFNNNE", "MLCC 1 uF 25 V X7R 0805"),
+    ("2.2u", "C_0805"): ("Samsung", "CL21B225KAFNNNE", "MLCC 2.2 uF 25 V X7R 0805"),
+    ("2.2n", "C_0805"): ("Samsung", "CL21C222JBFNNNE", "MLCC 2.2 nF 50 V C0G 0805"),
+    ("10u 16V", "CP_Elec_4x5.4"): ("Panasonic", "EEE-1CA100SR", "Al electrolytic 10 uF 16 V 4x5.4 SMD"),
+    ("red", "LED_0805"): ("Lite-On", "LTST-C171KRKT", "LED red 0805"),
+    ("green", "LED_0805"): ("Lite-On", "LTST-C171KGKT", "LED green 0805"),
+    ("4.7k", "R_0805"): ("Yageo", "RC0805FR-074K7L", "resistor 4.7 k 1% 0805"),
+    ("33", "R_0805"): ("Yageo", "RC0805FR-0733RL", "resistor 33 R 1% 0805"),
+    ("10k", "R_0805"): ("Yageo", "RC0805FR-0710KL", "resistor 10 k 1% 0805"),
+    ("100k", "R_0805"): ("Yageo", "RC0805FR-07100KL", "resistor 100 k 1% 0805"),
+    ("5.1k", "R_0805"): ("Yageo", "RC0805FR-075K1L", "resistor 5.1 k 1% 0805"),
+    ("2.4k", "R_0805"): ("Yageo", "RC0805FR-072K4L", "resistor 2.4 k 1% 0805"),
+    ("1k", "R_0805"): ("Yageo", "RC0805FR-071KL", "resistor 1 k 1% 0805"),
+    ("665k", "R_0805"): ("Yageo", "RC0805FR-07665KL", "resistor 665 k 1% 0805 - ПЕРЕВІРИТИ part number"),
+    ("91k", "R_0805"): ("Yageo", "RC0805FR-0791KL", "resistor 91 k 1% 0805"),
+    ("470", "R_0805"): ("Yageo", "RC0805FR-07470RL", "resistor 470 R 1% 0805"),
+    ("33 0.5W", "R_2010"): ("Yageo", "RC2010FK-0733RL", "resistor 33 R 1% 0.75 W 2010"),
+    ("10 0.25W", "R_1206"): ("Yageo", "RC1206FR-0710RL", "resistor 10 R 1% 0.5 W 1206"),
+}
+# who mounts it: NextPCB places every SMD part of the bottom side; these (by footprint) by hand
 HAND = {
     "Teensy41_SMD": "вручну: модуль Teensy 4.1 (DM12), після перевірки живлення",
     "PTA2043": "вручну: THT, фейдер",
     "LCD_GMT147SPI": "вручну: THT, гребінка дисплея",
     "EC12SY": "вручну: верхній бік, AliExpress (DM26)",
-    "TSF-1266": "вручну: верхній бік",
-    "Latching": "вручну: верхній бік (DM27)",
-    "SJ-43514": "вручну: джек (у LCSC мало) — або JLCPCB, якщо є",
+    "TSF-1266": "вручну: верхній бік, AliExpress",
+    "Latching": "вручну: верхній бік, AliExpress (DM27)",
     "MountingHole": "—",
 }
 
@@ -73,26 +98,16 @@ def cli(*args):
 
 
 def mount(footprint):
-    return next((v for k, v in HAND.items() if k in footprint), "JLCPCB")
+    return next((v for k, v in HAND.items() if k in footprint), "NextPCB")
 
 
 def part_of(value, footprint):
-    if "SJ-43514" in footprint:
-        return JACK
-    return PARTS.get(value, ("", ""))
-
-
-def spec(value, footprint):
     fp = footprint.split(":")[-1]
-    if fp.startswith("R_"):
-        return "товстоплівковий 1 %" + (", 0,5 W" if "2010" in fp else ", 0,25 W" if "1206" in fp else "")
-    if fp.startswith("C_"):
-        return "X7R, ≥ 10 V (шини ≤ 5 V)" if not value.endswith("n") else "X7R / C0G, ≥ 10 V"
-    if fp.startswith("CP_"):
-        return "алюмінієвий SMD 4 × 5,4"
-    if fp.startswith("LED_"):
-        return "світлодіод 0805"
-    return ""
+    if "SJ-43514" in fp:
+        return JACK
+    if value in PARTS:
+        return PARTS[value]
+    return next((v for (val, f), v in PASSIVES.items() if val == value and fp.startswith(f)), ("", "", ""))
 
 
 def gerbers():
@@ -121,9 +136,9 @@ def bom_rows():
         rows = [r for r in csv.DictReader(raw.open(encoding="utf-8")) if r["Footprint"]]
     out = []
     for r in rows:
-        mpn, lcsc = part_of(r["Value"], r["Footprint"])
+        mfr, mpn, desc = part_of(r["Value"], r["Footprint"])
         out.append({"К-сть": int(r["Qty"]), "Номінал": r["Value"], "Footprint": r["Footprint"],
-                    "Тип": spec(r["Value"], r["Footprint"]), "Партномер": mpn, "LCSC": lcsc,
+                    "Виробник": mfr, "Партномер": mpn, "Опис": desc,
                     "Монтаж": mount(r["Footprint"]), "Позначення": r["Refs"]})
     return out
 
@@ -136,26 +151,43 @@ def write_csv(path, rows, fields=None):
         w.writerows(rows)
 
 
-def jlc(rows):
-    """JLCPCB PCBA files for the parts JLCPCB places (all on the bottom side)."""
-    jl = [r for r in rows if r["Монтаж"] == "JLCPCB"]
-    refs = {ref for r in jl for ref in r["Позначення"].split(",")}
-    write_csv(FAB / "jlc" / "bom-jlc.csv",
-              [{"Comment": r["Партномер"] or r["Номінал"], "Designator": r["Позначення"],
-                "Footprint": r["Footprint"].split(":")[-1],
-                "LCSC Part #": r["LCSC"] if r["LCSC"].startswith("C") else ""} for r in jl])
+def nextpcb(rows):
+    """NextPCB PCBA files: BOM (hand-mounted lines as DNP), centroid of the parts NextPCB places,
+    assembly drawings."""
+    shutil.rmtree(OUT, ignore_errors=True)
+    OUT.mkdir(parents=True)
+    bom = []
+    for r in rows:
+        if r["Монтаж"] == "—":
+            continue
+        hand = r["Монтаж"] != "NextPCB"
+        bom.append({"Designator": r["Позначення"], "Quantity": r["К-сть"], "Manufacturer": r["Виробник"],
+                    "Manufacturer Part Number": r["Партномер"], "Description": r["Опис"] or r["Номінал"],
+                    "Package": r["Footprint"].split(":")[-1], "Procurement Type": "DNP" if hand else "",
+                    "Customer Note": r["Монтаж"] if hand else
+                    ("part number to be confirmed, any maker with this description" if "ПЕРЕВІРИТИ" in r["Опис"]
+                     else "")})
+    write_csv(OUT / "bom-nextpcb.csv", bom)
+    refs = {ref for r in rows if r["Монтаж"] == "NextPCB" for ref in r["Позначення"].split(",")}
     with tempfile.TemporaryDirectory() as tmp:
         pos = Path(tmp) / "pos.csv"
-        cli("pcb", "export", "pos", "-o", pos, "--format", "csv", "--units", "mm", "--side", "both", PCB)
-        cpl = []
+        cli("pcb", "export", "pos", "-o", pos, "--format", "csv", "--units", "mm", "--side", "both",
+            "--smd-only", PCB)
+        cen = []
         for r in csv.DictReader(pos.open(encoding="utf-8")):
             if r["Ref"] in refs:
-                cpl.append({"Designator": r["Ref"], "Mid X": f'{float(r["PosX"]):.4f}mm',
-                            "Mid Y": f'{float(r["PosY"]):.4f}mm',
-                            "Layer": "Bottom" if r["Side"] == "bottom" else "Top",
-                            "Rotation": f'{float(r["Rot"]) % 360:.1f}'})
-    write_csv(FAB / "jlc" / "cpl-jlc.csv", cpl)
-    return jl, cpl
+                cen.append({"Designator": r["Ref"], "Mid X(mm)": f'{float(r["PosX"]):.4f}',
+                            "Mid Y(mm)": f'{float(r["PosY"]):.4f}', "Rotation": f'{float(r["Rot"]) % 360:.1f}',
+                            "Layer": "Bottom" if r["Side"] == "bottom" else "Top"})
+    write_csv(OUT / "centroid-nextpcb.csv", cen)
+    with zipfile.ZipFile(OUT / "centroid-nextpcb.zip", "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(OUT / "centroid-nextpcb.csv", "centroid-nextpcb.csv")
+    cli("pcb", "export", "pdf", "-o", OUT / "assembly-top.pdf", "-l", "F.Fab,F.Silkscreen,Edge.Cuts",
+        "--include-border-title", PCB)
+    cli("pcb", "export", "pdf", "-o", OUT / "assembly-bottom.pdf", "-l", "B.Fab,B.Silkscreen,Edge.Cuts",
+        "--mirror", "--include-border-title", PCB)
+    missing = sorted(ref for ref in refs if ref not in {c["Designator"] for c in cen})
+    return bom, cen, missing
 
 
 def ibom(rows):
@@ -174,10 +206,9 @@ def ibom(rows):
             "for fp in b.GetFootprints():\n"
             "    r = info.get(fp.GetReference())\n"
             "    if r:\n"
-            "        for k in ('Партномер', 'LCSC', 'Монтаж'):\n"
+            "        for k in ('Виробник', 'Партномер', 'Монтаж'):\n"
             "            fp.SetField(k, r[k])\n"
             "b.Save(sys.argv[1])\n")
-        import json
         data = Path(tmp) / "info.json"
         data.write_text(json.dumps(info, ensure_ascii=False))
         env = dict(os.environ, PYTHONPATH=str(IBOM), INTERACTIVE_HTML_BOM_NO_DISPLAY="1")
@@ -187,7 +218,7 @@ def ibom(rows):
                             "--no-browser", "--dest-dir", IBOM_DIR, "--name-format", "ibom",
                             "--layer-view", "FB", "--bom-view", "left-right", "--highlight-pin1", "all",
                             "--checkboxes", "Закуплено,Встановлено", "--show-fields",
-                            "Value,Footprint,Партномер,LCSC,Монтаж", "--group-fields", "Value,Footprint",
+                            "Value,Footprint,Виробник,Партномер,Монтаж", "--group-fields", "Value,Footprint",
                             "--blacklist", "H*", "--include-tracks", "--include-nets"],
                            capture_output=True, text=True, env=env)
         if r.returncode:
@@ -202,8 +233,9 @@ def main():
     rows = bom_rows()
     write_csv(FAB / "bom.csv", rows)
     print(f"bom.csv: {len(rows)} lines, {sum(r['К-сть'] for r in rows)} parts")
-    jl, cpl = jlc(rows)
-    print(f"jlc: {len(jl)} BOM lines, {len(cpl)} placements")
+    bom, cen, missing = nextpcb(rows)
+    print(f"nextpcb: {len(bom)} BOM lines ({sum(1 for b in bom if b['Procurement Type'] == 'DNP')} DNP), "
+          f"{len(cen)} placements, not in centroid: {missing}")
     print("ibom:", ibom(rows))
 
 
