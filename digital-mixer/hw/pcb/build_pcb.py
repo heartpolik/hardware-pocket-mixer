@@ -15,11 +15,12 @@ from pathlib import Path
 
 import pcbnew
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
 import pcbkit as K  # noqa: E402
 from pcbkit import OX, OY, mm  # noqa: E402
 
-HW = K.HW
+HW = Path(__file__).resolve().parents[1]
+K.use_project(HW, "pocket-digital")
 _spec = importlib.util.spec_from_file_location("layout", HW.parent / "docs" / "mech" / "layout.py")
 L = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(L)

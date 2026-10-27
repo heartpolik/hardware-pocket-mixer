@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from kisch import Part, Sheet, project_files  # noqa: E402
+from project import Part, Sheet, project_files  # noqa: E402
 
 HW = Path(__file__).resolve().parents[1]
 R0805 = "Resistor_SMD:R_0805_2012Metric"

@@ -1,11 +1,16 @@
 """Generate project footprints (hw/lib/diy-mixer.pretty) from datasheet drawings.
 
-Run: python3 hw/lib/gen_footprints.py
+Run: python3 hw/lib/gen_footprints.py   (writer: common/fpgen.py)
 Every footprint lists its source drawing in `descr`. Dimensions in mm, origin and
 orientation as noted per footprint. Positional pad numbering is used where the
 datasheet does not name terminals.
 """
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
+import fpgen  # noqa: E402
+from fpgen import CRT, FAB, SILK, fmt  # noqa: E402,F401
 
 OUT = Path(__file__).parent / "diy-mixer.pretty"
 # 3D models from hw/lib/gen_3d.py; the path works from every project folder in hw/ (analog,
@@ -14,71 +19,15 @@ MODEL_DIR = "${KIPRJMOD}/../lib/diy-mixer.3dshapes"
 MODEL_OF = {"Alps_RK14K12D_Vertical_Volume": "Alps_RK14K_Vertical",
             "Alps_RK14K124_Vertical_Tone": "Alps_RK14K_Vertical",
             "CUI_SJ-4351X-SMT_TRRS_Horizontal": "CUI_SJ-43514-SMT_TRRS_Horizontal"}
-SILK, FAB, CRT = 0.12, 0.10, 0.05
 
 
-def fmt(v):
-    return f"{v:.4f}".rstrip("0").rstrip(".") if isinstance(v, float) else str(v)
+class FP(fpgen.FP):
+    OUT = OUT
+    GENERATOR = "diy-mixer-gen"
 
-
-class FP:
     def __init__(self, name, descr, tags, attr="through_hole", model=True, flags=""):
-        self.name, self.descr, self.tags, self.attr = name, descr, tags, attr
-        self.model, self.flags = model, flags
-        self.items = []
-
-    def line(self, x1, y1, x2, y2, layer, w):
-        self.items.append(f'\t(fp_line (start {fmt(x1)} {fmt(y1)}) (end {fmt(x2)} {fmt(y2)}) '
-                          f'(stroke (width {w}) (type solid)) (layer "{layer}"))')
-
-    def rect(self, x1, y1, x2, y2, layer, w):
-        self.items.append(f'\t(fp_rect (start {fmt(x1)} {fmt(y1)}) (end {fmt(x2)} {fmt(y2)}) '
-                          f'(stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
-
-    def circle(self, cx, cy, r, layer, w):
-        self.items.append(f'\t(fp_circle (center {fmt(cx)} {fmt(cy)}) (end {fmt(cx + r)} {fmt(cy)}) '
-                          f'(stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
-
-    def text(self, x, y, s, layer, size=1.0):
-        self.items.append(f'\t(fp_text user "{s}" (at {fmt(x)} {fmt(y)}) (layer "{layer}") '
-                          f'(effects (font (size {size} {size}) (thickness {size * 0.15:.3f}))))')
-
-    def body(self, x1, y1, x2, y2, pad=0.25):
-        """Fab outline, silk outline, courtyard around the body."""
-        self.rect(x1, y1, x2, y2, "F.Fab", FAB)
-        self.rect(x1, y1, x2, y2, "F.SilkS", SILK)
-        self.rect(x1 - pad, y1 - pad, x2 + pad, y2 + pad, "F.CrtYd", CRT)
-
-    def tht(self, num, x, y, size, drill, shape="circle"):
-        d = f"(drill {fmt(drill)})" if not isinstance(drill, tuple) else \
-            f"(drill oval {fmt(drill[0])} {fmt(drill[1])})"
-        sz = size if isinstance(size, tuple) else (size, size)
-        extra = " (roundrect_rratio 0.25)" if shape == "roundrect" else ""
-        self.items.append(f'\t(pad "{num}" thru_hole {shape} (at {fmt(x)} {fmt(y)}) '
-                          f'(size {fmt(sz[0])} {fmt(sz[1])}) {d} (layers "*.Cu" "*.Mask"){extra})')
-
-    def npth(self, x, y, drill):
-        self.items.append(f'\t(pad "" np_thru_hole circle (at {fmt(x)} {fmt(y)}) '
-                          f'(size {fmt(drill)} {fmt(drill)}) (drill {fmt(drill)}) (layers "*.Cu" "*.Mask"))')
-
-    def smd(self, num, x, y, w, h):
-        self.items.append(f'\t(pad "{num}" smd roundrect (at {fmt(x)} {fmt(y)}) (size {fmt(w)} {fmt(h)}) '
-                          f'(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.15))')
-
-    def write(self, ref_y, val_y):
-        attr = "" if self.attr == "through_hole" else " smd"
-        s = [f'(footprint "{self.name}"', '\t(version 20241229)', '\t(generator "diy-mixer-gen")',
-             '\t(layer "F.Cu")', f'\t(descr "{self.descr}")', f'\t(tags "{self.tags}")',
-             f'\t(property "Reference" "REF**" (at 0 {fmt(ref_y)} 0) (layer "F.SilkS") '
-             '(effects (font (size 1 1) (thickness 0.15))))',
-             f'\t(property "Value" "{self.name}" (at 0 {fmt(val_y)} 0) (layer "F.Fab") '
-             '(effects (font (size 1 1) (thickness 0.15))))',
-             f'\t(attr {"through_hole" if self.attr == "through_hole" else "smd"}{self.flags})']
-        model = MODEL_OF.get(self.name, self.name)
-        s += self.items + ([f'\t(model "{MODEL_DIR}/{model}.step")'] if self.model else []) + [")"]
-        OUT.mkdir(exist_ok=True)
-        (OUT / f"{self.name}.kicad_mod").write_text("\n".join(s) + "\n")
-        return self.name
+        super().__init__(name, descr, tags, attr, flags,
+                         f"{MODEL_DIR}/{MODEL_OF.get(name, name)}.step" if model else None)
 
 
 def fader_rs451121400a():

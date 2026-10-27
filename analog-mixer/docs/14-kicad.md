@@ -14,12 +14,12 @@
 ```mermaid
 flowchart LR
     LIB["hw/lib/gen_footprints.py<br/>hw/lib/gen_symbols.py"] --> L[("diy-mixer.pretty<br/>diy-mixer.kicad_sym")]
-    L --> SCH["hw/sch/analog.py<br/>hw/sch/digital.py<br/>(kisch.py)"]
+    L --> SCH["hw/sch/analog.py<br/>hw/sch/digital.py<br/>(common/kisch.py)"]
     SCH --> S1["analog.kicad_sch<br/>digital.kicad_sch"]
     S1 -->|"kicad-cli: netlist"| PCB["hw/pcb/build_pcb.py<br/>розстановка"]
     PCB --> P1["analog.kicad_pcb<br/>digital.kicad_pcb"]
     P1 --> RT["hw/pcb/route_pcb.py<br/>Freerouting 2.4.1"]
-    RT --> FX["hw/pcb/fix_pcb.py<br/>очищення, зшивка GND"]
+    RT --> FX["common/fix_pcb.py<br/>очищення, зшивка GND"]
     FX --> P2["*_routed.kicad_pcb<br/>ручна доводка тут"]
     P2 -->|"route_pcb.py --resume"| RT
     P2 -->|"add_holes.py<br/>отвори M2 (D57)"| P2
@@ -43,18 +43,18 @@ $PY hw/pcb/build_pcb.py                          # розстановка -> ana
 $PY hw/pcb/route_pcb.py analog --passes 40       # ~30 хв -> analog_routed.kicad_pcb
 $PY hw/pcb/route_pcb.py digital --passes 25      # ~1 хв  -> digital_routed.kicad_pcb
 $PY hw/pcb/route_pcb.py analog --resume --passes 10   # дотрасувати лише відкриті з'єднання
-$PY hw/pcb/fix_pcb.py analog                     # окремо: очищення й зшивка без трасування
+$PY ../common/fix_pcb.py hw/analog/analog_routed.kicad_pcb --edge-keep 1.0   # окремо: очищення й зшивка
 $PY hw/pcb/add_holes.py analog                   # отвори M2 (D57) на розведеній платі, доріжки не чіпає
 (cd hw/pcb && $PY add_silk.py analog)            # адреса джерел на шовкографії (D9), лише текст
 $PY hw/pcb/audio_review.py --svg docs/mech/audio-review.svg   # огляд аудіотракту (п. 4.1), плату не змінює
-$PY hw/pcb/patch_route.py hw/analog/analog_routed.kicad_pcb NET xa ya xb yb   # закрити один розрив
+$PY ../common/patch_route.py hw/analog/analog_routed.kicad_pcb NET xa ya xb yb   # закрити один розрив
 $PY hw/pcb/panel.py                              # -> hw/panel/panel.kicad_pcb
 python3 hw/pcb/fab.py                            # -> hw/fab/: Gerber + свердління (zip) і BOM
 kicad-cli sch erc hw/analog/analog.kicad_sch
 kicad-cli pcb drc --schematic-parity hw/analog/analog_routed.kicad_pcb
 ```
 
-Інструменти: Java 25 (`brew install openjdk@25`), Freerouting 2.4.1 у `hw/pcb/tools/` (у git не
+Інструменти: Java 25 (`brew install openjdk@25`), Freerouting 2.4.1 у `common/tools/` (спільний для обох підпроєктів; у git не
 кладемо, 64 МБ: [реліз](https://github.com/freerouting/freerouting/releases/tag/v2.4.1)),
 KiKit 1.8.1 (`$PY -m pip install --user kikit==1.8.1`).
 
@@ -119,7 +119,7 @@ flowchart TB
 
 Мідь ≥ 0,5 мм від зовнішнього контуру (під V-cut панелі), ≥ 0,2 мм від вирізів під LED.
 
-Власне правило DRC (`*.kicad_dru`, пише `hw/sch/kisch.py`): тепловому бар'єру площадки досить
+Власне правило DRC (`*.kicad_dru`, пише `common/kisch.py`): тепловому бар'єру площадки досить
 **однієї спиці** замість двох за замовчуванням. Де вміщається лише одна (GND-виводи SOIC/TSSOP між
 сусідніми, виводи джеків і USB-C), площадка має ще й відвід з переходом або площину In1, а з
 однією спицею її легше паяти паяльником (D12).
@@ -248,7 +248,7 @@ DRC не перевіряє, як аудіо сусідить із шумним�
 
 Ітерація 7:
 
-- `hw/pcb/patch_route.py` (локальний A* по сітці 0,05 мм у вікні навколо розриву, зазори з
+- `common/patch_route.py` (локальний A* по сітці 0,05 мм у вікні навколо розриву, зазори з
   `.kicad_pro`, заборонні зони враховано): IN1_RC 19,2 мм, IN4_RP 2,2 мм, PH_LB 45 мм (5 переходів,
   вихід ОП навушників — низькоомний), EN_5 26,8 мм (постійний рівень).
 - **Вхід TPS62933:** гілка EN_5 проходила між виводом VIN і вхідним C94 — її прибрано, VIN → C94

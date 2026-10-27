@@ -2,9 +2,10 @@
 the rest of the routing. For the few connections Freerouting leaves open (docs/14-kicad.md).
 
 Run with KiCad's Python:
-  hw/pcb/patch_route.py <board.kicad_pcb> <net> <xa> <ya> <xb> <yb> [--width W] [--margin M] [--dry]
+  common/patch_route.py <board.kicad_pcb> <net> <xa> <ya> <xb> <yb> [--width W] [--margin M] [--dry]
 (xa, ya), (xb, yb): a point on each of the two unconnected parts, board mm (page - 20), e.g. from
-the DRC report. Routes on F.Cu, In2 and B.Cu (In1 is the GND plane), vias by the net class,
+the DRC report. Routes on the signal layers: F.Cu and B.Cu, plus In2 on a 4-layer board (In1 is the
+GND plane there); vias by the net class,
 clearance from the board rules, respects track/via keepouts. Refills the zones and saves.
 """
 import argparse
@@ -18,7 +19,7 @@ import pcbnew
 
 OX = OY = 20.0
 RES = 0.05                             # grid, mm
-LAYERS = (pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.B_Cu)
+LAYERS = (pcbnew.F_Cu, pcbnew.B_Cu)    # + In2 on a 4-layer board, set in main()
 VIA_COST = 3.0                         # mm of track a via is worth
 
 
@@ -37,7 +38,7 @@ def poly_of(item, layer, grow=0.0):
 
 
 def net_class(board_path, net):
-    """Net class of `net` from the project file next to the board (hw/sch/kisch.py project_files)."""
+    """Net class of `net` from the project file next to the board (common/kisch.py project_files)."""
     pro = json.loads(Path(board_path).with_suffix(".kicad_pro").read_text())["net_settings"]
     name = next((p["netclass"] for p in pro.get("netclass_patterns", []) if fnmatch.fnmatch(net, p["pattern"])),
                 "Default")
@@ -90,6 +91,9 @@ def main():
                     "these parts (e.g. the converter inductors: L1,L2,L3:3)")
     a = ap.parse_args()
     board = pcbnew.LoadBoard(a.board)
+    global LAYERS
+    if board.GetCopperLayerCount() == 4:
+        LAYERS = (pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.B_Cu)
     net = a.net if a.net.startswith("/") else "/" + a.net
     ni = board.FindNet(net)
     nc = net_class(a.board, net)
@@ -164,7 +168,7 @@ def main():
                 ko.Append(x, y)
             ko.Inflate(iu(float(dist) + w / 2), pcbnew.CORNER_STRATEGY_ROUND_ALL_CORNERS, iu(0.005))
             c = cells(ko)
-            for L in (pcbnew.B_Cu, pcbnew.In2_Cu):
+            for L in [L for L in (pcbnew.B_Cu, pcbnew.In2_Cu) if L in LAYERS]:
                 block[L] |= c
     edge = pcbnew.SHAPE_POLY_SET()
     board.GetBoardPolygonOutlines(edge, False)

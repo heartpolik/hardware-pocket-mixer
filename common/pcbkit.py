@@ -1,6 +1,6 @@
-"""Board-building helpers for the digital mixer, copied from analog-mixer/hw/pcb/build_pcb.py
-(netlist parsing, footprint loading, PCB class with connectivity-driven placement). The converter
-block placement (place_group) of Rev A is not needed here.
+"""Board-building helpers (netlist parsing, footprint loading, PCB class with connectivity-driven
+placement), extracted from analog-mixer/hw/pcb/build_pcb.py. Shared (common/README.md): a board
+script calls use_project() with its hw/ folder and footprint library name first.
 """
 import re
 import subprocess
@@ -8,11 +8,16 @@ from pathlib import Path
 
 import pcbnew
 
-HW = Path(__file__).resolve().parents[1]
+HW = None                            # <subproject>/hw
 KICAD_FP = Path("/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints")
 CLI = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 OX, OY = 20.0, 20.0                  # board origin on the KiCad page
-PROJ_LIB = "pocket-digital"
+PROJ_LIB = None                      # project footprint library: HW/lib/<PROJ_LIB>.pretty
+
+
+def use_project(hw, lib):
+    global HW, PROJ_LIB
+    HW, PROJ_LIB = Path(hw), lib
 
 
 def mm(v):
@@ -24,7 +29,7 @@ def pt(x, y):
 
 
 def netlist(sch):
-    out = Path(__file__).resolve().parent / "build" / (Path(sch).stem + ".net")
+    out = HW / "pcb" / "build" / (Path(sch).stem + ".net")
     out.parent.mkdir(exist_ok=True)
     subprocess.run([CLI, "sch", "export", "netlist", "--format", "kicadsexpr", "-o", str(out), str(sch)],
                    check=True, capture_output=True)

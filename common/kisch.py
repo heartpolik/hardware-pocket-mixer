@@ -3,14 +3,24 @@
 A design is a list of parts; every used pin gets a local net label at its end point, unused
 pins get a no-connect flag. Single sheet per board. Output opens in KiCad 10 and passes
 `kicad-cli sch erc` / `sch export netlist`.
+
+Shared by both subprojects (common/README.md). A generator calls use_library() with its own
+hw/lib folder and symbol library name before adding parts.
 """
 import re
 import uuid as _uuid
 from pathlib import Path
 
 KICAD_SYM = Path("/Applications/KiCad/KiCad.app/Contents/SharedSupport/symbols")
-PROJ_SYM = Path(__file__).resolve().parents[1] / "lib" / "pocket-digital.kicad_sym"
-PROJ_LIB = "pocket-digital"
+LIB_DIR = None        # <subproject>/hw/lib: symbol library, fp-lib-table, sym-lib-table
+PROJ_LIB = None       # project symbol library name (diy-mixer / pocket-digital)
+
+
+def use_library(lib_dir, name):
+    """Project library: <lib_dir>/<name>.kicad_sym; lib tables copied from lib_dir."""
+    global LIB_DIR, PROJ_LIB
+    LIB_DIR, PROJ_LIB = Path(lib_dir), name
+    _libs.pop(name, None)
 
 
 def uid():
@@ -67,7 +77,7 @@ _libs = {}
 
 def lib_symbols(lib):
     if lib not in _libs:
-        path = PROJ_SYM if lib == PROJ_LIB else KICAD_SYM / f"{lib}.kicad_sym"
+        path = LIB_DIR / f"{lib}.kicad_sym" if lib == PROJ_LIB else KICAD_SYM / f"{lib}.kicad_sym"
         tree = parse(path.read_text())[0]
         _libs[lib] = {uq(s[1]): s for s in find(tree, "symbol")}
     return _libs[lib]
@@ -226,7 +236,8 @@ class Sheet:
         Path(path).write_text("\n".join(out) + "\n")
 
 
-def project_files(folder, name):
+def project_files(folder, name, power=()):
+    """<name>.kicad_pro (rules, net classes: `power` nets -> Power class), .kicad_dru, lib tables."""
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     pro = folder / f"{name}.kicad_pro"
@@ -236,8 +247,6 @@ def project_files(folder, name):
     rules = cfg.setdefault("board", {}).setdefault("design_settings", {}).setdefault("rules", {})
     rules.update({"min_clearance": 0.15, "min_copper_edge_clearance": 0.2,
                   "min_track_width": 0.15, "min_via_diameter": 0.5, "min_through_hole_diameter": 0.3})
-    # Power: battery / converter nets (up to ~0.45 A from the cell, docs/calc/power.py) and the rails
-    power = ["/VBUS", "/VSYS", "/BAT+", "/+4V2", "/BB_L1", "/BB_L2", "/+3V3", "/+3V3A"]
     cfg["net_settings"] = {"classes": [
         {"name": "Default", "priority": 2147483647, "clearance": 0.15, "track_width": 0.2,
          "via_diameter": 0.6, "via_drill": 0.3},
@@ -248,7 +257,7 @@ def project_files(folder, name):
     pro.write_text(json.dumps(cfg, indent=2) + "\n")
     rules_file(folder, name)
     for t in ("fp-lib-table", "sym-lib-table"):
-        src = Path(__file__).resolve().parents[1] / "lib" / t
+        src = LIB_DIR / t
         (folder / t).write_text(src.read_text())
 
 

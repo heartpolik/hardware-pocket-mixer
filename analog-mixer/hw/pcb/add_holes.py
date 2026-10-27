@@ -6,11 +6,15 @@ Run with KiCad's Python:  hw/pcb/add_holes.py analog|digital   (in place on <b>_
 """
 import argparse
 import math
+import sys
+from pathlib import Path
 
 import pcbnew
 
 import build_pcb as bp
-import fix_pcb as fx
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
+import fix_pcb as fx  # noqa: E402
 
 HOLE_KEEP = 2.2 + 0.3 + 0.25           # hole pad radius + via radius + hole-to-hole margin, mm
 

@@ -1,8 +1,10 @@
 """Post-route cleanup of a Freerouting result (hw/pcb/route_pcb.py output), in place.
 
+Shared (common/README.md). On a 4-layer board the plane is In1 GND; on a 2-layer board it is the GND
+pour of the other side: stitching vias go where both pours have room.
 Run with KiCad's Python:
   /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3 \
-      hw/pcb/fix_pcb.py analog|digital
+      common/fix_pcb.py <board>_routed.kicad_pcb [--edge-keep MM]
 
 1. Dangling vias (copper on one layer only) and the track stubs left behind are removed.
 2. Tracks thinner than the board minimum (Freerouting neck-downs) are widened to it.
@@ -15,13 +17,12 @@ from pathlib import Path
 
 import pcbnew
 
-HW = Path(__file__).resolve().parents[1]
-MIN_TRACK = 0.15                     # = min_track_width, hw/sch/kisch.py project_files
+MIN_TRACK = 0.15                     # = min_track_width, common/kisch.py project_files
 VIA_D, VIA_DRILL = 0.6, 0.3          # Default net class
 STITCH_PITCH = 5.0                   # mm, stitching grid
 STITCH_MIN_DIST = 2.0                # mm to the nearest existing GND via / THT pad
-EDGE_KEEP = 1.0                      # via centre to the board edge: V-cut keepout 0.5 (panel.py) + via
-                                     # radius 0.3 + 0.2
+EDGE_KEEP = 0.8                      # via centre to the board edge: via radius 0.3 + 0.5; Rev A
+                                     # sets 1.0 (+ V-cut keepout 0.5 of its panel)
 TOL = pcbnew.FromMM(0.005)
 
 
@@ -218,10 +219,13 @@ def stitch(board, gnd):
 
 
 def main():
+    global EDGE_KEEP
     ap = argparse.ArgumentParser()
-    ap.add_argument("board", choices=("analog", "digital"))
+    ap.add_argument("board")
+    ap.add_argument("--edge-keep", type=float, default=EDGE_KEEP)
     a = ap.parse_args()
-    path = HW / a.board / f"{a.board}_routed.kicad_pcb"
+    EDGE_KEEP = a.edge_keep
+    path = Path(a.board)
     board = pcbnew.LoadBoard(str(path))
     gnd = next(board.FindNet(n) for n in ("/GND", "GND") if board.FindNet(n)).GetNetCode()
 

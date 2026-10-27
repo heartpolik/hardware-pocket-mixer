@@ -2,69 +2,25 @@
 
 Run: python3 hw/lib/gen_footprints.py   (from digital-mixer/)
 Every footprint names its source in `descr` (drawings in docs/datasheets).
-Helper class as in analog-mixer/hw/lib/gen_footprints.py.
+Writer: common/fpgen.py. 3D models of the same names: hw/lib/gen_3d.py.
 """
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
+import fpgen  # noqa: E402
+from fpgen import CRT, FAB, SILK, fmt  # noqa: E402,F401
+
 OUT = Path(__file__).parent / "pocket-digital.pretty"
-SILK, FAB, CRT = 0.12, 0.10, 0.05
+MODEL_DIR = "${KIPRJMOD}/../lib/pocket-digital.3dshapes"
 
 
-def fmt(v):
-    return f"{v:.4f}".rstrip("0").rstrip(".") if isinstance(v, float) else str(v)
+class FP(fpgen.FP):
+    OUT = OUT
+    GENERATOR = "pocket-digital-gen"
 
-
-class FP:
-    def __init__(self, name, descr, tags, attr="through_hole", flags=""):
-        self.name, self.descr, self.tags, self.attr, self.flags = name, descr, tags, attr, flags
-        self.items = []
-
-    def line(self, x1, y1, x2, y2, layer, w):
-        self.items.append(f'\t(fp_line (start {fmt(x1)} {fmt(y1)}) (end {fmt(x2)} {fmt(y2)}) '
-                          f'(stroke (width {w}) (type solid)) (layer "{layer}"))')
-
-    def rect(self, x1, y1, x2, y2, layer, w):
-        self.items.append(f'\t(fp_rect (start {fmt(x1)} {fmt(y1)}) (end {fmt(x2)} {fmt(y2)}) '
-                          f'(stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
-
-    def circle(self, cx, cy, r, layer, w):
-        self.items.append(f'\t(fp_circle (center {fmt(cx)} {fmt(cy)}) (end {fmt(cx + r)} {fmt(cy)}) '
-                          f'(stroke (width {w}) (type solid)) (fill no) (layer "{layer}"))')
-
-    def text(self, x, y, s, layer, size=1.0):
-        self.items.append(f'\t(fp_text user "{s}" (at {fmt(x)} {fmt(y)}) (layer "{layer}") '
-                          f'(effects (font (size {size} {size}) (thickness {size * 0.15:.3f}))))')
-
-    def body(self, x1, y1, x2, y2, pad=0.25):
-        self.rect(x1, y1, x2, y2, "F.Fab", FAB)
-        self.rect(x1, y1, x2, y2, "F.SilkS", SILK)
-        self.rect(x1 - pad, y1 - pad, x2 + pad, y2 + pad, "F.CrtYd", CRT)
-
-    def tht(self, num, x, y, size, drill, shape="circle"):
-        self.items.append(f'\t(pad "{num}" thru_hole {shape} (at {fmt(x)} {fmt(y)}) (size {fmt(size)} {fmt(size)}) '
-                          f'(drill {fmt(drill)}) (layers "*.Cu" "*.Mask"))')
-
-    def npth(self, x, y, drill):
-        self.items.append(f'\t(pad "" np_thru_hole circle (at {fmt(x)} {fmt(y)}) '
-                          f'(size {fmt(drill)} {fmt(drill)}) (drill {fmt(drill)}) (layers "*.Cu" "*.Mask"))')
-
-    def smd(self, num, x, y, w, h, side="F", shape="roundrect", paste=True):
-        layers = f'"{side}.Cu" ' + (f'"{side}.Paste" ' if paste else "") + f'"{side}.Mask"'
-        extra = " (roundrect_rratio 0.15)" if shape == "roundrect" else ""
-        self.items.append(f'\t(pad "{num}" smd {shape} (at {fmt(x)} {fmt(y)}) (size {fmt(w)} {fmt(h)}) '
-                          f'(layers {layers}){extra})')
-
-    def write(self, ref_y, val_y):
-        s = [f'(footprint "{self.name}"', '\t(version 20241229)', '\t(generator "pocket-digital-gen")',
-             '\t(layer "F.Cu")', f'\t(descr "{self.descr}")', f'\t(tags "{self.tags}")',
-             f'\t(property "Reference" "REF**" (at 0 {fmt(ref_y)} 0) (layer "F.SilkS") '
-             '(effects (font (size 1 1) (thickness 0.15))))',
-             f'\t(property "Value" "{self.name}" (at 0 {fmt(val_y)} 0) (layer "F.Fab") '
-             '(effects (font (size 1 1) (thickness 0.15))))',
-             f'\t(attr {self.attr}{self.flags})']
-        OUT.mkdir(exist_ok=True)
-        (OUT / f"{self.name}.kicad_mod").write_text("\n".join(s + self.items + [")"]) + "\n")
-        return self.name
+    def __init__(self, name, descr, tags, attr="through_hole", flags="", model=True):
+        super().__init__(name, descr, tags, attr, flags, f"{MODEL_DIR}/{name}.step" if model else None)
 
 
 def teensy41_smd():
@@ -188,7 +144,7 @@ def mounting_hole_m2():
     f = FP("MountingHole_2.2mm_M2_Pad_Standoff_2Side",
            "M2 mounting hole, plated, pad 4.4, drill 2.2 (as KiCad MountingHole_2.2mm_M2_Pad). "
            "Courtyard r 2.45 on F and B.", "mountinghole M2 standoff",
-           flags=" board_only exclude_from_pos_files exclude_from_bom")
+           flags=" board_only exclude_from_pos_files exclude_from_bom", model=False)
     f.items.append('\t(pad "1" thru_hole circle (at 0 0) (size 4.4 4.4) (drill 2.2) (layers "*.Cu" "*.Mask") '
                    '(zone_connect 2))')
     f.circle(0, 0, 2.45, "F.CrtYd", CRT)

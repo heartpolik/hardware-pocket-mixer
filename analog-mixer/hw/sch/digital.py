@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from analog import Board, C0805, R0805  # noqa: E402
-from kisch import Sheet, project_files  # noqa: E402
+from project import Sheet, project_files  # noqa: E402
 
 HW = Path(__file__).resolve().parents[1]
 

@@ -1,13 +1,15 @@
-"""Autoroute the placed main board with Freerouting (Specctra DSN -> SES), 2 copper layers (DM22).
-Adapted from analog-mixer/hw/pcb/route_pcb.py (4 layers there; the converter keepouts of Rev A
-are not needed: one small buck-boost, no switching nodes near the audio inputs).
+"""Autoroute a placed board with Freerouting (Specctra DSN -> SES), 2 or 4 copper layers. Shared
+(common/README.md); Rev A wraps it with its converter keepouts (analog-mixer/hw/pcb/route_pcb.py).
 
-Run with KiCad's Python after build_pcb.py (from digital-mixer/):
+Run with KiCad's Python after the board script:
   /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3 \
-      hw/pcb/route_pcb.py [--passes N] [--resume]
+      common/route_pcb.py <board.kicad_pcb> [--layers 2|4] [--passes N] [--resume] [--edge MM]
 
-Both layers are signal layers; GND pours on both after routing, stitched by fix_pcb.stitch().
-Output: hw/main/main_routed.kicad_pcb - the placed board stays untouched.
+4 layers: F.Cu signal / In1.Cu GND plane / In2.Cu signal + power / B.Cu signal. The GND plane is a
+"power" layer, so Freerouting does not route on it and drops vias into it for GND pads. 2 layers:
+both are signal layers. GND pours on the routing layers after routing, stitched by fix_pcb.stitch().
+Tracks locked by the board script (pre-routed blocks) stay. Output: <board>_routed.kicad_pcb next
+to the input - the placed board stays untouched.
 
 --resume starts from <board>_routed.kicad_pcb and keeps its tracks: Freerouting only routes what is
 still open (the pours and stitching vias are rebuilt afterwards).
@@ -22,9 +24,8 @@ import pcbnew
 
 import fix_pcb
 
-HW = Path(__file__).resolve().parents[1]
 JAVA = os.environ.get("JAVA", "/opt/homebrew/opt/openjdk@25/bin/java")
-FREEROUTING = os.environ.get("FREEROUTING", str(HW / "pcb" / "tools" / "freerouting-2.4.1.jar"))
+FREEROUTING = os.environ.get("FREEROUTING", str(Path(__file__).resolve().parent / "tools" / "freerouting-2.4.1.jar"))
 
 
 def mm(v):
@@ -66,8 +67,8 @@ def zone(board, layer, net, priority=0, clearance=0.3):
 
 def edge_keepouts(board, outline=1.0, cutout=0.45):
     """Freerouting ignores KiCad's copper-to-edge rule: fence every Edge.Cuts segment with a
-    track/via keepout for the routing run. Board outline: 0.5 mm inward (the rear edges become the
-    V-cut of the panel in Rev A); footprint cut-outs (Teensy window): 0.225 mm.
+    track/via keepout for the routing run. Board outline: `outline` / 2 inward (Rev A: 0.5 for the
+    V-cut of its panel); footprint cut-outs (LED / Teensy windows): 0.225 mm.
     Returns the rule areas."""
     shapes = [(d, outline) for d in board.GetDrawings() if d.GetLayer() == pcbnew.Edge_Cuts]
     for fp in board.GetFootprints():
@@ -113,23 +114,19 @@ def gnd_name(board):
     raise RuntimeError("no GND net")
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--passes", type=int, default=40)
-    ap.add_argument("--resume", action="store_true")
-    a = ap.parse_args()
-    a.board, a.layers = "main", 2
-
-    src = HW / a.board / f"{a.board}.kicad_pcb"
-    out = HW / a.board / f"{a.board}_routed.kicad_pcb"
-    work = HW / a.board / "route"
+def route(src, layers=2, passes=40, resume=False, outline=1.0, setup=None):
+    """Route `src` into <src>_routed.kicad_pcb. `setup(board)`: project hook after the layer
+    setup (extra rule areas kept on the board)."""
+    src = Path(src)
+    out = src.with_name(src.stem + "_routed.kicad_pcb")
+    work = src.parent / "route"
     work.mkdir(exist_ok=True)
-    dsn, ses = work / f"{a.board}.dsn", work / f"{a.board}.ses"
+    dsn, ses = work / f"{src.stem}.dsn", work / f"{src.stem}.ses"
 
-    board = pcbnew.LoadBoard(str(out if a.resume else src))
+    board = pcbnew.LoadBoard(str(out if resume else src))
     gnd = gnd_name(board)
     gcode = board.FindNet(gnd).GetNetCode()
-    if a.resume:
+    if resume:
         # keep the routing, drop what fix_pcb.py rebuilds: pours on the routing layers and the
         # stitching vias (GND vias no track ends on)
         ends = {(t.GetStart().x, t.GetStart().y) for t in board.GetTracks() if t.GetClass() == "PCB_TRACK"}
@@ -138,24 +135,26 @@ def main():
             if t.GetClass() == "PCB_VIA" and t.GetNetCode() == gcode and (t.GetPosition().x, t.GetPosition().y) not in ends:
                 board.Delete(t)
         for z in list(board.Zones()):
-            if not z.GetIsRuleArea():
+            if not z.GetIsRuleArea() and not (layers == 4 and z.GetLayer() == pcbnew.In1_Cu):
                 board.Delete(z)
     else:
         for t in list(board.GetTracks()):
-            if not t.IsLocked():                       # pre-routed blocks (build_pcb.py) stay
+            if not t.IsLocked():                       # pre-routed blocks of the board script stay
                 board.Remove(t)
         for z in list(board.Zones()):
             board.Remove(z)
-        if a.layers == 4:
+        if layers == 4:
             setup_layers(board)
             zone(board, pcbnew.In1_Cu, gnd)
-    fences = edge_keepouts(board, outline=0.6)
+    if setup:
+        setup(board)
+    fences = edge_keepouts(board, outline=outline)
     board.BuildConnectivity()
     if not pcbnew.ExportSpecctraDSN(board, str(dsn)):
         raise RuntimeError("DSN export failed")
 
     cmd = [JAVA, "-Duser.language=en", "-jar", FREEROUTING, "-de", str(dsn), "-do", str(ses),
-           "-mp", str(a.passes), "--gui.enabled=false", "--router.fanout.enabled=true",
+           "-mp", str(passes), "--gui.enabled=false", "--router.fanout.enabled=true",
            "--profile.allow_telemetry=false", "--usage_and_diagnostic_data.disable_analytics=true"]
     print(" ".join(cmd), flush=True)
     subprocess.run(cmd, check=True)
@@ -165,18 +164,29 @@ def main():
     for z in fences:
         board.Remove(z)
     print("dangling removed:", fix_pcb.cleanup(board, gcode), "widened:", fix_pcb.widen(board))
-    # GND pours on the routing layers after routing, stitched to In1
-    for layer in ((pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.B_Cu) if a.layers == 4 else (pcbnew.F_Cu, pcbnew.B_Cu)):
+    for layer in ((pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.B_Cu) if layers == 4 else (pcbnew.F_Cu, pcbnew.B_Cu)):
         zone(board, layer, gnd)
     fix_pcb.fill(board)
     print("stitching vias (fragments, grid):", fix_pcb.stitch(board, gcode))
     fix_pcb.fill(board)
     board.SetFileName(str(out))
     pcbnew.SaveBoard(str(out), board)
-    if not a.resume:
+    if not resume:
         for ext in (".kicad_pro", ".kicad_dru"):
             shutil.copy(src.with_suffix(ext), out.with_suffix(ext))   # net classes, rules
     print("saved", out, "tracks:", len(board.GetTracks()))
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("board", help="placed board, e.g. digital-mixer/hw/main/main.kicad_pcb")
+    ap.add_argument("--layers", type=int, default=2, choices=(2, 4))
+    ap.add_argument("--passes", type=int, default=40)
+    ap.add_argument("--resume", action="store_true")
+    ap.add_argument("--edge", type=float, default=1.0, help="edge fence width, mm (half of it inside)")
+    a = ap.parse_args()
+    route(a.board, a.layers, a.passes, a.resume, a.edge)
 
 
 if __name__ == "__main__":
