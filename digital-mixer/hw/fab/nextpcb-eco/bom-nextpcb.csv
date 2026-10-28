@@ -1,0 +1,70 @@
+Designator,Quantity,Manufacturer,Manufacturer Part Number,Description,Package,Procurement Type,Customer Note
+"C1,C2,C4,C5,C6,C7,C20,C23,C32,C35,C42,C44,C53,C55,C64,C66,C82",17,Samsung,CL31B106KAHNNNE,MLCC 10 uF 25 V X7R 1206,C_1206_3216Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C3,C17,C19,C21,C22,C29,C31,C33,C34,C38,C39,C40,C43,C49,C50,C51,C54,C60,C61,C62,C65,C75,C76,C77,C78,C79,C80,C81",28,Samsung,CL21B104KBCNNNC,MLCC 100 nF 50 V X7R 0805,C_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C8,C9",2,Samsung,CL31A226KAHNNNE,MLCC 22 uF 25 V X5R 1206,C_1206_3216Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C10,C16,C28,C69,C70,C73,C74",7,Samsung,CL21B105KAFNNNE,MLCC 1 uF 25 V X7R 0805,C_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+C11,1,Samsung,CL31B225KBHNNNE,MLCC 2.2 uF 50 V X7R 1206,C_1206_3216Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C12,C13,C14,C15,C24,C25,C26,C27",8,Panasonic,EEE-1CA100SR,Al electrolytic 10 uF 16 V 4x5.4 SMD,CP_Elec_4x5.4,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C18,C30,C41,C52,C63",5,Samsung,CL31B105KBHNNNE,MLCC 1 uF 50 V X7R 1206,C_1206_3216Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C36,C37,C47,C48,C58,C59,C71,C72",8,Samsung,CL21B225KAFNNNE,MLCC 2.2 uF 25 V X7R 0805,C_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"C45,C46,C56,C57,C67,C68",6,Samsung,CL21C222JBFNNNE,MLCC 2.2 nF 50 V C0G 0805,C_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+D1,1,Lite-On,LTST-C171KRKT,LED red 0805,LED_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+D2,1,Lite-On,LTST-C171KGKT,LED green 0805,LED_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+D3,1,JSCJ,MBR0530,"Schottky 30 V 0.5 A, SOD-123",D_SOD-123,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+DS1,1,,,GMT147SPI 1.47in 172x320,LCD_GMT147SPI,DNP,"вручну: THT, гребінка дисплея"
+J1,1,GCT,USB4110-GF-A,"USB-C 2.0 receptacle, SMT",USB_C_Receptacle_GCT_USB4110,,
+J2,1,JST,S2B-PH-SM4-TB(LF)(SN),"PH 2-pin side entry, SMT",JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J3,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J4,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J5,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J6,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J7,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J8,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J9,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+J10,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+L1,1,Coilcraft,XFL4015-471MEC,"inductor 0.47 uH 6.6 A, 4x4x1.5",L_Coilcraft_XFL4015,,
+Q1,1,Alpha & Omega,AO3401A,"P-MOSFET 30 V 4 A, SOT-23",SOT-23,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R1,R2,R3,R4",4,Yageo,RC0805FR-074K7L,resistor 4.7 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R5,R6,R7,R8,R9,R31,R40",7,Yageo,RC0805FR-0733RL,resistor 33 R 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R10,R11,R24,R26,R28,R30,R33,R35,R37,R39",10,Yageo,RC0805FR-0710KL,resistor 10 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R12,R13,R19,R22,R23,R25,R27,R29,R32,R34,R36,R38",12,Yageo,RC0805FR-07100KL,resistor 100 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R14,R15",2,Yageo,RC0805FR-075K1L,resistor 5.1 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+R16,1,Yageo,RC0805FR-072K4L,resistor 2.4 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R17,R18",2,Yageo,RC0805FR-071KL,resistor 1 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+R20,1,Yageo,RC0805FR-07665KL,resistor 665 k 1% 0805 - ПЕРЕВІРИТИ part number,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+R21,1,Yageo,RC0805FR-0791KL,resistor 91 k 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"R41,R42,R43,R44,R45,R46",6,Yageo,RC0805FR-07470RL,resistor 470 R 1% 0805,R_0805_2012Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+R47,1,Yageo,RC2010FK-0733RL,resistor 33 R 1% 0.75 W 2010,R_2010_5025Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+R48,1,Yageo,RC1206FR-0710RL,resistor 10 R 1% 0.5 W 1206,R_1206_3216Metric,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"RV1,RV2,RV3,RV4",4,,,PTA2043 10k B,Potentiometer_Bourns_PTA2043_Single_Slide,DNP,"вручну: THT, фейдер"
+SW1,1,,,Power 5.8mm DPDT self-lock SMD,SW_Push_Latching_DPDT_5.8mm_SMD,DNP,"вручну: верхній бік, AliExpress (DM27)"
+SW2,1,,,EC12SY ch1.1,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW3,1,,,EC12SY ch1.2,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW4,1,,,EC12SY ch1.3,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW5,1,,,Mute 1 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW6,1,,,EC12SY ch2.1,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW7,1,,,EC12SY ch2.2,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW8,1,,,EC12SY ch2.3,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW9,1,,,Mute 2 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW10,1,,,EC12SY ch3.1,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW11,1,,,EC12SY ch3.2,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW12,1,,,EC12SY ch3.3,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW13,1,,,Mute 3 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW14,1,,,EC12SY ch4.1,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW15,1,,,EC12SY ch4.2,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW16,1,,,EC12SY ch4.3,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW17,1,,,Mute 4 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW18,1,,,EC12SY master,RotaryEncoder_EC12SY_SMD,DNP,"вручну: верхній бік, AliExpress (DM26)"
+SW19,1,,,FX1 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW20,1,,,FX2 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW21,1,,,AUX TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+SW22,1,,,SHIFT TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
+U1,1,,,Teensy 4.1,Teensy41_THT,DNP,"вручну: Teensy 4.1 на гребінках 2 × 24 (DM35) + 3 дроти USB, PSRAM на ньому — до встановлення; після перевірки живлення"
+U2,1,STMicroelectronics,USBLC6-2SC6,"USB ESD protection, SOT-23-6",SOT-23-6,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+U3,1,TOP POWER ASIC,TP4056-42-ESOP8,"Li-ion charger 1 A, ESOP-8",SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm,,
+U4,1,Texas Instruments,TPS63802DLAR,"buck-boost 2 A, VSON-HR-10 2x3",Texas_VSON-HR-10_2x3mm_P0.5mm,,
+U5,1,Texas Instruments,LP5907MFX-3.3/NOPB,"LDO 3.3 V 250 mA low noise, SOT-23-5",SOT-23-5,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+"U6,U7",2,Texas Instruments,PCM1865DBTR,"ADC 4ch 24 bit TDM, TSSOP-30 (LCSC: NRND; alt. PCM1865QDBTRQ1)",TSSOP-30_4.4x7.8mm_P0.5mm,,
+"U8,U9,U10",3,Texas Instruments,PCM5102APWR,"DAC stereo 32 bit I2S, TSSOP-20",TSSOP-20_4.4x6.5mm_P0.65mm,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
+U11,1,Texas Instruments,TPA6132A2RTER,"headphone amp DirectPath, WQFN-16 3x3",WQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm,,
+"U12,U13,U14",3,Microchip,MCP23017-E/SO,"I2C 16-bit I/O expander, SOIC-28W",SOIC-28W_7.5x17.9mm_P1.27mm,DNP,вручну: паяльник (економний монтаж) - деталь купує замовник
