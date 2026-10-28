@@ -11,6 +11,7 @@ constexpr int NSCENES = 8;      // 01-spec 3.6
 
 enum class FxType : uint8_t { Reverb, Delay, Chorus, Filter, Dist, Tape, Freeze, Count };
 const char* fxName(FxType t);
+const char* fxShortName(FxType t);      // 3 letters for the row labels
 const char* fxParamName(FxType t, int i);
 
 enum class PhonesSrc : uint8_t { Auto, Main, Cue, Count };

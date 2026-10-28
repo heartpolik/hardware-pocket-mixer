@@ -19,6 +19,16 @@ enum MenuId {
 };
 static const int MENU_ROWS = 8;
 
+// value colour by position: blue at the minimum, white in the middle, red at the maximum
+static uint16_t valueColor(float n) {
+    n = clampf(n, 0, 1);
+    const float lo[3] = {60, 110, 255}, mid[3] = {255, 255, 255}, hi[3] = {240, 50, 40};
+    const float* a = n < 0.5f ? lo : mid;
+    const float* b = n < 0.5f ? mid : hi;
+    float t = n < 0.5f ? n * 2 : (n - 0.5f) * 2;
+    return rgb((uint8_t)(a[0] + (b[0] - a[0]) * t), (uint8_t)(a[1] + (b[1] - a[1]) * t), (uint8_t)(a[2] + (b[2] - a[2]) * t));
+}
+
 static uint16_t paramColor(int id) {
     switch (id) {
         case P_SEND_AUX: return col::CYAN;
@@ -55,8 +65,11 @@ void Ui::begin() {
 }
 
 // FX send rows are labelled with the engine of their bus (REVERB, DELAY ...), the rest by the parameter
-const char* Ui::rowLabel(int id) const {
-    if (id == P_SEND_FX1 || id == P_SEND_FX2) return fxName((FxType)scene_->fx[id == P_SEND_FX2].type);
+const char* Ui::rowLabel(int id, bool full) const {
+    if (id == P_SEND_FX1 || id == P_SEND_FX2) {
+        FxType t = (FxType)scene_->fx[id == P_SEND_FX2].type;
+        return full ? fxName(t) : fxShortName(t);
+    }
     return paramDesc(id).name;
 }
 
@@ -611,9 +624,9 @@ void Ui::drawLabels(Canvas& c) {
         int id = rowParam(0, r);
         bool same = true;
         for (int ch = 1; ch < NCH; ch++) same &= rowParam(ch, r) == id;
-        c.text(1, ROW_Y0 + r * ROW_DY + 5, same ? rowLabel(id) : "F/C", paramColor(id));
+        c.textRight(LABEL_W - 4, ROW_Y0 + r * ROW_DY + 5, same ? rowLabel(id) : "F/C", paramColor(id));
     }
-    c.text(1, LVL_Y + 2, "LEVEL", col::DIM);
+    c.textRight(LABEL_W - 4, LVL_Y + 2, "LVL", col::DIM);
     c.vline(LABEL_W - 1, 16, DISPLAY_H - 16, col::DARK);
 }
 
@@ -632,9 +645,10 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
         float v = paramGet(s, *live_, ch, id);
         uint16_t colr = paramColor(id);
         paramFormat(id, v, buf, sizeof buf);
-        c.textRight(x + w - 1, y0, buf, col::WHITE);
+        float n = paramNorm(id, v);
+        c.textCentered(x + w / 2, y0, buf, valueColor(n));
         int k = paramDesc(id).kind;
-        drawBar(c, x + 2, y0 + 11, w - 3, 5, paramNorm(id, v), k == K_DB || k == K_BIPOLAR, colr);
+        drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, colr);
     }
     // level block: fader level (and compressor gain reduction) on top, meters and fader below
     float pos = live_->fader[ch];
@@ -687,8 +701,8 @@ void Ui::drawMaster(Canvas& c, int x) {
 void Ui::drawHome(Canvas& c) {
     char title[48];
     if (shiftOn()) snprintf(title, sizeof title, shiftLatched_ ? "SHIFT ON: GAIN PAN FILT/COMP" : "SHIFT: GAIN PAN FILT/COMP");
-    else snprintf(title, sizeof title, "%s %s %s", auxLayer_ ? "AUX" : "HI", fxLayer_[0] ? rowLabel(P_SEND_FX1) : "MID",
-                  fxLayer_[1] ? rowLabel(P_SEND_FX2) : "LO");
+    else snprintf(title, sizeof title, "%s %s %s", auxLayer_ ? "AUX" : "HI", fxLayer_[0] ? rowLabel(P_SEND_FX1, true) : "MID",
+                  fxLayer_[1] ? rowLabel(P_SEND_FX2, true) : "LO");
     c.clear(col::BLACK);
     drawTop(c, title, shiftOn() ? col::YELLOW : col::WHITE);
     drawLabels(c);

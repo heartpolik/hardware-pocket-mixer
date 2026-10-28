@@ -39,7 +39,7 @@ public:
     bool held(int b) const { return down_[b]; }
     bool shiftOn() const { return down_[B_SHIFT] || shiftLatched_; }
     int rowParam(int ch, int row) const;
-    const char* rowLabel(int id) const;   // FX sends: engine name of the bus
+    const char* rowLabel(int id, bool full = false) const;   // FX sends: engine of the bus (3 letters / full)
 
 private:
     enum Page : uint8_t { HOME, MENU, TUNER, FADER_CAL };

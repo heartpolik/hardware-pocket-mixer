@@ -18,7 +18,10 @@ static const char* const FX_PARAMS[][3] = {
     {"LEN", "HOLD", "SPEED"},     // freeze
 };
 
+static const char* const FX_SHORT[] = {"REV", "DLY", "CHO", "FLT", "DST", "TAP", "FRZ"};
+
 const char* fxName(FxType t) { return FX_NAMES[(int)t % (int)FxType::Count]; }
+const char* fxShortName(FxType t) { return FX_SHORT[(int)t % (int)FxType::Count]; }
 const char* fxParamName(FxType t, int i) { return FX_PARAMS[(int)t % (int)FxType::Count][i % 3]; }
 
 // MIDI CC: channel params on MIDI channel (base + ch), TX-6 numbers where 00-research p. 9 lists
