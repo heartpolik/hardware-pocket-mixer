@@ -191,11 +191,12 @@ def build():
            {"1": "GND", "2": "PWR_EN", "3": "VSYS", "4": None, "5": None, "6": None}, units=(1, 2), w=20)
     b.r("100k", "PWR_EN", "GND")                                 # EN never floats while switching
 
-    b.block("LP5907 3,3 V — аналог кодеків (+3V3A): < 6,5 µVrms, 250 mA; навантаження 128 mA (calc/power.py)", 1)
+    b.block("LP5907 3,3 V — аналог кодеків (+3V3A): < 6,5 µVrms, 250 mA; навантаження 128 mA (calc/power.py). "
+            "Ємність на всій шині +3V3A — 0,7…10 µF (datasheet, COUT): 2,2 µF тут + 1 µF біля кожного кодека + 100 nF ≈ 8 µF", 1)
     b.part("U", "Regulator_Linear:LP5907MFX-3.3", "LP5907MFX-3.3", "Package_TO_SOT_SMD:SOT-23-5",
            {"IN": RAIL, "EN": RAIL, "GND": "GND", "OUT": A3, "NC": None}, w=30)
     b.c("1u", RAIL, "GND")
-    b.c("10u", A3, "GND", C1206)
+    b.c("2.2u", A3, "GND", C1206)          # LP5907: 0.7 <= COUT <= 10 uF over the whole +3V3A rail (SNVS798Q, 5.6 "capacitance for stability")
 
     # ================================================================ inputs + ADC
     for k, (adr, chs) in enumerate((("GND", (1, 2)), (D3, (3, 4))), start=1):
@@ -222,7 +223,7 @@ def build():
             "MOSI/SDA": "I2C_SDA", "MC/SCL": "I2C_SCL", "MS/AD": adr, "MD0": "GND"}, w=50)
         b.c("1u", f"ADC{k}_VREF", "GND")
         b.decouple(A3)
-        b.c("10u", A3, "GND", C1206)
+        b.c("1u", A3, "GND", C1206)            # not 10 uF: the LP5907 output limit (see the LDO block)
         b.c("100n", f"ADC{k}_LDO", "GND")
         b.c("10u", f"ADC{k}_LDO", "GND", C1206)
         b.decouple(D3, D3)                  # DVDD, IOVDD
@@ -242,7 +243,7 @@ def build():
         b.c("2.2u", f"{name}_CAPP", f"{name}_CAPM", fields={"Decouples": dac})
         b.c("2.2u", f"{name}_VNEG", "GND", fields={"Decouples": dac})
         b.decouple(A3, A3, D3)              # CPVDD, AVDD, DVDD
-        b.c("10u", A3, "GND", C1206)
+        b.c("1u", A3, "GND", C1206)            # not 10 uF: the LP5907 output limit
         b.c("10u", D3, "GND", C1206)
         b.c("100n", f"{name}_LDOO", "GND")
         b.c("10u", f"{name}_LDOO", "GND", C1206)

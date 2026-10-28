@@ -1,9 +1,11 @@
 К-сть,Номінал,Footprint,Виробник,Партномер,Опис,Монтаж,Позначення
-23,10u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31B106KAHNNNE,MLCC 10 uF 25 V X7R 1206,NextPCB,"C1,C2,C4,C5,C6,C7,C11,C18,C20,C23,C30,C32,C35,C41,C42,C44,C52,C53,C55,C63,C64,C66,C82"
+17,10u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31B106KAHNNNE,MLCC 10 uF 25 V X7R 1206,NextPCB,"C1,C2,C4,C5,C6,C7,C20,C23,C32,C35,C42,C44,C53,C55,C64,C66,C82"
 28,100n,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21B104KBCNNNC,MLCC 100 nF 50 V X7R 0805,NextPCB,"C3,C17,C19,C21,C22,C29,C31,C33,C34,C38,C39,C40,C43,C49,C50,C51,C54,C60,C61,C62,C65,C75,C76,C77,C78,C79,C80,C81"
 2,22u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31A226KAHNNNE,MLCC 22 uF 25 V X5R 1206,NextPCB,"C8,C9"
 7,1u,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21B105KAFNNNE,MLCC 1 uF 25 V X7R 0805,NextPCB,"C10,C16,C28,C69,C70,C73,C74"
+1,2.2u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31B225KBHNNNE,MLCC 2.2 uF 50 V X7R 1206,NextPCB,C11
 8,10u 16V,Capacitor_SMD:CP_Elec_4x5.4,Panasonic,EEE-1CA100SR,Al electrolytic 10 uF 16 V 4x5.4 SMD,NextPCB,"C12,C13,C14,C15,C24,C25,C26,C27"
+5,1u,Capacitor_SMD:C_1206_3216Metric,Samsung,CL31B105KBHNNNE,MLCC 1 uF 50 V X7R 1206,NextPCB,"C18,C30,C41,C52,C63"
 8,2.2u,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21B225KAFNNNE,MLCC 2.2 uF 25 V X7R 0805,NextPCB,"C36,C37,C47,C48,C58,C59,C71,C72"
 6,2.2n,Capacitor_SMD:C_0805_2012Metric,Samsung,CL21C222JBFNNNE,MLCC 2.2 nF 50 V C0G 0805,NextPCB,"C45,C46,C56,C57,C67,C68"
 1,red,LED_SMD:LED_0805_2012Metric,Lite-On,LTST-C171KRKT,LED red 0805,NextPCB,D1
@@ -57,7 +59,7 @@
 1,FX2 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW20
 1,AUX TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW21
 1,SHIFT TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW22
-1,Teensy 4.1,pocket-digital:Teensy41_THT,,,,"вручну: Teensy 4.1 на гребінках 2 × 24 (DM35), PSRAM на ньому — до встановлення; після перевірки живлення",U1
+1,Teensy 4.1,pocket-digital:Teensy41_THT,,,,"вручну: Teensy 4.1 на гребінках 2 × 24 (DM35) + 3 дроти USB, PSRAM на ньому — до встановлення; після перевірки живлення",U1
 1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,STMicroelectronics,USBLC6-2SC6,"USB ESD protection, SOT-23-6",NextPCB,U2
 1,TP4056,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm,TOP POWER ASIC,TP4056-42-ESOP8,"Li-ion charger 1 A, ESOP-8",NextPCB,U3
 1,TPS63802,pocket-digital:Texas_VSON-HR-10_2x3mm_P0.5mm,Texas Instruments,TPS63802DLAR,"buck-boost 2 A, VSON-HR-10 2x3",NextPCB,U4

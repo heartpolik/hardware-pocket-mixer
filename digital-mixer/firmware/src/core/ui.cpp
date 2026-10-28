@@ -98,6 +98,12 @@ int Ui::fxHeld() const {
 }
 
 // Linear 3.3..4.2 V (VSYS / 2 on A14); a LiPo discharge curve is a later refinement (06-firmware, p. 7).
+// VSYS is measured, not the cell: with USB plugged in it is VBUS minus the Schottky (~4.7 V), above
+// anything a 1S cell gives - shown as USB power instead of a charge level.
+bool Ui::usbPowered() {
+    return hal_->batteryVolts() > 4.35f;
+}
+
 int Ui::batteryPercent() {
     float v = hal_->batteryVolts();
     if (v <= 0) return -1;
@@ -480,7 +486,8 @@ void Ui::menuItem(int i, char* label, char* value, int n) {
         case M_BATT: {
             int pct = batteryPercent();
             snprintf(label, n, "BATTERY");
-            if (pct >= 0) snprintf(value, n, "%d%% %.2fV", pct, (double)hal_->batteryVolts());
+            if (pct >= 0 && usbPowered()) snprintf(value, n, "USB %.2fV", (double)hal_->batteryVolts());
+            else if (pct >= 0) snprintf(value, n, "%d%% %.2fV", pct, (double)hal_->batteryVolts());
             else snprintf(value, n, "-");
             break;
         }
@@ -612,7 +619,8 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
         rx = x - 8;
     };
     int pct = batteryPercent();
-    if (pct >= 0) {                                    // battery icon: body 16 x 8, tip 2 x 4
+    if (pct >= 0 && usbPowered()) right("USB", col::GREEN);
+    else if (pct >= 0) {                               // battery icon: body 16 x 8, tip 2 x 4
         int x = rx - 18, y = 3;
         uint16_t k = pct < 15 ? col::RED : pct < 35 ? col::YELLOW : col::DIM;
         c.rect(x, y, 16, 8, k);

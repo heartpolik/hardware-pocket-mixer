@@ -98,12 +98,13 @@ Designator, Quantity, Manufacturer Part Number (+ Procurement Type: `DNP` — н
 | Кераміка | CL31B106KAHNNNE, CL21B104KBCNNNC, CL31A226KAHNNNE, CL21B105KAFNNNE, CL21B225KAFNNNE, CL21C222JBFNNNE (Samsung) | [10 µ](https://www.lcsc.com/product-image/C14860.html), [100 n](https://fat.lcsc.com/product-detail/image/CL21B104KBCNNNC_C1711.html), [22 µ](https://www.lcsc.com/product-detail/C12891.html), [1 µ](https://www.futureelectronics.com/p/passives--capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl21b105kafnnne-samsung-electro-mechanics-2046528), [2,2 µ](https://www.lcsc.com/product-detail/C19110.html), [2,2 n C0G](https://www.lcsc.com/product-detail/C28260.html) | 100 n і 2,2 µ — у частини дистриб'юторів «не для нових розробок»; рівноцінна заміна допустима |
 | Електроліти ×8 | EEE-1CA100SR (Panasonic) | [TME](https://www.tme.eu/gb/details/eee1ca100sr/smd-electrolytic-capacitors/panasonic/) | NRND за Octopart; заміна — 10 µF 16 V 4 × 5,4 SMD |
 | Світлодіоди | LTST-C171KRKT, LTST-C171KGKT (Lite-On) | [RS](https://twcn.rs-online.com/web/p/leds/6920941), [Arrow](https://www.arrow.com/en/products/ltst-c171kgkt/lite-on-technology.html?region=nac) | |
+| Конденсатори +3V3A 1206 | Samsung CL31B225KBHNNNE (2,2 µF, C11 біля LP5907), CL31B105KBHNNNE (1 µF ×5 біля кодеків) | [1 µF](https://www.lcsc.com/product-detail/C1848.html), [2,2 µF](https://www.digikey.co.uk/en/products/detail/samsung-electro-mechanics/CL31B225KBHNNNE/3889377) | разом із 100 nF ≈ 8 µF — у межах 0,7…10 µF виходу LP5907 ([07](07-review.md)) |
 | Резистори 0805 1 % | Yageo RC0805FR-07… (10k, 100k, 4K7, 33R, 5K1, 2K4, 1K, 91K, 470R) | [10k](https://www.lcsc.com/product-detail/C84376.html), [4K7](https://jlcpcb.com/partdetail/RC0805FR-074K7L/C60816), [33R](https://www.lcsc.com/product-detail/C126353.html), [91K](https://www.lcsc.com/product-image/C137484.html), [5K1](https://www.lcsc.com/product-image/C84375.html), [2K4](https://www.lcsc.com/product-image/C114521.html) | **665k (RC0805FR-07665KL) — `ПЕРЕВІРИТИ`**: партномер за схемою Yageo, сторінки не знайдено; будь-який 665 kΩ 1 % 0805 |
 | Резистори MIDI | RC2010FK-0733RL (33 Ω 2010), RC1206FR-0710RL (10 Ω 1206) | [2010](https://www.ibselectronics.com/part/yageo/rc2010fk-0733rl/419924/), [1206](https://www.lcsc.com/product-image/C108080.html) | |
 
 Ручний монтаж (DNP) — з AliExpress / магазинів України (DM7): EC12SY-H6-17.5F5.0-24C24P-SMD ×13,
 TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери PTA2043 B10K ×4, дисплей GMT147SPI на
-гребінці, Teensy 4.1 + гребінки 2,54 (2 × 1×24 і шматок 1×2 під USB, стандартна планка 2,5 мм) + PSRAM
+гребінці, Teensy 4.1 + гребінки 2,54 (2 × 1×24, стандартна планка 2,5 мм) + 3 тонкі дроти (D−, D+, VUSB) + PSRAM
 8 МБ SOIC-8 (1–2 шт., PJRC тестувала APS6404L-3SQR, [PJRC](https://www.pjrc.com/store/psram.html)),
 акумулятор 1S 3000 mAh з платою захисту і роз'ємом JST PH.
 
@@ -116,11 +117,14 @@ TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери PT
 4. **Teensy 4.1 (DM35)** — на гребінках у наскрізні отвори, за 6 мм від переднього краю:
    1. розрізати перемичку VIN–VUSB на модулі (PJRC);
    2. припаяти PSRAM на менші площадки під гніздом microSD (друга — на більші), прогнати тест пам'яті PJRC;
-   3. припаяти дротик до площадки VUSB модуля (положення — з фото PJRC, `ОРІЄНТИР`);
-   4. вставити гребінки 2 × 24 і шматок 1 × 2 (у отвори D− / D+ модуля; пролізе штир чи ні — `ПЕРЕВІРИТИ`,
-      інакше дріт 0,5 мм) планкою до нашої плати; вставити модуль у плату знизу — штирі в наскрізні отвори;
-      пропаяти згори нашої плати й на модулі, обкусити;
-   5. дротик VUSB — на площадку 49 за торцем модуля.
+   3. до площадок **D− і D+** на звороті модуля припаяти по тонкому дроту (0,3–0,5 мм, ≈ 15 мм). Площадки — під
+      роз'ємом micro-USB з іншого боку модуля, тож штир гребінки крізь Teensy не пройде; дріт — так. Положення
+      площадок — креслення PJRC (1,78 мм від торця USB, ±1,27 від осі; D+ ближче до ряду з виводом GND / 0);
+      до площадки **VUSB** — третій дріт (положення — з фото PJRC, `ОРІЄНТИР`);
+   4. вставити гребінки 2 × 24 у модуль планкою до нашої плати; вставити модуль у плату знизу, штирі — в наскрізні
+      отвори, дроти D− / D+ — в отвори 66 / 67 поруч (позначки «D-», «D+» на шовкографії); пропаяти штирі й дроти
+      зверху нашої плати й штирі на модулі, обкусити;
+   5. дріт VUSB — на площадку 49 за торцем модуля.
 
 Інтерактивний BOM ([ibom.html](ibom/ibom.html)) зручно відкрити поруч під час пайки: клік по рядку
 підсвічує місця на платі, позначки «Встановлено» зберігаються в браузері.

@@ -31,8 +31,9 @@ def teensy41_tht():
     of the main board, the header spacer (2.5) between the boards: the gap holds PSRAM chips under the SD
     socket (PJRC psram.html). Pins are soldered from the top side. USB device D- / D+ on the Teensy
     bottom: holes 1.78 from the USB end (pin 1 + 0.51), 8.89 / 6.35 from the pin-1 row (bottom view of
-    the PJRC drawing), D+ nearer the pin-1 row (PJRC card back): through holes 66 / 67 under them for a
-    2-pin header piece (the Teensy holes' size is not given - ПЕРЕВІРИТИ that the pins fit, else wire).
+    the PJRC drawing), D+ nearer the pin-1 row (PJRC card back): through holes 66 / 67 under them for
+    two thin wires soldered from the top of our board (the module pads sit under its micro-USB, so a
+    header pin cannot pass through the module).
     VUSB next to them (card photo, no dimension - ОРІЄНТИР): wire pad 49 run out past the module end."""
     f = FP("Teensy41_THT",
            "Teensy 4.1 on 2.54 pin headers (2 x 24, rows 15.24) - PJRC dimensions_teensy41.png; "
@@ -42,7 +43,7 @@ def teensy41_tht():
         x = -29.21 + i * 2.54
         f.tht(str(i + 1), x, 7.62, 1.7, 1.0, shape="rect" if i == 0 else "circle")
         f.tht(str(48 - i), x, -7.62, 1.7, 1.0)
-    # USB device D- / D+: through holes for a 2-pin header piece under the Teensy's own D- / D+ holes;
+    # USB device D- / D+: through holes for two wires from the Teensy's own D- / D+ pads;
     # VUSB: wire pad from under the module out past its USB end (no dimension for the Teensy pad)
     x_hole, x_out = -30.48 + 1.78, -30.48 - 0.8
     for num, y, name in (("66", -1.27, "D-"), ("67", 1.27, "D+")):

@@ -60,6 +60,8 @@ PASSIVES = {
     ("10u", "C_1206"): ("Samsung", "CL31B106KAHNNNE", "MLCC 10 uF 25 V X7R 1206"),
     ("100n", "C_0805"): ("Samsung", "CL21B104KBCNNNC", "MLCC 100 nF 50 V X7R 0805"),
     ("22u", "C_1206"): ("Samsung", "CL31A226KAHNNNE", "MLCC 22 uF 25 V X5R 1206"),
+    ("2.2u", "C_1206"): ("Samsung", "CL31B225KBHNNNE", "MLCC 2.2 uF 50 V X7R 1206"),
+    ("1u", "C_1206"): ("Samsung", "CL31B105KBHNNNE", "MLCC 1 uF 50 V X7R 1206"),
     ("1u", "C_0805"): ("Samsung", "CL21B105KAFNNNE", "MLCC 1 uF 25 V X7R 0805"),
     ("2.2u", "C_0805"): ("Samsung", "CL21B225KAFNNNE", "MLCC 2.2 uF 25 V X7R 0805"),
     ("2.2n", "C_0805"): ("Samsung", "CL21C222JBFNNNE", "MLCC 2.2 nF 50 V C0G 0805"),
@@ -94,7 +96,7 @@ FULL = {
 }
 # who mounts it: NextPCB places every SMD part of the bottom side; these (by footprint) by hand
 HAND = {
-    "Teensy41_THT": "вручну: Teensy 4.1 на гребінках 2 × 24 (DM35), PSRAM на ньому — до встановлення; після перевірки живлення",
+    "Teensy41_THT": "вручну: Teensy 4.1 на гребінках 2 × 24 (DM35) + 3 дроти USB, PSRAM на ньому — до встановлення; після перевірки живлення",
     "PTA2043": "вручну: THT, фейдер",
     "LCD_GMT147SPI": "вручну: THT, гребінка дисплея",
     "EC12SY": "вручну: верхній бік, AliExpress (DM26)",

@@ -49,6 +49,7 @@ private:
     void highlight(int ch, int row);      // the cell being turned, for the display
     bool highlighted(int ch, int row) const;   // ch < 0: any channel
     int batteryPercent();                 // -1 unknown
+    bool usbPowered();                    // VSYS above a 1S cell: running from USB
     void setParam(int ch, int id, float v, bool fromMidi = false);
     void stepParam(int ch, int id, int delta);
     void sendCC(int ch, int id);

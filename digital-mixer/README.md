@@ -24,6 +24,7 @@ flowchart LR
 | [docs/03-schematic.md](docs/03-schematic.md) | **Принципова схема** (KiCad, [PDF](hw/main/main.pdf)), виводи Teensy, макет розташування |
 | [docs/04-pcb.md](docs/04-pcb.md) | **Плата:** чотиришарова 104,5 × 136,5 мм (компоновка C), Teensy на гребінках з PSRAM (DM35), розведена, DRC 0 порушень, 0 розривів |
 | [docs/05-fab.md](docs/05-fab.md) | **Виготовлення:** Gerber, BOM, файли PCBA для NextPCB, [інтерактивний BOM](docs/ibom/ibom.html), порядок ручного монтажу |
+| [docs/07-review.md](docs/07-review.md) | **Перевірка перед замовленням:** що знайдено й виправлено, що перевірено, що звірити |
 | [docs/06-firmware.md](docs/06-firmware.md) | **Прошивка й емулятор:** ядро C++ ([firmware/](firmware/README.md)), емулятор на SDL2, керування, ефекти, MIDI CC, що перевірити на макеті |
 | [docs/calc/](docs/calc/power.py) | Розрахунок живлення |
 | [docs/decisions.md](docs/decisions.md) | Журнал рішень цифрового підпроєкту (DM1…) |
