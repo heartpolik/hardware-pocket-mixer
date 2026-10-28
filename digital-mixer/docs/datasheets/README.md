@@ -23,3 +23,5 @@ Datasheets, на які посилається документація цифр
 | [bourns-pta.pdf](bourns-pta.pdf) | Bourns PTA, повзункові потенціометри, rev. 08/25 | фейдер PTA2043 (DM8), 3D-модель | bourns.com |
 | [teensy41-dimensions.png](teensy41-dimensions.png), [teensy41-card-back.png](teensy41-card-back.png) | PJRC Teensy 4.1: розміри, картка виводів (зворот) | footprint `Teensy41_SMD` | pjrc.com |
 | [coilcraft-xfl4015.pdf](coilcraft-xfl4015.pdf) | Coilcraft XFL4015, Doc 769, rev. 03/10/26 | дросель TPS63802 | coilcraft.com |
+| [mcp23017.pdf](mcp23017.pdf) | Microchip MCP23017/MCP23S17, DS20001952D, розширювач 16 GPIO I²C | регістри розширювачів у прошивці ([06](../06-firmware.md), п. 6) | microchip.com |
+| `st7789v.pdf` (у git не кладемо: позначений «Sitronix Confidential») | Sitronix ST7789V v1.3 (2014/03), контролер TFT 240 × 320 | драйвер дисплея GMT147SPI ([06](../06-firmware.md), п. 6) | [newhavendisplay.com](https://www.newhavendisplay.com/appnotes/datasheets/LCDs/ST7789V.pdf) — завантажити в цю теку |

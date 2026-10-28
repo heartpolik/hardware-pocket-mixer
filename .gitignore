@@ -30,3 +30,9 @@ common/tools/*.jar
 # GCT drawings are marked confidential (no redistribution): kept locally, link in the README
 digital-mixer/docs/datasheets/gct-usb4110.pdf
 common/tools/ibom/
+# Sitronix ST7789V datasheet is marked "Sitronix Confidential": kept locally, link in the README
+digital-mixer/docs/datasheets/st7789v.pdf
+# firmware simulator: saved scenes, screenshots, recordings
+**/firmware/sim-data/
+**/firmware/screen-*.png
+**/firmware/rec-*.wav

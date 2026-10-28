@@ -1,0 +1,47 @@
+# Demo run (screenshots for docs/06-firmware.md):
+#   ./build/pocket-mixer-sim --headless --script sim/scripts/demo.txt --data build/demo-data --out build/demo.wav
+wait 1500
+# EQ: cut highs on the drums, a bit of mid on the bass, low on the pad
+enc e0 -6
+enc e4 3
+enc e8 4
+# FX I layer: row 2 = send to FX I (reverb) on the pad and the lead
+click fx1
+enc e7 12
+enc e10 15
+# FX II layer: row 3 = send to FX II (delay) on the lead
+click fx2
+enc e11 10
+wait 1500
+shot ../docs/fw/home.png
+# SHIFT layer: gain / pan / filter; SHIFT + Mute 2 = cue the bass
+press shift
+enc e3 -6
+enc e10 -8
+click mute2
+wait 300
+shot ../docs/fw/shift.png
+release shift
+# hold FX I: engine parameters
+press fx1
+wait 400
+enc e0 4
+enc e9 3
+shot ../docs/fw/fx.png
+release fx1
+# menu, tuner on IN4 (lead)
+click master
+enc m 3
+wait 100
+shot ../docs/fw/menu.png
+enc m 15
+click master
+enc m 3
+wait 600
+shot ../docs/fw/tuner.png
+click master
+enc m -30
+click master
+wait 200
+meters
+panel ../docs/fw/sim-panel.png
