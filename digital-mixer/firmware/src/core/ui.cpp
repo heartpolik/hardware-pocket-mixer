@@ -564,15 +564,15 @@ void Ui::menuPress() {
 }
 
 // ------------------------------------------------------------------ drawing
-// value bar: the filled part takes the colour of each position (blue - white - red, valueColor)
-void Ui::drawBar(Canvas& c, int x, int y, int w, int h, float norm, bool bipolar, uint16_t) {
+void Ui::drawBar(Canvas& c, int x, int y, int w, int h, float norm, bool bipolar, uint16_t colr) {
     c.fill(x, y, w, h, col::DARK);
     norm = clampf(norm, 0, 1);
-    int px = x + (int)lroundf(norm * (w - 1));
-    int a = bipolar ? (px < x + w / 2 ? px : x + w / 2) : x;
-    int b = bipolar ? (px < x + w / 2 ? x + w / 2 : px) : x + (int)lroundf(norm * w) - 1;
-    for (int i = a; i <= b; i++) c.vline(i, y, h, valueColor((float)(i - x) / (w - 1)));
-    if (bipolar) c.vline(x + w / 2, y - 1, h + 2, col::DIM);
+    if (bipolar) {
+        int mid = x + w / 2, px = x + (int)lroundf(norm * (w - 1));
+        if (px >= mid) c.fill(mid, y, px - mid + 1, h, colr);
+        else c.fill(px, y, mid - px, h, colr);
+        c.vline(mid, y - 1, h + 2, col::DIM);
+    } else c.fill(x, y, (int)lroundf(norm * w), h, colr);
 }
 
 void Ui::drawMeter(Canvas& c, int x, int y, int w, int h, float peak, float clip) {
@@ -648,12 +648,11 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
     for (int r = 0; r < 3; r++) {
         int id = rowParam(ch, r), y0 = ROW_Y0 + r * ROW_DY;
         float v = paramGet(s, *live_, ch, id);
-        uint16_t colr = paramColor(id);
         paramFormat(id, v, buf, sizeof buf);
         float n = paramNorm(id, v);
         c.textCentered(x + w / 2, y0, buf, col::WHITE);
         int k = paramDesc(id).kind;
-        drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, colr);
+        drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, valueColor(n));   // colour by position
     }
     // level block: fader level (and compressor gain reduction) on top, meters below (the faders are physical)
     float db = faderDb(live_->fader[ch]);
