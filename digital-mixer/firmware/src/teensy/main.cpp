@@ -57,6 +57,16 @@ public:
             if (hi) release(hi);
             if (lo) release(lo);
         }
+#ifdef MIXER_USB_TEST_TONE
+        // bench test without codecs: input k = sine of k x 250 Hz at -12 dBFS (USB to the DAW carries the inputs)
+        static float ph[8];
+        for (int s = 0; s < 8; s++)
+            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+                ph[s] += 2.f * 3.14159265f * 250.f * (s + 1) / AUDIO_SAMPLE_RATE_EXACT;
+                if (ph[s] > 6.2831853f) ph[s] -= 6.2831853f;
+                in[s][i] = 0.25f * sinf(ph[s]);
+            }
+#endif
         AudioIO io;
         for (int k = 0; k < 2; k++) {
             audio_block_t* b = receiveReadOnly(16 + k);
