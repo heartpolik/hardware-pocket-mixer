@@ -13,7 +13,9 @@
 
 ## Походження та ліцензія
 
-Похідний від **mixerli** (Stahl, 2023): <https://github.com/stahlnow/mixerli>.
 Source location: <https://github.com/heartpolik/hardware-pocket-mixer>.
-SPDX-License-Identifier: CERN-OHL-S-2.0+ — повний текст у [LICENSE](LICENSE), деталі — в
-[analog-mixer/README.md](analog-mixer/README.md#походження-та-ліцензія).
+
+| Тека | Ліцензія | Чому |
+|---|---|---|
+| [analog-mixer/](analog-mixer/README.md#походження-та-ліцензія), [common/](common/README.md) | CERN-OHL-S-2.0+ ([LICENSE](LICENSE)) | Rev A похідний від **mixerli** (Stahl, 2023): <https://github.com/stahlnow/mixerli> |
+| [digital-mixer/](digital-mixer/README.md#ліцензія) | GPL-3.0-or-later ([digital-mixer/LICENSE](digital-mixer/LICENSE)) | власна розробка, файлів mixerli немає (DM36) |

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Tuner (01-spec 3.3): YIN pitch detection (de Cheveigne & Kawahara, JASA 2002) on the ring the
 // mixer fills at fs/2. Runs in the main loop, a few times per second.
 #pragma once
@@ -8,7 +9,7 @@
 struct TunerResult {
     bool valid = false;
     float hz = 0, cents = 0;
-    char note[4] = "--";
+    char note[16] = "--";
 };
 
 inline TunerResult tunerAnalyze(const float* ring, uint32_t write, int ringLen, float rate) {

@@ -23,41 +23,40 @@ class FP(fpgen.FP):
         super().__init__(name, descr, tags, attr, flags, f"{MODEL_DIR}/{name}.step" if model else None)
 
 
-def teensy41_smd():
-    """Teensy 4.1 lying flat, its plated holes soldered onto SMD pads from above (as the SuperMini
-    in Rev A, D59). PJRC dimensions_teensy41.png: board 60.96 x 17.78, rows 15.24 apart, pitch 2.54,
-    first pin 1.27 from the USB end, micro-USB 0.7 past the board. Origin = module centre, USB to -X,
-    bottom row (GND, 0..12, 3V3, 24..32 = pads 1..24) at +Y, top row (33..41, GND, 13..23, 3V3, GND,
-    VIN = pads 25..48) at -Y - numbering of the XenGi symbol. Placed on the bottom side of the main
-    board: the Teensy's own top (SD socket, PJRC card) then faces down and the SD end is put at the
-    board edge (DM12). The flat bottom of the Teensy lies on the board: a window under the USB end
-    gives access to its USB device pads (VUSB, D-, D+, PJRC card back) and to the VIN/VUSB trace that
-    must be cut; pads 49, 66, 67 on the other side of the main board take short wires through it."""
-    f = FP("Teensy41_SMD",
-           "Teensy 4.1 soldered flat: SMD pads under the module holes (2 x 24, rows 15.24, pitch 2.54, "
-           "first pin 1.27 from the USB end) - PJRC dimensions_teensy41.png. Window for wires to the USB "
-           "device pads; wire pads VUSB / D- / D+ on the opposite side.",
-           "Teensy 4.1 module SMD", attr="smd")
+def teensy41_tht():
+    """Teensy 4.1 on standard 2.54 pin headers through our board (DM35): PJRC dimensions_teensy41.png -
+    board 60.96 x 17.78, rows 15.24 apart, pitch 2.54, first pin 1.27 from the USB end. Origin = module
+    centre, USB to -X, bottom row (GND, 0..12, 3V3, 24..32 = pads 1..24) at +Y, top row (33..41, GND,
+    13..23, 3V3, GND, VIN = pads 25..48) at -Y - numbering of the XenGi symbol. Placed on the bottom side
+    of the main board, the header spacer (2.5) between the boards: the gap holds PSRAM chips under the SD
+    socket (PJRC psram.html). Pins are soldered from the top side. USB device D- / D+ on the Teensy
+    bottom: holes 1.78 from the USB end (pin 1 + 0.51), 8.89 / 6.35 from the pin-1 row (bottom view of
+    the PJRC drawing), D+ nearer the pin-1 row (PJRC card back): through holes 66 / 67 under them for a
+    2-pin header piece (the Teensy holes' size is not given - ПЕРЕВІРИТИ that the pins fit, else wire).
+    VUSB next to them (card photo, no dimension - ОРІЄНТИР): wire pad 49 run out past the module end."""
+    f = FP("Teensy41_THT",
+           "Teensy 4.1 on 2.54 pin headers (2 x 24, rows 15.24) - PJRC dimensions_teensy41.png; "
+           "through holes D- / D+ under the USB device holes of the module (PJRC drawing), wire pad VUSB",
+           "Teensy 4.1 module THT header")
     for i in range(24):
         x = -29.21 + i * 2.54
-        f.smd(str(i + 1), x, 7.62, 1.7, 1.7, shape="circle", paste=False)
-        f.smd(str(48 - i), x, -7.62, 1.7, 1.7, shape="circle", paste=False)
-    # window 1.5..5.5 mm from the USB end, where the PJRC card back shows the USB device pads and the
-    # VIN/VUSB trace (position from the photo - ОРІЄНТИР); 1.5 keeps it off the FX II button pads above
-    # (layout C, DM25); wire pads beside it, over the module
-    wx0, wx1 = -30.48 + 1.5, -30.48 + 5.5
-    f.rect(wx0, -5.0, wx1, 5.0, "Edge.Cuts", 0.1)
-    for num, y, name in (("49", -2.54, "VUSB"), ("66", 0.0, "D-"), ("67", 2.54, "D+")):
-        f.smd(num, wx1 + 1.6, y, 1.6, 1.4, side="B", paste=False)
-        f.items.append(f'\t(fp_text user "{name}" (at {fmt(wx1 + 4.2)} {fmt(y)}) (layer "B.SilkS") '
-                       '(effects (font (size 0.8 0.8) (thickness 0.12)) (justify mirror)))')
+        f.tht(str(i + 1), x, 7.62, 1.7, 1.0, shape="rect" if i == 0 else "circle")
+        f.tht(str(48 - i), x, -7.62, 1.7, 1.0)
+    # USB device D- / D+: through holes for a 2-pin header piece under the Teensy's own D- / D+ holes;
+    # VUSB: wire pad from under the module out past its USB end (no dimension for the Teensy pad)
+    x_hole, x_out = -30.48 + 1.78, -30.48 - 0.8
+    for num, y, name in (("66", -1.27, "D-"), ("67", 1.27, "D+")):
+        f.tht(num, x_hole, y, 1.6, 1.0)
+        f.text(x_hole + 2.0, y, name, "F.SilkS", 0.7)
+    f.smd("49", (x_hole + 0.5 + x_out) / 2, -3.81, x_hole + 0.5 - x_out, 1.0, paste=False)
+    f.text(x_hole + 2.4, -3.81, "VUSB", "F.SilkS", 0.7)
     f.rect(-30.48, -8.89, 30.48, 8.89, "F.Fab", FAB)
     f.rect(-30.48 - 0.7, -3.75, -30.48 + 5.0, 3.75, "F.Fab", FAB)   # micro-USB, 7.5 wide (PJRC)
     f.text(25.0, 0, "SD", "F.Fab", 1.0)
     f.line(-30.48, -8.89, 30.48, -8.89, "F.SilkS", SILK)
     f.line(-30.48, 8.89, 30.48, 8.89, "F.SilkS", SILK)
     f.text(-29.21, 5.6, "1", "F.SilkS", 0.8)
-    f.rect(-31.43, -9.14, 30.73, 9.14, "F.CrtYd", CRT)
+    f.rect(-31.53, -9.14, 30.73, 9.14, "F.CrtYd", CRT)
     return f.write(-10.5, 10.5)
 
 
@@ -130,20 +129,21 @@ def ec12sy_smd():
     """EC12SY-H6-17.5F5.0-24C24P-SMD-612 encoder with push switch, seller drawing
     (docs/datasheets/ec12sy-smd-encoder-drawing.png, "Mounting hole detail"): A / C / B pads
     pitch 2.5 along the bottom, S1 / S2 5.0 apart along the top, 5 pads 1.3 x 3.5, 20.0 over both
-    rows; 2 side lugs 3.0 x 5.0, 18.0 over both; body 12.5 x 13.2, height 6, shaft d6 (flat),
+    rows; 2 side lugs 3.0 x 5.0, 18.0 over both (pads cut to 6.0..7.95 from the axis: the tabs end at 7.75, 15.5
+    over both in the top view - room for the Teensy header next to channel 4, DM35); body 12.5 x 13.2, height 6, shaft d6 (flat),
     17.5 above the PCB (L), bushing d6.8. Locating holes d1.5 and d1.2 on the lug axis at 2.0 left
     and 2.5 right of the centre - the drawing is not to scale and the dimension lines are
     ambiguous: ПЕРЕВІРИТИ on a sample. Lugs centred on the body (drawing: ~0.2 above) - ПРИПУЩЕННЯ.
     Origin = shaft axis, S1 / S2 toward -Y."""
     f = FP("RotaryEncoder_EC12SY_SMD", "EC12SY SMD rotary encoder with switch, 24 detents (seller drawing); "
-           "pads 1.3 x 3.5, lugs 3.0 x 5.0; locating holes d1.5 / d1.2 - verify on a sample",
+           "pads 1.3 x 3.5, lugs 1.95 x 5.0; locating holes d1.5 / d1.2 - verify on a sample",
            "rotary encoder SMD EC12 switch", attr="smd")
     for num, x in (("S1", -2.5), ("S2", 2.5)):
         f.smd(num, x, -8.25, 1.3, 3.5)
     for num, x in (("A", -2.5), ("C", 0.0), ("B", 2.5)):
         f.smd(num, x, 8.25, 1.3, 3.5)
-    for x in (-7.5, 7.5):
-        f.smd("MP", x, 0.0, 3.0, 5.0)
+    for x in (-6.975, 6.975):                     # lug pads 6.0..7.95: tabs end at 7.75 (15.5 over both)
+        f.smd("MP", x, 0.0, 1.95, 5.0)
     f.npth(-2.0, 0.0, 1.5)
     f.npth(2.5, 0.0, 1.2)
     f.rect(-6.25, -6.6, 6.25, 6.6, "F.Fab", FAB)
@@ -158,7 +158,7 @@ def ec12sy_smd():
     f.text(-4.6, -8.25, "S1", "F.SilkS", 0.6)
     f.text(-4.6, 8.25, "A", "F.SilkS", 0.6)
     # courtyard follows the pads: the corners stay free (M2 hole next to MASTER, DM25)
-    q = [(3.4, -10.25), (3.4, -6.85), (6.5, -6.85), (6.5, -2.75), (9.25, -2.75)]   # right half, top
+    q = [(3.4, -10.25), (3.4, -6.85), (6.5, -6.85), (6.5, -2.75), (8.1, -2.75)]   # right half, top
     q += [(x, -y) for x, y in reversed(q)]                                          # right half, bottom
     f.poly(q + [(-x, -y) for x, y in q], "F.CrtYd", CRT)                            # left half
     return f.write(-11.2, 11.2)
@@ -200,7 +200,7 @@ def mounting_hole_m2():
 
 
 def main():
-    print("\n".join([teensy41_smd(), vson_hr10(), xfl4015(), tsf1266(), latch_smd(), ec12sy_smd(), lcd_gmt147(),
+    print("\n".join([teensy41_tht(), vson_hr10(), xfl4015(), tsf1266(), latch_smd(), ec12sy_smd(), lcd_gmt147(),
                      mounting_hole_m2()]))
 
 

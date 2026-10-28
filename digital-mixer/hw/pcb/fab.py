@@ -80,7 +80,7 @@ PASSIVES = {
 }
 # who mounts it: NextPCB places every SMD part of the bottom side; these (by footprint) by hand
 HAND = {
-    "Teensy41_SMD": "вручну: модуль Teensy 4.1 (DM12), після перевірки живлення",
+    "Teensy41_THT": "вручну: Teensy 4.1 на гребінках 2 × 24 (DM35), PSRAM на ньому — до встановлення; після перевірки живлення",
     "PTA2043": "вручну: THT, фейдер",
     "LCD_GMT147SPI": "вручну: THT, гребінка дисплея",
     "EC12SY": "вручну: верхній бік, AliExpress (DM26)",

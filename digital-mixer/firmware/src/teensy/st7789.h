@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // GMT147SPI (ST7789V, 172 x 320) in landscape over SPI. Commands: docs/datasheets/st7789v.pdf
 // (Sitronix ST7789V v1.3, 2014/03; kept local, not in git): SWRESET 01h, SLPOUT 11h, INVON 21h, DISPON 29h, CASET 2Ah, RASET 2Bh,
 // RAMWR 2Ch, MADCTL 36h, COLMOD 3Ah. Only rows whose content changed are sent (row hashes), a few

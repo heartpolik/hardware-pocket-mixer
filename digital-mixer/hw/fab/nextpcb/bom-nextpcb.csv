@@ -57,7 +57,7 @@ SW19,1,,,FX1 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній б
 SW20,1,,,FX2 TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
 SW21,1,,,AUX TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
 SW22,1,,,SHIFT TSF-1266,SW_TSF-1266_6x6mm_SMD,DNP,"вручну: верхній бік, AliExpress"
-U1,1,,,Teensy 4.1,Teensy41_SMD,DNP,"вручну: модуль Teensy 4.1 (DM12), після перевірки живлення"
+U1,1,,,Teensy 4.1,Teensy41_THT,DNP,"вручну: Teensy 4.1 на гребінках 2 × 24 (DM35), PSRAM на ньому — до встановлення; після перевірки живлення"
 U2,1,STMicroelectronics,USBLC6-2SC6,"USB ESD protection, SOT-23-6",SOT-23-6,,
 U3,1,TOP POWER ASIC,TP4056-42-ESOP8,"Li-ion charger 1 A, ESOP-8",SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm,,
 U4,1,Texas Instruments,TPS63802DLAR,"buck-boost 2 A, VSON-HR-10 2x3",Texas_VSON-HR-10_2x3mm_P0.5mm,,

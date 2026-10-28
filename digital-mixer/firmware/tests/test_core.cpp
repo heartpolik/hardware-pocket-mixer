@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Checks of the portable core without hardware: DSP, mixer routing, FX timing, tuner, UI layers.
 #include <math.h>
 #include <stdio.h>
@@ -107,6 +108,16 @@ static void testMixer() {
     r.run(20, 0, 0.5f, 1000, &l, &rr);
     CHECK(fabsf(dsp::linToDb(l) - dsp::linToDb(0.5f * 0.7071f)) < 0.2f, "mono centre L %.2f dB", dsp::linToDb(l));
     CHECK(fabsf(l - rr) < 0.01f, "mono centre L=R");
+    // channel meter is post-fader; the clip mark comes from the input only
+    CHECK(fabsf(r.mix.chMeter[0][0].peak - l) < 0.02f && r.mix.chMeter[0][0].clip <= 0, "post-fader meter %.3f", (double)r.mix.chMeter[0][0].peak);
+    r.scene.ch[0].eq[1] = 15;                     // +15 dB at 1 kHz: hot in float, no input clip
+    r.live.fader[0] = 0.3f;
+    r.run(40, 0, 0.5f, 1000, &l, &rr);
+    CHECK(r.mix.chMeter[0][0].clip <= 0, "EQ boost does not light CLIP");
+    r.run(2, 0, 1.0f, 1000, &l, &rr);
+    CHECK(r.mix.chMeter[0][0].clip > 0, "input at full scale lights CLIP");
+    r.scene.ch[0].eq[1] = 0; r.live.fader[0] = 0.75f;
+    for (int k = 0; k < 2; k++) r.mix.chMeter[0][k].clip = 0;
     // hard left
     r.scene.ch[0].pan = -1;
     r.run(10, 0, 0.5f, 1000, &l, &rr);
@@ -283,6 +294,52 @@ static void testUi() {
     ui.fader(3, 0.2f);
     CHECK(r.live.fader[3] == f0 && hal.midi.size() >= 3 && hal.midi[hal.midi.size() - 3] == 0xB3 &&
               hal.midi[hal.midi.size() - 2] == 7, "controller mode fader -> CC");
+    // EQ at its minimum comes back up (regression: the OFF jump of volumes clamped it to -15)
+    st.ctrlMode = 0;
+    r.scene.ch[0].eq[2] = -15.f;
+    hal.t += 1000;
+    ui.encoder(2, 1);
+    CHECK(fabsf(r.scene.ch[0].eq[2] + 14.5f) < 1e-4f, "EQ LO from -15: %.2f", r.scene.ch[0].eq[2]);
+    // volumes: down to OFF and back (AUX layer off: MASTER = MAIN)
+    if (ui.layerAux()) { ui.button(B_AUX, true); ui.button(B_AUX, false); }
+    for (int i = 0; i < 60; i++) { hal.t += 200; ui.encoder(E_MASTER, -1); }
+    CHECK(r.scene.mainDb <= -59.9f, "MAIN off: %.1f", r.scene.mainDb);
+    hal.t += 200; ui.encoder(E_MASTER, 1);
+    CHECK(fabsf(r.scene.mainDb + 48.f) < 1e-3f, "MAIN out of OFF: %.1f", r.scene.mainDb);
+    for (int i = 0; i < 30; i++) { hal.t += 200; ui.encoder(E_MASTER, 1); }
+    CHECK(r.scene.mainDb > -12.f, "MAIN after 30 detents up: %.1f", r.scene.mainDb);
+    // AUX layer on: MASTER turns the AUX output
+    if (!ui.layerAux()) { ui.button(B_AUX, true); ui.button(B_AUX, false); }
+    float auxBefore = r.scene.auxDb, mainBefore = r.scene.mainDb;
+    hal.t += 300; ui.encoder(E_MASTER, -2);
+    CHECK(r.scene.auxDb < auxBefore && r.scene.mainDb == mainBefore, "AUX layer: MASTER -> AUX %.1f", r.scene.auxDb);
+    ui.button(B_AUX, true); ui.button(B_AUX, false);
+    // SHIFT as a toggle (settings)
+    st.shiftToggle = 1;
+    ui.button(B_SHIFT, true); ui.button(B_SHIFT, false);
+    CHECK(ui.shiftOn() && ui.rowParam(0, 0) == P_GAIN, "SHIFT latched");
+    ui.button(B_MUTE1, true); ui.button(B_MUTE1, false);
+    CHECK(r.scene.ch[0].cue == 1, "latched SHIFT + Mute = Cue");
+    ui.button(B_SHIFT, true); ui.button(B_SHIFT, false);
+    CHECK(!ui.shiftOn() && ui.rowParam(0, 0) != P_GAIN, "SHIFT released by a second press");
+    st.shiftToggle = 0;
+    // fader calibration: bottom at 0.9, top at 0.12 (wired the other way round)
+    ui.button(B_MASTER, true); ui.button(B_MASTER, false);              // menu
+    for (int i = 0; i < 40; i++) ui.encoder(E_MASTER, 1);               // to the end (ABOUT)
+    ui.encoder(E_MASTER, -2);                                           // FADER CAL
+    ui.button(B_MASTER, true); ui.button(B_MASTER, false);              // enter
+    for (int c = 0; c < NCH; c++) ui.fader(c, 0.9f);
+    ui.button(B_MASTER, true); ui.button(B_MASTER, false);              // bottom taken
+    for (int c = 0; c < NCH; c++) ui.fader(c, 0.12f);
+    ui.button(B_MASTER, true); ui.button(B_MASTER, false);              // top taken, saved
+    CHECK(st.fadHi[0] < st.fadLo[0], "calibration stored (inverted) lo %u hi %u", st.fadLo[0], st.fadHi[0]);
+    CHECK(r.live.fader[2] > 0.99f, "top after calibration: %.3f", (double)r.live.fader[2]);
+    ui.fader(2, 0.89f);
+    CHECK(r.live.fader[2] < 0.01f, "bottom after calibration: %.3f", (double)r.live.fader[2]);
+    ui.fader(2, 0.51f);
+    CHECK(fabsf(r.live.fader[2] - 0.5f) < 0.02f, "middle after calibration: %.3f", (double)r.live.fader[2]);
+    ui.button(B_SHIFT, true); ui.button(B_MASTER, true); ui.button(B_MASTER, false); ui.button(B_SHIFT, false);
+    st.fadLo[2] = 0; st.fadHi[2] = 65535;
     // render every page without crashing
     static uint16_t fb[DISPLAY_W * DISPLAY_H];
     Canvas c(fb, DISPLAY_W, DISPLAY_H);

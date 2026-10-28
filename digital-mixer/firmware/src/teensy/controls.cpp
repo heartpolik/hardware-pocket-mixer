@@ -1,11 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "controls.h"
 
 // MCP23017 registers, IOCON.BANK = 0 (docs/datasheets/mcp23017.pdf, DS20001952D, table 3-1)
 enum : uint8_t { IODIRA = 0x00, GPINTENA = 0x04, INTCONA = 0x08, IOCON = 0x0A, GPPUA = 0x0C, GPIOA = 0x12 };
 constexpr uint8_t IOCON_MIRROR = 0x40;          // INTA = INTB = any change on either port
-
-// Fader travel direction: which end of the PTA2043 goes to 3V3 - check on the assembled board.
-constexpr bool FADER_INVERT = false;
 
 volatile int Controls::masterSteps_ = 0;
 Quad Controls::masterQuad_;
@@ -66,17 +64,18 @@ bool Controls::begin(Ui* ui) {
     return ok;
 }
 
+static inline bool bitOf(uint16_t ab, int i) { return (ab >> i & 1) != 0; }   // 1 = high = released / open
+
 void Controls::handleMcp(int k, uint16_t ab, uint32_t now) {
-    auto bit = [&](int i) { return (ab >> i & 1) != 0; };     // 1 = high = released / open
     if (k < 2) {
         for (int half = 0; half < 2; half++) {
             int ch = 2 * k + half, base = 8 * half;
             for (int row = 0; row < 3; row++) {
-                uint8_t q = (uint8_t)(bit(base + 2 * row) << 1 | bit(base + 2 * row + 1));
+                uint8_t q = (uint8_t)(bitOf(ab, base + 2 * row) << 1 | bitOf(ab, base + 2 * row + 1));
                 int d = enc_[ch * 3 + row].step(q);
                 if (d) ui_->encoder(ch * 3 + row, d);
             }
-            int b = B_MUTE1 + ch, e = btn_[b].update(!bit(base + 6), now);
+            int b = B_MUTE1 + ch, e = btn_[b].update(!bitOf(ab, base + 6), now);
             if (e) ui_->button(b, e > 0);
         }
         return;
@@ -84,12 +83,12 @@ void Controls::handleMcp(int k, uint16_t ab, uint32_t now) {
     // #3: encoder pushes GPA0-5 (ch 1-2), GPB0-5 (ch 3-4); AUX GPA6, FX I GPA7, FX II GPB6
     for (int i = 0; i < 12; i++) {
         int bitn = i < 6 ? i : 8 + (i - 6);
-        int e = btn_[i].update(!bit(bitn), now);
+        int e = btn_[i].update(!bitOf(ab, bitn), now);
         if (e) ui_->button(i, e > 0);
     }
     const int ids[3] = {B_AUX, B_FX1, B_FX2}, bits[3] = {6, 7, 14};
     for (int j = 0; j < 3; j++) {
-        int e = btn_[ids[j]].update(!bit(bits[j]), now);
+        int e = btn_[ids[j]].update(!bitOf(ab, bits[j]), now);
         if (e) ui_->button(ids[j], e > 0);
     }
 }
@@ -117,8 +116,7 @@ void Controls::poll() {
     if (now - lastFader_ >= 5) {
         lastFader_ = now;
         for (int ch = 0; ch < 4; ch++) {
-            float x = analogRead(pin::FADER[ch]) / 4095.f;
-            if (FADER_INVERT) x = 1.f - x;
+            float x = analogRead(pin::FADER[ch]) / 4095.f;      // raw; ends and direction: menu FADER CAL
             fader_[ch] = fader_[ch] < 0 ? x : fader_[ch] + 0.3f * (x - fader_[ch]);
             if (fabsf(fader_[ch] - sent_[ch]) > 0.002f) {        // hysteresis against ADC noise
                 sent_[ch] = fader_[ch];

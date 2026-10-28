@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "mixer.h"
 
 #include <math.h>
@@ -93,11 +94,10 @@ void Mixer::process(AudioIO& io) {
             }
         }
 
-        // meters and cue: after processing, before mute and fader (PFL)
-        float pkL = 0, pkR = 0;
-        for (int i = 0; i < n; i++) { pkL = fmaxf(pkL, fabsf(l[i])); pkR = fmaxf(pkR, fabsf(r[i])); }
-        chMeter[c][0].block(pkL, dt);
-        chMeter[c][1].block(pkR, dt);
+        // clip mark: the ADC input itself at full scale (the float processing after it cannot clip)
+        float inL0 = 0, inR0 = 0;
+        for (int i = 0; i < n; i++) { inL0 = fmaxf(inL0, fabsf(inL[i])); inR0 = fmaxf(inR0, fabsf(inR[i])); }
+        // cue: after processing, before mute and fader (PFL)
         if (p.cue)
             for (int i = 0; i < n; i++) { cueL[i] += l[i]; cueR[i] += r[i]; }
 
@@ -116,10 +116,11 @@ void Mixer::process(AudioIO& io) {
         float aux0 = k.sAux, dAux = (p.sendAux - aux0) * invN;
         float fx0[NFX], dFx[NFX];
         for (int f = 0; f < NFX; f++) { fx0[f] = k.sFx[f]; dFx[f] = (p.sendFx[f] - fx0[f]) * invN; }
-        float gl = k.gl, gr = k.gr;
+        float gl = k.gl, gr = k.gr, pkL = 0, pkR = 0;
         for (int i = 0; i < n; i++) {
             gl += dl; gr += dr; aux0 += dAux;
             float ol = l[i] * gl, orr = r[i] * gr;
+            pkL = fmaxf(pkL, fabsf(ol)); pkR = fmaxf(pkR, fabsf(orr));
             mainL[i] += ol; mainR[i] += orr;
             auxL[i] += ol * aux0; auxR[i] += orr * aux0;
             for (int f = 0; f < NFX; f++) {
@@ -127,6 +128,9 @@ void Mixer::process(AudioIO& io) {
                 fxL[f][i] += ol * fx0[f]; fxR[f][i] += orr * fx0[f];
             }
         }
+        // channel meters: what the channel sends into the mix (after mute, fader, pan)
+        chMeter[c][0].block(pkL, dt, inL0 >= 0.99f);
+        chMeter[c][1].block(pkR, dt, (stereo ? inR0 : inL0) >= 0.99f);
         k.gl = tl; k.gr = tr; k.sAux = p.sendAux;
         for (int f = 0; f < NFX; f++) k.sFx[f] = p.sendFx[f];
 

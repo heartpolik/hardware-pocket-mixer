@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Minimal PNG writer (RGB8, zlib) for screenshots.
 #pragma once
 #include <stdint.h>

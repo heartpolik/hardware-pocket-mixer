@@ -57,7 +57,7 @@
 1,FX2 TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW20
 1,AUX TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW21
 1,SHIFT TSF-1266,pocket-digital:SW_TSF-1266_6x6mm_SMD,,,,"вручну: верхній бік, AliExpress",SW22
-1,Teensy 4.1,pocket-digital:Teensy41_SMD,,,,"вручну: модуль Teensy 4.1 (DM12), після перевірки живлення",U1
+1,Teensy 4.1,pocket-digital:Teensy41_THT,,,,"вручну: Teensy 4.1 на гребінках 2 × 24 (DM35), PSRAM на ньому — до встановлення; після перевірки живлення",U1
 1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,STMicroelectronics,USBLC6-2SC6,"USB ESD protection, SOT-23-6",NextPCB,U2
 1,TP4056,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm,TOP POWER ASIC,TP4056-42-ESOP8,"Li-ion charger 1 A, ESOP-8",NextPCB,U3
 1,TPS63802,pocket-digital:Texas_VSON-HR-10_2x3mm_P0.5mm,Texas Instruments,TPS63802DLAR,"buck-boost 2 A, VSON-HR-10 2x3",NextPCB,U4

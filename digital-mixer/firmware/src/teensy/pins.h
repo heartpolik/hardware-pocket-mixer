@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Teensy 4.1 pins as wired in hw/sch/main.py (symbol pins -> Teensy pins: docs/03-schematic.md, p. 2).
 #pragma once
 #include <stdint.h>

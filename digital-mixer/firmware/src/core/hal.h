@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // What the portable core needs from the platform (Teensy 4.1 or the desktop simulator).
 #pragma once
 #include <stdint.h>

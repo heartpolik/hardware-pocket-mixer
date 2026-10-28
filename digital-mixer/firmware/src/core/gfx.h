@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // RGB565 canvas with the primitives the UI needs: rectangles, lines, 5x7 text at integer scale.
 #pragma once
 #include <stdint.h>

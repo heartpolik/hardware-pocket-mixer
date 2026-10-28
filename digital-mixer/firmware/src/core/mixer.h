@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Audio engine (01-spec 2): 4 stereo channels -> filter, 3-band EQ, compressor, mute, fader, pan ->
 // MAIN / AUX / FX I / FX II buses; CUE (pre-fader) for the headphones; USB to/from the DAW.
 // Runs in the audio interrupt on Teensy and in the audio callback in the simulator.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Simulator input sources: looped WAV files or built-in demo parts (drums, bass, pad, lead at
 // 120 BPM) so the mixer has something to mix without any files.
 #pragma once

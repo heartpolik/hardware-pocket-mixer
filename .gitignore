@@ -36,3 +36,4 @@ digital-mixer/docs/datasheets/st7789v.pdf
 **/firmware/sim-data/
 **/firmware/screen-*.png
 **/firmware/rec-*.wav
+**/firmware/tools/ext/

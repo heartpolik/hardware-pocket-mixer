@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // FX bus engines (01-spec 3.2): reverb, delay, chorus, filter, distortion, tape, freeze.
 // Each bus owns a memory pool of int16 samples (PSRAM on Teensy if fitted, else RAM2) that the
 // current engine carves into delay lines when the engine is selected.

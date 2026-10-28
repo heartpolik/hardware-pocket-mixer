@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // microSD recorder (01-spec 3.5): the audio thread packs 24-bit samples into a byte ring, the main
 // loop drains it into a WAV file through a FileSink (SdFat on Teensy, stdio in the simulator).
 #pragma once

@@ -22,7 +22,7 @@ flowchart LR
 | [docs/01-spec.md](docs/01-spec.md) | **ТЗ Rev 1:** функціонал, керування, роз'єми, ТТХ |
 | [docs/02-components.md](docs/02-components.md) | Фейдери, енкодери, живлення 1S, монтаж Teensy, AliExpress чи JLCPCB |
 | [docs/03-schematic.md](docs/03-schematic.md) | **Принципова схема** (KiCad, [PDF](hw/main/main.pdf)), виводи Teensy, макет розташування |
-| [docs/04-pcb.md](docs/04-pcb.md) | **Плата:** чотиришарова 104,5 × 136,5 мм (компоновка C), розведена, DRC 0 порушень, 0 розривів |
+| [docs/04-pcb.md](docs/04-pcb.md) | **Плата:** чотиришарова 104,5 × 136,5 мм (компоновка C), Teensy на гребінках з PSRAM (DM35), розведена, DRC 0 порушень, 0 розривів |
 | [docs/05-fab.md](docs/05-fab.md) | **Виготовлення:** Gerber, BOM, файли PCBA для NextPCB, [інтерактивний BOM](docs/ibom/ibom.html), порядок ручного монтажу |
 | [docs/06-firmware.md](docs/06-firmware.md) | **Прошивка й емулятор:** ядро C++ ([firmware/](firmware/README.md)), емулятор на SDL2, керування, ефекти, MIDI CC, що перевірити на макеті |
 | [docs/calc/](docs/calc/power.py) | Розрахунок живлення |
@@ -32,4 +32,13 @@ flowchart LR
 З аналогового [Rev A](../analog-mixer/README.md) переносимо деталі там, де вони підходять:
 джеки CUI SJ-43514, USB-C GCT USB4085, захист USBLC6-2SC6, MBR0530 і AO3401A (load sharing).
 
-Ліцензія — [CERN-OHL-S-2.0+](../LICENSE), як і весь репозиторій.
+## Ліцензія
+
+SPDX-License-Identifier: GPL-3.0-or-later — повний текст у [LICENSE](LICENSE). Стосується всього в
+`digital-mixer/`: схеми, плати, бібліотек, документації й прошивки (DM36).
+
+Цифрова версія не є похідною від mixerli: файлів звідти в ній немає. Footprint і 3D-модель джека
+SJ-43514 перейшли з Rev A, але Rev A згенерував їх сам за кресленням CUI. Чужі файли зберігають свої ліцензії:
+символ Teensy 4.1 від XenGi — MIT ([hw/lib/third_party](hw/lib/third_party/LICENSE-teensy_library.txt));
+стандартні бібліотеки KiCad — за їхньою ліцензією з винятком для проєктів; datasheets — власність
+виробників.

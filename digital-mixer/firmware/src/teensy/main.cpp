@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Teensy 4.1 entry point: audio graph (TDM in from 2 x PCM1865, I2S out to 3 x PCM5102A, USB audio
 // and MIDI), codecs over I2C, controls, display, EEPROM scenes, microSD recorder.
 #include <Arduino.h>

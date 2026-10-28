@@ -105,9 +105,10 @@ def build():
     b = Board()
 
     # ================================================================ Teensy 4.1
-    b.block("Teensy 4.1 (DM4, DM12): VIN = +4V2; перемичку VIN–VUSB на модулі РОЗРІЗАТИ, VUSB = VBUS з USB-C; "
-            "USB device — площадки D+/D− знизу (66/67, XenGi teensy_library; звірити з PJRC)", 0)
-    b.part("U", "pocket-digital:Teensy4.1", "Teensy 4.1", "pocket-digital:Teensy41_SMD", {
+    b.block("Teensy 4.1 (DM4, DM12, DM35): на гребінках 2 × 24 крізь плату, зазор 2,5 мм під PSRAM; VIN = +4V2; "
+            "перемичку VIN–VUSB на модулі РОЗРІЗАТИ, VUSB = VBUS з USB-C; USB device D−/D+ — отвори знизу модуля "
+            "(креслення PJRC) → площадки 66/67 під ними, VUSB — дротик (49)", 0)
+    b.part("U", "pocket-digital:Teensy4.1", "Teensy 4.1", "pocket-digital:Teensy41_THT", {
         "48": RAIL, "49": "VBUS", "15": D3, "46": D3, "51": D3,
         "1": "GND", "34": "GND", "47": "GND", "52": "GND",
         "66": "USB_DN", "67": "USB_DP",

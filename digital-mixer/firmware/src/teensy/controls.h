@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Physical controls: 3 x MCP23017 on Wire2 (12 channel encoders, their pushes, Mute, AUX, FX I,
 // FX II), master encoder and SHIFT on Teensy pins, 4 faders. Produces Ui events.
 #pragma once

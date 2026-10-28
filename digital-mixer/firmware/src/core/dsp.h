@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // DSP building blocks shared by the mixer and the FX engines. Portable C++17, no allocation.
 #pragma once
 #include <math.h>
@@ -152,10 +153,12 @@ struct Meter {
     volatile float clip = 0;               // seconds of clip indicator left
     float fall = 0.f;
     void setup(float fs, int block) { fall = powf(10.f, -20.f / 20.f * block / fs); }   // 20 dB/s
-    inline void block(float pk, float dt) {
+    inline void block(float pk, float dt) { block(pk, dt, pk >= 0.99f); }
+    // `clipped`: where the clip mark comes from (the channel meters take it from the ADC input)
+    inline void block(float pk, float dt, bool clipped) {
         float p = peak * fall;
         peak = pk > p ? pk : p;
-        if (pk >= 0.99f) clip = 1.0f; else if (clip > 0) clip = clip - dt;
+        if (clipped) clip = 1.0f; else if (clip > 0) clip = clip - dt;
     }
 };
 

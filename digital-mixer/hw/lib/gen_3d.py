@@ -70,14 +70,20 @@ def lcd():
 
 
 def teensy():
-    """Teensy 4.1 lying flat (PJRC dimensions_teensy41.png): board 60.96 x 17.78 x 1.57, micro-USB
-    7.5 wide, 5.0 long, 0.7 past the USB end (-X). Its parts face away from our board. MCU and
-    microSD socket size and position - ОРІЄНТИР."""
-    board = box(-30.48, -8.89, 30.48, 8.89, 0.0, 1.57)
-    usb = box(-31.18, -3.75, -26.18, 3.75, 1.57, 1.57 + 2.5)
-    mcu = box(-12.0, -5.0, -2.0, 5.0, 1.57, 1.57 + 1.2)
-    sd = box(18.0, -6.0, 30.48, 6.0, 1.57, 1.57 + 1.8)
-    return save("Teensy41_SMD", [(board, PCB_BLACK), (usb, METAL), (mcu, DARK), (sd, METAL)])
+    """Teensy 4.1 on 2.54 pin headers (DM35), PJRC dimensions_teensy41.png: board 60.96 x 17.78 x 1.57
+    on the 2.5 header spacer, micro-USB 7.5 wide, 5.0 long, 0.7 past the USB end (-X). Its parts face
+    away from our board. MCU and microSD socket size and position - ОРІЄНТИР."""
+    zb = 2.5
+    xs = [-29.21 + i * 2.54 for i in range(24)]
+    p1, n1 = header(xs, 7.62, zb)
+    p2, n2 = header(xs, -7.62, zb)
+    board = box(-30.48, -8.89, 30.48, 8.89, zb, zb + 1.57)
+    top = zb + 1.57
+    usb = box(-31.18, -3.75, -26.18, 3.75, top, top + 2.5)
+    mcu = box(-12.0, -5.0, -2.0, 5.0, top, top + 1.2)
+    sd = box(18.0, -6.0, 30.48, 6.0, top, top + 1.8)
+    return save("Teensy41_THT", [(board, PCB_BLACK), (usb, METAL), (mcu, DARK), (sd, METAL),
+                                 (union(p1, p2), BLACK), (union(n1, n2), PIN)])
 
 
 def xfl4015():

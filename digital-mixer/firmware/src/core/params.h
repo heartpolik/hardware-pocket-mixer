@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Mixer state: a Scene (everything saved in a scene slot), live values that are not saved
 // (fader positions), device settings, and the parameter table used by encoders, MIDI and the UI.
 #pragma once
@@ -59,9 +60,13 @@ struct Settings {
     uint8_t usbSend = 0;        // stereo USB build: 0 = MAIN, 1..4 = input channel
     uint8_t lastScene = 0;
     uint8_t encInvert = 0;      // encoder direction (EC12SY A/B order - check on the sample)
-    uint8_t pad = 0;
+    uint8_t shiftToggle = 0;    // 0: SHIFT works while held, 1: a press latches it on / off
+    // fader calibration (menu FADER CAL): raw ADC position x 65535 at the bottom and at the top;
+    // top < bottom = the fader is wired the other way round
+    uint16_t fadLo[NCH] = {0, 0, 0, 0};
+    uint16_t fadHi[NCH] = {65535, 65535, 65535, 65535};
     uint32_t crc = 0;
-    static constexpr uint32_t MAGIC = 0x4D585331;
+    static constexpr uint32_t MAGIC = 0x4D585332;
     void seal();
     bool valid() const;
 };

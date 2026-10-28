@@ -161,11 +161,12 @@ def via(pcb, net, x, y, d=0.6, drill=0.3):
 
 
 def usb_pair(pcb, comps):
-    """USB D+ / D- from the USBLC6 to the Teensy wire pads 67 / 66 as a coupled pair (DM25 puts them
-    ~75 mm apart): 0.2 tracks, 0.2 gap, on F.Cu over the In1 GND plane (DM31) along the right column - between the
-    left lug of MASTER and the S1 pad / the AUX, FX I, FX II pads - round the left of the Teensy
-    window, into the pads from below. Locked, so Freerouting routes the rest around it. Returns
-    keep-out boxes of its vias for the bottom-side placement."""
+    """USB D+ / D- from the USBLC6 toward the Teensy wire pads 67 / 66 as a coupled pair (DM25 puts
+    them ~75 mm apart): 0.2 tracks, 0.2 gap, on F.Cu over the In1 GND plane (DM31) along the right
+    column - between the left lug of MASTER and the S1 pad / the AUX, FX I, FX II pads - down to 2.3 mm
+    before the wire pads at the Teensy USB end (DM35). Locked, so Freerouting routes the rest around
+    it; the last few mm to the pads (on B.Cu, where they are) are left to the router / patch_route.py.
+    Returns keep-out boxes of its vias for the bottom-side placement."""
     esd = next(r for r, c in comps.items() if c["value"] == "USBLC6-2SC6")
     teensy = next(r for r, c in comps.items() if "Teensy41" in c["fp"])
     master = next(r for r, c in comps.items() if "EC12SY" in c["fp"] and "/ENC_M_A" in c["pins"].values())
@@ -173,32 +174,22 @@ def usb_pair(pcb, comps):
            any(v.lstrip("/") in ("BTN_AUX", "BTN_FX1", "BTN_FX2") for v in c["pins"].values())]
     dp_pin = pad_xy(pcb.fps[esd], next(n for n, v in comps[esd]["pins"].items() if v.endswith("USB_DP")))
     dn_pin = pad_xy(pcb.fps[esd], next(n for n, v in comps[esd]["pins"].items() if v.endswith("USB_DN")))
-    dp_end, dn_end = pad_xy(pcb.fps[teensy], "67"), pad_xy(pcb.fps[teensy], "66")
-    win = next(g for g in pcb.fps[teensy].GraphicalItems() if g.GetLayer() == pcbnew.Edge_Cuts).GetBoundingBox()
-    win_l, win_t = pcbnew.ToMM(win.GetLeft()) - OX, pcbnew.ToMM(win.GetTop()) - OY
+    wire_top = min(pcbnew.ToMM(p.GetBoundingBox().GetTop()) - OY for p in pcb.fps[teensy].Pads()
+                   if p.GetNumber() in ("66", "67"))
     lug_r = max(pcbnew.ToMM(p.GetBoundingBox().GetRight()) - OX for p in pcb.fps[master].Pads()
                 if p.GetNumber() == "MP" and pcbnew.ToMM(p.GetPosition().x) - OX < L.xr)
     pad_l = min(pcbnew.ToMM(p.GetBoundingBox().GetLeft()) - OX for r in btn for p in pcb.fps[r].Pads())
-    win_b = pcbnew.ToMM(win.GetTop()) - OY
-    btn_t = max(pcbnew.ToMM(p.GetBoundingBox().GetTop()) - OY for r in btn for p in pcb.fps[r].Pads()
-                if pcbnew.ToMM(p.GetBoundingBox().GetTop()) - OY < win_b)       # FX II, just above the window
     h, w = 0.2, 0.2                                    # half pitch, track width: 0.2 gap (90 ohm - ОЦІНКА)
     xc = (lug_r + pad_l) / 2                           # corridor axis
-    xw = win_l - 0.2 - w / 2 - h - 0.1                 # axis left of the Teensy window
-    yj = btn_t - 0.7                                   # jog above the FX II pads
-    yb = dn_end[1] + 1.5                               # run under the wire pads
+    y_end = wire_top - 2.3                             # stop short of the wire pads
     vx = dp_pin[0] + 1.16                              # vias right of the ESD pins, 0.2 to them and to the USB-C tab
     for net, pin, y_via in (("/USB_DP", dp_pin, dp_pin[1]), ("/USB_DN", dn_pin, dn_pin[1])):
         via(pcb, net, vx, y_via)
         track(pcb, net, [pin, (vx, y_via)], w, pcbnew.B_Cu)
-    # heading south the west lane is D+, so it stays outside on the right turns and ends on the
-    # south lane under the pads, D+ pad being the far one
     xs_p, xs_n = xc - h, xc + h
     yfirst = dn_pin[1] + 0.34
-    track(pcb, "/USB_DP", [(vx, dp_pin[1]), (xs_p, dp_pin[1]), (xs_p, yj - h), (xw - h, yj - h),
-                           (xw - h, yb + h), (dp_end[0], yb + h), dp_end], w, pcbnew.F_Cu)
-    track(pcb, "/USB_DN", [(vx, dn_pin[1]), (vx + 0.34, yfirst), (xs_n, yfirst), (xs_n, yj + h),
-                           (xw + h, yj + h), (xw + h, yb - h), (dn_end[0], yb - h), dn_end], w, pcbnew.F_Cu)
+    track(pcb, "/USB_DP", [(vx, dp_pin[1]), (xs_p, dp_pin[1]), (xs_p, y_end)], w, pcbnew.F_Cu)
+    track(pcb, "/USB_DN", [(vx, dn_pin[1]), (vx + 0.34, yfirst), (xs_n, yfirst), (xs_n, y_end)], w, pcbnew.F_Cu)
     r = 0.3 + 0.4
     return [(vx - r, y - r, vx + r, y + r) for y in (dp_pin[1], dn_pin[1])]
 
@@ -296,7 +287,7 @@ def main():
                 at_edge(pcb, ref, L.y_out[outs[t]], W, "+x", "1", True, 0.5)
             placed.add(ref)
         elif "Teensy41" in fpn:
-            at_edge(pcb, ref, L.T_X, D, "+y", "25", True, 0.0)              # microSD end at the front
+            at_edge(pcb, ref, L.T_X, D, "+y", "25", True, -L.T_BACK)       # microSD end 6 mm off the front (DM35)
             placed.add(ref)
         elif "USB4110" in fpn:
             # GCT USB4110 (all SMD): PCB edge line at local y 3.675 (KiCad footprint), courtyard to

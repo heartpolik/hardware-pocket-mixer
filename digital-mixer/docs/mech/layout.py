@@ -46,11 +46,12 @@ X_ON = CORNER + LATCH[0] / 2               # rear-left corner
 Y_BTN = [*y_enc, y_mute]                   # AUX, FX I, FX II on the encoder rows; SHIFT on the Mute row (cue = SHIFT + Mute)
 T_EDGE = 6.5                               # Teensy off the right edge: routing room + the corner hole
 T_X = W - T_EDGE - TEENSY[0] / 2
-T_Y = D - TEENSY[1] / 2                    # microSD in the front wall
+T_BACK = 6.0                               # Teensy 6 mm off the front edge: its USB D-/D+ header holes miss FX II
+T_Y = D - T_BACK - TEENSY[1] / 2           # (DM35); microSD behind a slot in the front wall
 # rear wall under MASTER (DM25): USB4110 is all SMD; 1.6 left of the MASTER axis its two locating
 # holes (d0.65, 6.3 from the edge) miss the S1 / S2 pads on top, and the courtyard clears the corner hole
 USB_X = xr - 1.6
-OUT_P = 14.0                               # 3.2 mm between the output jacks
+OUT_P = 12.5                               # 1.7 mm between the output jacks (DM35: room for the Teensy)
 # right-wall jacks start behind the MASTER pads: their plastic pegs (d1.7 NPTH on the jack axis) clear
 # the A / C / B pads and the lugs on top
 OUT_Y0 = Y_TOP + ENC[1] / 2 + 0.85 + 0.3

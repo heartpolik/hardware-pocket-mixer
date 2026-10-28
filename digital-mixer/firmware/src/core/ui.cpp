@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ui.h"
 
 #include <math.h>
@@ -14,7 +15,7 @@ using dsp::clampf;
 enum MenuId {
     M_EXIT, M_LOAD, M_SAVE, M_MODE1, M_MODE4 = M_MODE1 + 3, M_WIDTH1, M_WIDTH4 = M_WIDTH1 + 3,
     M_PHONES, M_TEMPO, M_TAP, M_CLOCK, M_LIMITER, M_USBVOL, M_USBSEND, M_TUNER, M_REC,
-    M_MIDICH, M_CTRL, M_BRIGHT, M_ENCDIR, M_BATT, M_ABOUT, M_COUNT
+    M_MIDICH, M_CTRL, M_BRIGHT, M_ENCDIR, M_SHIFTMODE, M_FADERCAL, M_BATT, M_ABOUT, M_COUNT
 };
 static const int MENU_ROWS = 8;
 
@@ -53,8 +54,14 @@ void Ui::begin() {
     tick();
 }
 
+// FX send rows are labelled with the engine of their bus (REVERB, DELAY ...), the rest by the parameter
+const char* Ui::rowLabel(int id) const {
+    if (id == P_SEND_FX1 || id == P_SEND_FX2) return fxName((FxType)scene_->fx[id == P_SEND_FX2].type);
+    return paramDesc(id).name;
+}
+
 int Ui::rowParam(int ch, int row) const {
-    if (down_[B_SHIFT]) return row == 0 ? P_GAIN : row == 1 ? P_PAN : (compRow_[ch] ? P_COMP : P_FILTER);
+    if (shiftOn()) return row == 0 ? P_GAIN : row == 1 ? P_PAN : (compRow_[ch] ? P_COMP : P_FILTER);
     if (row == 0) return auxLayer_ ? P_SEND_AUX : P_EQ_HI;
     if (row == 1) return fxLayer_[0] ? P_SEND_FX1 : P_EQ_MID;
     return fxLayer_[1] ? P_SEND_FX2 : P_EQ_LO;
@@ -67,6 +74,13 @@ int Ui::fxHeld() const {
         if (down_[b] && (used_[b] || now - downAt_[b] > 300)) return k;
     }
     return -1;
+}
+
+// Linear 3.3..4.2 V (VSYS / 2 on A14); a LiPo discharge curve is a later refinement (06-firmware, p. 7).
+int Ui::batteryPercent() {
+    float v = hal_->batteryVolts();
+    if (v <= 0) return -1;
+    return (int)clampf((v - 3.3f) / (4.2f - 3.3f) * 100.f, 0, 100);
 }
 
 void Ui::changed() {
@@ -105,7 +119,16 @@ void Ui::stepParam(int ch, int id, int delta) {
         setParam(ch, id, d.min + i);
         return;
     }
-    if (d.kind == K_DB && v <= d.min + 0.01f && delta > 0) v = -40.f;     // jump out of "OFF"
+    if (d.min <= -59.f) {                              // volumes: -60 = OFF, finer steps near 0 dB
+        if (v <= d.min + 0.01f && delta > 0) { setParam(ch, id, -48.f + 3.f * (delta - 1)); return; }
+        for (int i = 0, n = delta > 0 ? delta : -delta; i < n; i++) {
+            float st = v < -30.f ? 3.f : v < -12.f ? 1.f : d.step;
+            v += delta > 0 ? st : -st;
+            if (v < -48.f && delta < 0) v = d.min;        // below -48 dB: OFF
+        }
+        setParam(ch, id, v);
+        return;
+    }
     setParam(ch, id, v + d.step * delta);
 }
 
@@ -135,7 +158,7 @@ void Ui::encoder(int id, int delta) {
     uint32_t dt = encSeen_[id] ? now - encAt_[id] : 1000;
     encAt_[id] = now;
     encSeen_[id] = true;
-    if (page_ == HOME && id != E_MASTER) delta *= dt < 25 ? 4 : dt < 60 ? 2 : 1;      // acceleration
+    if (page_ == HOME) delta *= dt < 25 ? 4 : dt < 60 ? 2 : 1;      // acceleration (not in the menu)
 
     if (id == E_MASTER) {
         if (page_ == MENU) { menuTurn(delta); return; }
@@ -147,7 +170,8 @@ void Ui::encoder(int id, int delta) {
                 return;
             }
         if (down_[B_AUX]) { used_[B_AUX] = true; stepParam(-1, P_AUX, delta); return; }
-        if (down_[B_SHIFT]) { used_[B_SHIFT] = true; stepParam(-1, P_PHONES, delta); return; }
+        if (shiftOn()) { used_[B_SHIFT] = true; stepParam(-1, P_PHONES, delta); return; }
+        if (auxLayer_) { stepParam(-1, P_AUX, delta); return; }      // AUX layer on: MASTER = AUX out
         stepParam(-1, P_MAIN, delta);
         return;
     }
@@ -159,7 +183,7 @@ void Ui::encoder(int id, int delta) {
             stepParam(-1, ch < 3 ? base + 1 + ch : base + 4, delta);
             return;
         }
-    if (down_[B_SHIFT]) used_[B_SHIFT] = true;
+    if (shiftOn()) used_[B_SHIFT] = true;
     stepParam(ch, rowParam(ch, row), delta);
 }
 
@@ -178,17 +202,21 @@ void Ui::button(int id, bool down) {
         return;
     }
 
+    if (id == B_SHIFT && settings_->shiftToggle) { shiftLatched_ = !shiftLatched_; return; }
     if (id == B_MASTER) {
         if (page_ == MENU) {
-            if (down_[B_SHIFT]) { used_[B_SHIFT] = true; page_ = HOME; menuEdit_ = false; }
+            if (shiftOn()) { used_[B_SHIFT] = true; shiftLatched_ = false; page_ = HOME; menuEdit_ = false; }
             else menuPress();
         } else if (page_ == TUNER) page_ = MENU;
-        else { page_ = MENU; menuEdit_ = false; }
+        else if (page_ == FADER_CAL) {
+            if (shiftOn()) { used_[B_SHIFT] = true; page_ = MENU; toast("FADER CAL", "CANCELLED"); }
+            else faderCalPress();
+        } else { page_ = MENU; menuEdit_ = false; }
         return;
     }
     if (id >= B_MUTE1 && id < B_MUTE1 + NCH) {
         int ch = id - B_MUTE1;
-        if (down_[B_SHIFT]) {                          // SHIFT + Mute = Cue (DM28)
+        if (shiftOn()) {                               // SHIFT + Mute = Cue (DM28)
             used_[B_SHIFT] = true;
             setParam(ch, P_CUE, ed().ch[ch].cue ? 0.f : 1.f);
         } else setParam(ch, P_MUTE, ed().ch[ch].mute ? 0.f : 1.f);
@@ -203,21 +231,30 @@ void Ui::button(int id, bool down) {
                 setParam(-1, pid, paramDesc(pid).def);
                 return;
             }
-        if (down_[B_SHIFT] && row == 2) {              // filter <-> compressor on the 3rd row (DM28)
+        if (shiftOn() && row == 2) {                   // filter <-> compressor on the 3rd row (DM28)
             used_[B_SHIFT] = true;
             compRow_[ch] = !compRow_[ch];
             toast(compRow_[ch] ? "ROW 3" : "ROW 3", compRow_[ch] ? "COMP" : "FILTER");
             return;
         }
-        if (down_[B_SHIFT]) used_[B_SHIFT] = true;
+        if (shiftOn()) used_[B_SHIFT] = true;
         int pid = rowParam(ch, row);
         setParam(ch, pid, paramDesc(pid).def);
     }
 }
 
-void Ui::fader(int ch, float pos) {
+// raw -> 0..1 by the stored end points, with 2 % dead zones so the ends are solid OFF / +6 dB
+float Ui::calibrated(int ch, float raw) const {
+    float lo = settings_->fadLo[ch] / 65535.f, hi = settings_->fadHi[ch] / 65535.f;
+    float x = fabsf(hi - lo) < 0.05f ? raw : (raw - lo) / (hi - lo);
+    return clampf((x - 0.02f) / 0.96f, 0, 1);
+}
+
+void Ui::fader(int ch, float raw) {
     if (ch < 0 || ch >= NCH) return;
-    pos = clampf(pos, 0, 1);
+    lastRaw_[ch] = clampf(raw, 0, 1);
+    if (page_ == FADER_CAL) return;                    // the mix keeps the last positions meanwhile
+    float pos = calibrated(ch, lastRaw_[ch]);
     if (settings_->ctrlMode) {
         uint8_t mch = (uint8_t)((settings_->midiCh + ch) & 15);
         uint8_t val = (uint8_t)lroundf(pos * 127.f);
@@ -405,10 +442,13 @@ void Ui::menuItem(int i, char* label, char* value, int n) {
         case M_CTRL: snprintf(label, n, "CONTROLLER"); snprintf(value, n, settings_->ctrlMode ? "ON" : "OFF"); break;
         case M_BRIGHT: snprintf(label, n, "BRIGHTNESS"); snprintf(value, n, "%d", settings_->brightness); break;
         case M_ENCDIR: snprintf(label, n, "ENC DIR"); snprintf(value, n, settings_->encInvert ? "INVERT" : "NORMAL"); break;
+        case M_SHIFTMODE: snprintf(label, n, "SHIFT MODE"); snprintf(value, n, settings_->shiftToggle ? "TOGGLE" : "HOLD"); break;
+        case M_FADERCAL: snprintf(label, n, "FADER CAL"); snprintf(value, n, ">"); break;
         case M_BATT: {
-            float v = hal_->batteryVolts();
+            int pct = batteryPercent();
             snprintf(label, n, "BATTERY");
-            if (v > 0) snprintf(value, n, "%.2fV", (double)v); else snprintf(value, n, "-");
+            if (pct >= 0) snprintf(value, n, "%d%% %.2fV", pct, (double)hal_->batteryVolts());
+            else snprintf(value, n, "-");
             break;
         }
         case M_ABOUT: {
@@ -420,6 +460,30 @@ void Ui::menuItem(int i, char* label, char* value, int n) {
         }
         default: label[0] = 0;
     }
+}
+
+void Ui::faderCalPress() {
+    if (calStep_ == 0) {
+        for (int c = 0; c < NCH; c++) calLo_[c] = lastRaw_[c];
+        calStep_ = 1;
+        return;
+    }
+    for (int c = 0; c < NCH; c++)
+        if (lastRaw_[c] < 0 || fabsf(lastRaw_[c] - calLo_[c]) < 0.5f) {   // less than half the scale: not moved
+            char v[16];
+            snprintf(v, sizeof v, "FADER %d FAIL", c + 1);
+            toast("CAL", v);
+            page_ = MENU;
+            return;
+        }
+    for (int c = 0; c < NCH; c++) {
+        settings_->fadLo[c] = (uint16_t)lroundf(calLo_[c] * 65535.f);
+        settings_->fadHi[c] = (uint16_t)lroundf(lastRaw_[c] * 65535.f);
+    }
+    settingsDirty_ = true;
+    toast("FADER CAL", "SAVED");
+    page_ = MENU;
+    for (int c = 0; c < NCH; c++) fader(c, lastRaw_[c]);           // apply at once
 }
 
 void Ui::menuTurn(int d) {
@@ -475,6 +539,8 @@ void Ui::menuPress() {
             memset(lastCC_, 0, sizeof lastCC_);
             break;
         case M_ENCDIR: settings_->encInvert ^= 1; settingsDirty_ = true; break;
+        case M_SHIFTMODE: settings_->shiftToggle ^= 1; shiftLatched_ = false; settingsDirty_ = true; break;
+        case M_FADERCAL: page_ = FADER_CAL; calStep_ = 0; break;
         default: break;
     }
 }
@@ -512,11 +578,14 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
         c.text(x, 3, s, k);
         rx = x - 8;
     };
-    float v = hal_->batteryVolts();
-    if (v > 0) {
-        int pct = (int)clampf((v - 3.3f) / (4.2f - 3.3f) * 100.f, 0, 100);
-        snprintf(buf, sizeof buf, "%d%%", pct);
-        right(buf, pct < 15 ? col::RED : col::DIM);
+    int pct = batteryPercent();
+    if (pct >= 0) {                                    // battery icon: body 16 x 8, tip 2 x 4
+        int x = rx - 18, y = 3;
+        uint16_t k = pct < 15 ? col::RED : pct < 35 ? col::YELLOW : col::DIM;
+        c.rect(x, y, 16, 8, k);
+        c.fill(x + 16, y + 2, 2, 4, k);
+        c.fill(x + 2, y + 2, (12 * pct + 50) / 100, 4, k);
+        rx = x - 8;
     }
     snprintf(buf, sizeof buf, "%s%d", extClockAt_ ? "EXT " : "", (int)lroundf(scene_->bpm));
     right(buf, col::DIM);
@@ -536,7 +605,7 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
 void Ui::drawStrip(Canvas& c, int ch, int x) {
     const Scene& s = settings_->ctrlMode ? shadow_ : *scene_;
     const ChannelParams& p = s.ch[ch];
-    char buf[16];
+    char buf[24];
     c.fill(x, 16, 62, 12, p.mute ? col::RED : col::GREY);
     snprintf(buf, sizeof buf, "IN%d %s", ch + 1, p.stereo ? "ST" : "MO");
     c.text(x + 3, 18, buf, col::WHITE);
@@ -545,7 +614,7 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
         int id = rowParam(ch, r), y0 = 32 + r * 26;
         float v = paramGet(s, *live_, ch, id);
         uint16_t colr = paramColor(id);
-        c.text(x + 3, y0, paramDesc(id).name, colr);
+        c.text(x + 3, y0, rowLabel(id), colr);
         paramFormat(id, v, buf, sizeof buf);
         c.textRight(x + 60, y0, buf, col::WHITE);
         int k = paramDesc(id).kind;
@@ -602,11 +671,11 @@ void Ui::drawMaster(Canvas& c, int x) {
 
 void Ui::drawHome(Canvas& c) {
     char title[48];
-    if (down_[B_SHIFT]) snprintf(title, sizeof title, "SHIFT: GAIN PAN FILT/COMP");
-    else snprintf(title, sizeof title, "%s %s %s", auxLayer_ ? "AUX" : "HI", fxLayer_[0] ? "FX1" : "MID",
-                  fxLayer_[1] ? "FX2" : "LO");
+    if (shiftOn()) snprintf(title, sizeof title, shiftLatched_ ? "SHIFT ON: GAIN PAN FILT/COMP" : "SHIFT: GAIN PAN FILT/COMP");
+    else snprintf(title, sizeof title, "%s %s %s", auxLayer_ ? "AUX" : "HI", fxLayer_[0] ? rowLabel(P_SEND_FX1) : "MID",
+                  fxLayer_[1] ? rowLabel(P_SEND_FX2) : "LO");
     c.clear(col::BLACK);
-    drawTop(c, title, down_[B_SHIFT] ? col::YELLOW : col::WHITE);
+    drawTop(c, title, shiftOn() ? col::YELLOW : col::WHITE);
     for (int ch = 0; ch < NCH; ch++) drawStrip(c, ch, ch * 64);
     drawMaster(c, 256);
 }
@@ -662,7 +731,7 @@ void Ui::drawMenu(Canvas& c) {
 }
 
 void Ui::drawTuner(Canvas& c) {
-    char buf[32];
+    char buf[48];
     snprintf(buf, sizeof buf, "TUNER IN%d  (MASTER = CHANNEL)", tunerCh_ + 1);
     c.clear(col::BLACK);
     drawTop(c, buf, col::GREEN);
@@ -682,8 +751,32 @@ void Ui::drawTuner(Canvas& c) {
     }
 }
 
+void Ui::drawFaderCal(Canvas& c) {
+    char buf[32];
+    c.clear(col::BLACK);
+    drawTop(c, calStep_ ? "FADER CAL 2/2  (SHIFT+PUSH = CANCEL)" : "FADER CAL 1/2  (SHIFT+PUSH = CANCEL)", col::CYAN);
+    c.textCentered(DISPLAY_W / 2, 22, calStep_ ? "ALL FADERS UP" : "ALL FADERS DOWN", col::WHITE, 2);
+    c.textCentered(DISPLAY_W / 2, 42, "THEN PUSH MASTER", col::DIM);
+    for (int ch = 0; ch < NCH; ch++) {
+        int x = 30 + ch * 72, y = 58, h = 92;
+        float v = lastRaw_[ch] < 0 ? 0.f : lastRaw_[ch];
+        c.fill(x + 16, y, 20, h, col::DARK);
+        int hh = (int)lroundf(v * h);
+        c.fill(x + 16, y + h - hh, 20, hh, col::CYAN);
+        if (calStep_) {                                // the bottom point already taken
+            int yl = y + h - (int)lroundf(calLo_[ch] * h);
+            c.hline(x + 10, yl, 32, col::YELLOW);
+        }
+        snprintf(buf, sizeof buf, "%d", (int)lroundf(v * 4095));
+        c.textCentered(x + 26, y + h + 4, lastRaw_[ch] < 0 ? "-" : buf, col::WHITE);
+        snprintf(buf, sizeof buf, "F%d", ch + 1);
+        c.textCentered(x + 26, y + h + 13, buf, col::GREY);
+    }
+}
+
 void Ui::render(Canvas& c) {
-    if (page_ == MENU) drawMenu(c);
+    if (page_ == FADER_CAL) drawFaderCal(c);
+    else if (page_ == MENU) drawMenu(c);
     else if (page_ == TUNER) drawTuner(c);
     else {
         int k = fxHeld();

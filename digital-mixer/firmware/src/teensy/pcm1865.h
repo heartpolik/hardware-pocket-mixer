@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // PCM1865 in I2C slave mode, 4-channel TDM on a shared DOUT line (docs/datasheets/pcm1865.pdf,
 // SLAS831D: register map p. 86-96, TDM p. 58-59).
 #pragma once

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Desktop simulator: the same core (mixer, FX, UI, display) as the Teensy build, with an SDL2
 // window that shows the display and a virtual control panel laid out like the board (DM25), and
 // audio through the computer's sound card. --headless runs a script without a window or audio.
@@ -270,7 +271,7 @@ static void drawPanel(Sim& s, Canvas& w, const bool latched[B_COUNT], float encA
                           : pid == P_GAIN ? col::YELLOW : pid == P_PAN ? col::GREEN : pid == P_FILTER ? col::BLUE
                           : pid == P_COMP ? col::RED : col::GREY;
             knob(x, Panel::rowY(r), 26, encAngle[id], s.ui.held(id), ring);
-            w.text(x + 32, Panel::rowY(r) - 4, paramDesc(pid).name, ring == col::GREY ? col::DIM : ring);
+            w.text(x + 32, Panel::rowY(r) - 4, s.ui.rowLabel(pid), ring == col::GREY ? col::DIM : ring);
         }
         w.fill(x - 3, Panel::FADER_Y0, 6, Panel::FADER_Y1 - Panel::FADER_Y0, rgb(10, 10, 10));
         int fy = Panel::FADER_Y0 + (int)((1.f - s.live.fader[ch]) * (Panel::FADER_Y1 - Panel::FADER_Y0));
@@ -286,7 +287,7 @@ static void drawPanel(Sim& s, Canvas& w, const bool latched[B_COUNT], float encA
     button(Panel::RIGHT_X, Panel::rowY(0), "AUX", s.ui.layerAux() ? col::CYAN : 0, s.ui.held(B_AUX), latched[B_AUX]);
     button(Panel::RIGHT_X, Panel::rowY(1), "FX I", s.ui.layerFx(0) ? col::MAGENTA : 0, s.ui.held(B_FX1), latched[B_FX1]);
     button(Panel::RIGHT_X, Panel::rowY(2), "FX II", s.ui.layerFx(1) ? col::ORANGE : 0, s.ui.held(B_FX2), latched[B_FX2]);
-    button(Panel::RIGHT_X, Panel::MUTE_Y, "SHIFT", 0, s.ui.held(B_SHIFT), latched[B_SHIFT]);
+    button(Panel::RIGHT_X, Panel::MUTE_Y, "SHIFT", s.ui.shiftOn() ? col::YELLOW : 0, s.ui.held(B_SHIFT), latched[B_SHIFT]);
 
     static const char* const MON[] = {"MAIN", "AUX", "PHONES"};
     snprintf(buf, sizeof buf, "OUT: %s", MON[s.monitor % 3]);
