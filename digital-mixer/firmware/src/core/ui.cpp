@@ -70,6 +70,11 @@ const char* Ui::rowLabel(int id, bool full) const {
         FxType t = (FxType)scene_->fx[id == P_SEND_FX2].type;
         return full ? fxName(t) : fxShortName(t);
     }
+    if (!full) {                                    // the label column is 3 characters wide
+        if (id == P_GAIN) return "GN";
+        if (id == P_FILTER) return "FLT";
+        if (id == P_COMP) return "CMP";
+    }
     return paramDesc(id).name;
 }
 
@@ -559,15 +564,15 @@ void Ui::menuPress() {
 }
 
 // ------------------------------------------------------------------ drawing
-void Ui::drawBar(Canvas& c, int x, int y, int w, int h, float norm, bool bipolar, uint16_t colr) {
+// value bar: the filled part takes the colour of each position (blue - white - red, valueColor)
+void Ui::drawBar(Canvas& c, int x, int y, int w, int h, float norm, bool bipolar, uint16_t) {
     c.fill(x, y, w, h, col::DARK);
     norm = clampf(norm, 0, 1);
-    if (bipolar) {
-        int mid = x + w / 2, px = x + (int)lroundf(norm * (w - 1));
-        if (px >= mid) c.fill(mid, y, px - mid + 1, h, colr);
-        else c.fill(px, y, mid - px, h, colr);
-        c.vline(mid, y - 1, h + 2, col::DIM);
-    } else c.fill(x, y, (int)lroundf(norm * w), h, colr);
+    int px = x + (int)lroundf(norm * (w - 1));
+    int a = bipolar ? (px < x + w / 2 ? px : x + w / 2) : x;
+    int b = bipolar ? (px < x + w / 2 ? x + w / 2 : px) : x + (int)lroundf(norm * w) - 1;
+    for (int i = a; i <= b; i++) c.vline(i, y, h, valueColor((float)(i - x) / (w - 1)));
+    if (bipolar) c.vline(x + w / 2, y - 1, h + 2, col::DIM);
 }
 
 void Ui::drawMeter(Canvas& c, int x, int y, int w, int h, float peak, float clip) {
@@ -616,7 +621,7 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
 }
 
 // Home layout: row labels once on the left, then 4 input strips and the master strip.
-static constexpr int LABEL_W = 39, STRIP_W = 53, MASTER_X = LABEL_W + NCH * STRIP_W, ROW_Y0 = 32, ROW_DY = 26;
+static constexpr int LABEL_W = 22, STRIP_W = 57, MASTER_X = LABEL_W + NCH * STRIP_W, ROW_Y0 = 32, ROW_DY = 26;
 static constexpr int LVL_Y = 112;                       // level block: number, then meters and fader below
 
 void Ui::drawLabels(Canvas& c) {
@@ -646,26 +651,22 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
         uint16_t colr = paramColor(id);
         paramFormat(id, v, buf, sizeof buf);
         float n = paramNorm(id, v);
-        c.textCentered(x + w / 2, y0, buf, valueColor(n));
+        c.textCentered(x + w / 2, y0, buf, col::WHITE);
         int k = paramDesc(id).kind;
         drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, colr);
     }
-    // level block: fader level (and compressor gain reduction) on top, meters and fader below
-    float pos = live_->fader[ch];
-    float db = faderDb(pos);
+    // level block: fader level (and compressor gain reduction) on top, meters below (the faders are physical)
+    float db = faderDb(live_->fader[ch]);
     if (db <= -89.f) snprintf(buf, sizeof buf, "-INF"); else snprintf(buf, sizeof buf, "%+.1f", (double)db);
-    c.text(x + 2, LVL_Y + 2, buf, col::WHITE);
+    c.textCentered(x + w / 2, LVL_Y + 2, buf, col::WHITE);
     float gr = mix_->chGr[ch];
     if (gr > 0.3f) {
         snprintf(buf, sizeof buf, "-%.0f", (double)gr);
         c.textRight(x + w - 1, LVL_Y + 2, buf, col::RED);
     }
     int y = LVL_Y + 13, h = DISPLAY_H - 3 - y;
-    drawMeter(c, x + 12, y, 5, h, mix_->chMeter[ch][0].peak, mix_->chMeter[ch][0].clip);
-    drawMeter(c, x + 19, y, 5, h, mix_->chMeter[ch][1].peak, mix_->chMeter[ch][1].clip);
-    c.vline(x + 37, y, h, col::GREY);
-    int yk = y + (int)lroundf((1.f - pos) * (h - 4));
-    c.fill(x + 32, yk, 11, 4, col::WHITE);
+    drawMeter(c, x + w / 2 - 6, y, 5, h, mix_->chMeter[ch][0].peak, mix_->chMeter[ch][0].clip);
+    drawMeter(c, x + w / 2 + 1, y, 5, h, mix_->chMeter[ch][1].peak, mix_->chMeter[ch][1].clip);
     c.vline(x + STRIP_W - 1, 16, DISPLAY_H - 16, col::DARK);
 }
 
