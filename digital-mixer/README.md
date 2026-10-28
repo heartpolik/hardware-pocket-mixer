@@ -4,7 +4,7 @@
 формфактор і функції (EQ, компресор, ефекти, cue, сцени, MIDI, рекордер), але не схемотехніку.
 
 > [!NOTE]
-> Стан: плата розведена ([docs/04-pcb.md](docs/04-pcb.md)), прошивка 0.1 з емулятором ([docs/06-firmware.md](docs/06-firmware.md)), схема — [docs/03-schematic.md](docs/03-schematic.md); ТЗ — [docs/01-spec.md](docs/01-spec.md), дослідження — [docs/00-research.md](docs/00-research.md). Наступний крок — макет на готових
+> Стан: плата розведена ([docs/04-pcb.md](docs/04-pcb.md)), прошивка 0.2 з емулятором ([docs/06-firmware.md](docs/06-firmware.md)), схема — [docs/03-schematic.md](docs/03-schematic.md); ТЗ — [docs/01-spec.md](docs/01-spec.md), дослідження — [docs/00-research.md](docs/00-research.md). Наступний крок — макет на готових
 > платах: Teensy 4.1 + PCM1865 + PCM5102A, перевірка USB-аудіо 8 каналів у Windows, macOS та iOS.
 
 ```mermaid
