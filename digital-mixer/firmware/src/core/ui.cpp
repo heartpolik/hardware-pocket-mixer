@@ -602,73 +602,87 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
     } else c.textCentered(DISPLAY_W / 2, 3, title, colr);
 }
 
+// Home layout: row labels once on the left, then 4 input strips and the master strip.
+static constexpr int LABEL_W = 39, STRIP_W = 53, MASTER_X = LABEL_W + NCH * STRIP_W, ROW_Y0 = 32, ROW_DY = 26;
+static constexpr int LVL_Y = 112;                       // level block: number, then meters and fader below
+
+void Ui::drawLabels(Canvas& c) {
+    for (int r = 0; r < 3; r++) {
+        int id = rowParam(0, r);
+        bool same = true;
+        for (int ch = 1; ch < NCH; ch++) same &= rowParam(ch, r) == id;
+        c.text(1, ROW_Y0 + r * ROW_DY + 5, same ? rowLabel(id) : "F/C", paramColor(id));
+    }
+    c.text(1, LVL_Y + 2, "LEVEL", col::DIM);
+    c.vline(LABEL_W - 1, 16, DISPLAY_H - 16, col::DARK);
+}
+
 void Ui::drawStrip(Canvas& c, int ch, int x) {
     const Scene& s = settings_->ctrlMode ? shadow_ : *scene_;
     const ChannelParams& p = s.ch[ch];
+    const int w = STRIP_W - 2;
     char buf[24];
-    c.fill(x, 16, 62, 12, p.mute ? col::RED : col::GREY);
-    snprintf(buf, sizeof buf, "IN%d %s", ch + 1, p.stereo ? "ST" : "MO");
-    c.text(x + 3, 18, buf, col::WHITE);
-    if (p.cue) { c.fill(x + 44, 16, 18, 12, col::YELLOW); c.text(x + 45, 18, "CU", col::BLACK); }
+    c.fill(x, 16, w, 12, p.mute ? col::RED : col::GREY);
+    if (p.cue) snprintf(buf, sizeof buf, "IN%d", ch + 1);          // the CU badge takes the place of ST / MO
+    else snprintf(buf, sizeof buf, "IN%d %s", ch + 1, p.stereo ? "ST" : "MO");
+    c.text(x + 2, 18, buf, col::WHITE);
+    if (p.cue) { c.fill(x + w - 14, 16, 14, 12, col::YELLOW); c.text(x + w - 13, 18, "CU", col::BLACK); }
     for (int r = 0; r < 3; r++) {
-        int id = rowParam(ch, r), y0 = 32 + r * 26;
+        int id = rowParam(ch, r), y0 = ROW_Y0 + r * ROW_DY;
         float v = paramGet(s, *live_, ch, id);
         uint16_t colr = paramColor(id);
-        c.text(x + 3, y0, rowLabel(id), colr);
         paramFormat(id, v, buf, sizeof buf);
-        c.textRight(x + 60, y0, buf, col::WHITE);
+        c.textRight(x + w - 1, y0, buf, col::WHITE);
         int k = paramDesc(id).kind;
-        drawBar(c, x + 3, y0 + 11, 57, 5, paramNorm(id, v), k == K_DB || k == K_BIPOLAR, colr);
+        drawBar(c, x + 2, y0 + 11, w - 3, 5, paramNorm(id, v), k == K_DB || k == K_BIPOLAR, colr);
     }
-    // left to right: fader level (and gain reduction) as numbers, meters, fader
-    int y = 112, h = 56;
+    // level block: fader level (and compressor gain reduction) on top, meters and fader below
     float pos = live_->fader[ch];
     float db = faderDb(pos);
     if (db <= -89.f) snprintf(buf, sizeof buf, "-INF"); else snprintf(buf, sizeof buf, "%+.1f", (double)db);
-    c.text(x + 2, y + 2, buf, col::WHITE);
+    c.text(x + 2, LVL_Y + 2, buf, col::WHITE);
     float gr = mix_->chGr[ch];
     if (gr > 0.3f) {
         snprintf(buf, sizeof buf, "-%.0f", (double)gr);
-        c.text(x + 2, y + 14, "GR", col::RED);
-        c.text(x + 2, y + 24, buf, col::RED);
+        c.textRight(x + w - 1, LVL_Y + 2, buf, col::RED);
     }
-    drawMeter(c, x + 33, y, 5, h, mix_->chMeter[ch][0].peak, mix_->chMeter[ch][0].clip);
-    drawMeter(c, x + 40, y, 5, h, mix_->chMeter[ch][1].peak, mix_->chMeter[ch][1].clip);
-    c.vline(x + 54, y, h, col::GREY);
+    int y = LVL_Y + 13, h = DISPLAY_H - 3 - y;
+    drawMeter(c, x + 12, y, 5, h, mix_->chMeter[ch][0].peak, mix_->chMeter[ch][0].clip);
+    drawMeter(c, x + 19, y, 5, h, mix_->chMeter[ch][1].peak, mix_->chMeter[ch][1].clip);
+    c.vline(x + 37, y, h, col::GREY);
     int yk = y + (int)lroundf((1.f - pos) * (h - 4));
-    c.fill(x + 49, yk, 11, 4, col::WHITE);
-    c.vline(x + 63, 16, DISPLAY_H - 16, col::DARK);
+    c.fill(x + 32, yk, 11, 4, col::WHITE);
+    c.vline(x + STRIP_W - 1, 16, DISPLAY_H - 16, col::DARK);
 }
 
 void Ui::drawMaster(Canvas& c, int x) {
     char buf[16];
-    c.fill(x, 16, 64, 12, col::GREY);
-    c.text(x + 3, 18, "MASTER", col::WHITE);
+    const int w = DISPLAY_W - x;
+    c.fill(x, 16, w, 12, col::GREY);
+    c.text(x + 2, 18, "MASTER", col::WHITE);
     const int ids[3] = {P_MAIN, P_AUX, P_PHONES};
     const char* names[3] = {"MAIN", "AUX", "PHON"};
     const uint16_t cols[3] = {col::WHITE, col::CYAN, col::YELLOW};
     for (int r = 0; r < 3; r++) {
-        int y0 = 32 + r * 26;
+        int y0 = ROW_Y0 + r * ROW_DY;
         float v = paramGet(*scene_, *live_, 0, ids[r]);
-        c.text(x + 3, y0, names[r], cols[r]);
+        c.text(x + 2, y0, names[r], cols[r]);
         paramFormat(ids[r], v, buf, sizeof buf);
-        c.textRight(x + 61, y0, buf, col::WHITE);
-        drawBar(c, x + 3, y0 + 11, 58, 5, paramNorm(ids[r], v), false, cols[r]);
+        c.textRight(x + w - 4, y0, buf, col::WHITE);
+        drawBar(c, x + 2, y0 + 11, w - 6, 5, paramNorm(ids[r], v), false, cols[r]);
     }
-    int y = 112, h = 56;
     bool cue = scene_->phonesSrc == (uint8_t)PhonesSrc::Cue || (scene_->phonesSrc == 0 && mix_->anyCue());
-    c.text(x + 2, y + 2, cue ? "CUE" : "", col::YELLOW);
+    if (cue) c.text(x + 2, LVL_Y + 2, "CUE", col::YELLOW);
     if (mix_->limGr > 0.3f) {
-        snprintf(buf, sizeof buf, "-%.0f", (double)mix_->limGr);
-        c.text(x + 2, y + 14, "LIM", col::RED);
-        c.text(x + 2, y + 24, buf, col::RED);
+        snprintf(buf, sizeof buf, "L-%.0f", (double)mix_->limGr);
+        c.textRight(x + w - 4, LVL_Y + 2, buf, col::RED);
     }
-    drawMeter(c, x + 27, y, 5, h, mix_->mainMeter[0].peak, mix_->mainMeter[0].clip);
-    drawMeter(c, x + 34, y, 5, h, mix_->mainMeter[1].peak, mix_->mainMeter[1].clip);
-    drawMeter(c, x + 44, y, 4, h, mix_->auxMeter[0].peak, mix_->auxMeter[0].clip);
-    drawMeter(c, x + 50, y, 4, h, mix_->auxMeter[1].peak, mix_->auxMeter[1].clip);
+    int y = LVL_Y + 13, h = DISPLAY_H - 3 - y;
+    drawMeter(c, x + 10, y, 5, h, mix_->mainMeter[0].peak, mix_->mainMeter[0].clip);
+    drawMeter(c, x + 17, y, 5, h, mix_->mainMeter[1].peak, mix_->mainMeter[1].clip);
+    drawMeter(c, x + 32, y, 4, h, mix_->auxMeter[0].peak, mix_->auxMeter[0].clip);
+    drawMeter(c, x + 38, y, 4, h, mix_->auxMeter[1].peak, mix_->auxMeter[1].clip);
 }
-
 
 void Ui::drawHome(Canvas& c) {
     char title[48];
@@ -677,8 +691,9 @@ void Ui::drawHome(Canvas& c) {
                   fxLayer_[1] ? rowLabel(P_SEND_FX2) : "LO");
     c.clear(col::BLACK);
     drawTop(c, title, shiftOn() ? col::YELLOW : col::WHITE);
-    for (int ch = 0; ch < NCH; ch++) drawStrip(c, ch, ch * 64);
-    drawMaster(c, 256);
+    drawLabels(c);
+    for (int ch = 0; ch < NCH; ch++) drawStrip(c, ch, LABEL_W + ch * STRIP_W);
+    drawMaster(c, MASTER_X);
 }
 
 void Ui::drawFx(Canvas& c, int k) {

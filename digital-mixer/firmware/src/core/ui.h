@@ -61,6 +61,7 @@ private:
     void menuItem(int i, char* label, char* value, int n);
     // drawing
     void drawHome(Canvas& c);
+    void drawLabels(Canvas& c);
     void drawStrip(Canvas& c, int ch, int x);
     void drawMaster(Canvas& c, int x);
     void drawFx(Canvas& c, int k);
