@@ -9,7 +9,7 @@ Designator,Quantity,Manufacturer,Manufacturer Part Number,Description,Package,Pr
 D1,1,Lite-On,LTST-C171KRKT,LED red 0805,LED_0805_2012Metric,,
 D2,1,Lite-On,LTST-C171KGKT,LED green 0805,LED_0805_2012Metric,,
 D3,1,JSCJ,MBR0530,"Schottky 30 V 0.5 A, SOD-123",D_SOD-123,,
-DS1,1,(module),GMT147SPI (GMT147-01M) 1.47in 172x320 ST7789,TFT display module on 8-pin 2.54 header,LCD_GMT147SPI,,"THT, top side; consigned module"
+DS1,1,,,GMT147SPI 1.47in 172x320,LCD_GMT147SPI,DNP,"вручну: THT, гребінка дисплея"
 J1,1,GCT,USB4110-GF-A,"USB-C 2.0 receptacle, SMT",USB_C_Receptacle_GCT_USB4110,,
 J2,1,JST,S2B-PH-SM4-TB(LF)(SN),"PH 2-pin side entry, SMT",JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal,,
 J3,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,,

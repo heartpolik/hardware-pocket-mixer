@@ -9,7 +9,7 @@ Writes hw/fab/:
                              Number, Description, Package, Procurement Type (DNP = mounted by hand), Customer Note
   nextpcb/centroid-nextpcb.csv (+ .zip)  pick and place of the parts NextPCB places (mm, Top / Bottom)
   nextpcb/assembly-top.pdf, assembly-bottom.pdf   assembly drawings (fab + silk + outline)
-  nextpcb-full/              the same for a full-assembly quote (both sides, THT included, only the Teensy DNP)
+  nextpcb-full/              the same for a full-assembly quote (both sides, THT included; Teensy and display DNP)
 and docs/ibom/ibom.html - InteractiveHtmlBom (as mixerli documentation/ibom/ibom.html). InteractiveHtmlBom:
 common/tools/ibom (pip --target, see common/README.md).
 
@@ -91,8 +91,6 @@ FULL = {
                  "top side; seller part (docs/datasheets/push-latching-dpdt-5.8mm-smd-drawing.png) - consign if not sourceable"),
     "PTA2043": ("Bourns", "PTA2043-2010DPB103", "slide potentiometer 20 mm travel, single, 10 k linear, DP lever 10 mm",
                 "THT, top side; part number composed from the Bourns PTA 'How To Order' table"),
-    "LCD_GMT147SPI": ("(module)", "GMT147SPI (GMT147-01M) 1.47in 172x320 ST7789", "TFT display module on 8-pin 2.54 header",
-                      "THT, top side; consigned module"),
 }
 # who mounts it: NextPCB places every SMD part of the bottom side; these (by footprint) by hand
 HAND = {
