@@ -10,7 +10,7 @@ Writes hw/fab/:
   nextpcb/centroid-nextpcb.csv (+ .zip)  pick and place of the parts NextPCB places (mm, Top / Bottom)
   nextpcb/assembly-top.pdf, assembly-bottom.pdf   assembly drawings (fab + silk + outline)
   nextpcb-full/              the same for a full-assembly quote (both sides, THT included; Teensy and display DNP)
-  nextpcb-eco/               economy: NextPCB places only what a soldering iron cannot (ECO), the rest by hand
+  nextpcb-opt/               the same as nextpcb/, but the parts of OWN_BUY are bought and soldered by us
 and docs/ibom/ibom.html - InteractiveHtmlBom (as mixerli documentation/ibom/ibom.html). InteractiveHtmlBom:
 common/tools/ibom (pip --target, see common/README.md).
 
@@ -105,15 +105,11 @@ HAND = {
     "Latching": "вручну: верхній бік, AliExpress (DM27)",
     "MountingHole": "—",
 }
-# economy assembly: NextPCB places only these (by footprint keyword) - leadless, pads under the body or
-# 0.5 mm pitch (pitches from the footprints); everything else is soldered by hand with an iron
-ECO = {
-    "VSON-HR-10": "TPS63802: VSON 2 x 3, pads under the body, 0.5 mm",
-    "WQFN-16": "TPA6132A2: WQFN 3 x 3, leadless + exposed pad, 0.5 mm",
-    "TSSOP-30": "PCM1865: TSSOP-30, 0.5 mm pitch",
-    "USB4110": "USB4110-GF-A: USB-C, 0.5 mm pitch",
-    "SOIC-8-1EP": "TP4056: exposed thermal pad under the body",
-    "XFL4015": "XFL4015: terminals under the body",
+# optimised order: these (by footprint keyword) are bought on AliExpress and soldered by hand - NextPCB's price
+# plus its fee is higher (docs/05-fab.md, p. 1.1); the XFL4015 stays with NextPCB (one piece per board)
+OWN_BUY = {
+    "SJ-43514": "вручну: джек купує замовник (AliExpress), паяльник",
+    "TSSOP-30": "вручну: PCM1865 купує замовник (AliExpress), паяльник з флюсом, крок 0,5 мм",
 }
 
 
@@ -199,13 +195,12 @@ def full_rows(rows):
     return out
 
 
-def eco_rows(rows):
-    """Rows for the economy assembly: NextPCB keeps only the ECO parts, the other SMD parts go by hand."""
+def opt_rows(rows):
+    """Rows for the optimised order: the OWN_BUY parts become DNP, the rest as in nextpcb/."""
     out = []
     for r in rows:
-        if r["Монтаж"] == "NextPCB" and not any(k in r["Footprint"] for k in ECO):
-            r = dict(r, Монтаж="вручну: паяльник (економний монтаж) - деталь купує замовник")
-        out.append(r)
+        key = next((k for k in OWN_BUY if k in r["Footprint"]), None)
+        out.append(dict(r, Монтаж=OWN_BUY[key]) if key and r["Монтаж"] == "NextPCB" else r)
     return out
 
 
@@ -298,9 +293,9 @@ def main():
     top = sum(1 for c in cen if c["Layer"] == "Top")
     print(f"nextpcb-full: {len(bom)} BOM lines ({sum(1 for b in bom if b['Procurement Type'] == 'DNP')} DNP), "
           f"{len(cen)} placements ({top} top, {len(cen) - top} bottom), not in centroid: {missing}")
-    bom, cen, missing = nextpcb(eco_rows(rows), FAB / "nextpcb-eco")
-    print(f"nextpcb-eco: {len(bom)} BOM lines ({sum(1 for b in bom if b['Procurement Type'] == 'DNP')} DNP), "
-          f"{len(cen)} placements {sorted(c['Designator'] for c in cen)}, not in centroid: {missing}")
+    bom, cen, missing = nextpcb(opt_rows(rows), FAB / "nextpcb-opt")
+    print(f"nextpcb-opt: {len(bom)} BOM lines ({sum(1 for b in bom if b['Procurement Type'] == 'DNP')} DNP), "
+          f"{len(cen)} placements, not in centroid: {missing}")
     print("ibom:", ibom(rows))
 
 
