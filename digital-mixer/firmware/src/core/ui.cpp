@@ -18,6 +18,7 @@ enum MenuId {
     M_MIDICH, M_CTRL, M_BRIGHT, M_ENCDIR, M_SHIFTMODE, M_FADERCAL, M_BATT, M_ABOUT, M_COUNT
 };
 static const int MENU_ROWS = 8;
+static constexpr uint32_t HIGHLIGHT_MS = 1500;           // how long a turned cell stays highlighted
 
 // value colour relative to 0: white at 0, toward blue at the minimum, toward red at the maximum
 static uint16_t valueColor(int id, float v) {
@@ -101,6 +102,16 @@ int Ui::batteryPercent() {
     float v = hal_->batteryVolts();
     if (v <= 0) return -1;
     return (int)clampf((v - 3.3f) / (4.2f - 3.3f) * 100.f, 0, 100);
+}
+
+void Ui::highlight(int ch, int row) {
+    hlCh_ = ch;
+    hlRow_ = row;
+    hlUntil_ = hal_->millis() + HIGHLIGHT_MS;
+}
+
+bool Ui::highlighted(int ch, int row) const {
+    return (int32_t)(hal_->millis() - hlUntil_) < 0 && (ch < 0 || ch == hlCh_) && row == hlRow_;
 }
 
 void Ui::changed() {
@@ -204,6 +215,7 @@ void Ui::encoder(int id, int delta) {
             return;
         }
     if (shiftOn()) used_[B_SHIFT] = true;
+    highlight(ch, row);
     stepParam(ch, rowParam(ch, row), delta);
 }
 
@@ -259,6 +271,7 @@ void Ui::button(int id, bool down) {
         }
         if (shiftOn()) used_[B_SHIFT] = true;
         int pid = rowParam(ch, row);
+        highlight(ch, row);
         setParam(ch, pid, paramDesc(pid).def);
     }
 }
@@ -623,19 +636,8 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
 }
 
 // Home layout: row labels once on the left, then 4 input strips and the master strip.
-static constexpr int LABEL_W = 22, STRIP_W = 57, MASTER_X = LABEL_W + NCH * STRIP_W, ROW_Y0 = 32, ROW_DY = 26;
+static constexpr int LABEL_W = 0, STRIP_W = 63, MASTER_X = LABEL_W + NCH * STRIP_W, ROW_Y0 = 32, ROW_DY = 26;
 static constexpr int LVL_Y = 112;                       // level block: number, then meters and fader below
-
-void Ui::drawLabels(Canvas& c) {
-    for (int r = 0; r < 3; r++) {
-        int id = rowParam(0, r);
-        bool same = true;
-        for (int ch = 1; ch < NCH; ch++) same &= rowParam(ch, r) == id;
-        c.textRight(LABEL_W - 4, ROW_Y0 + r * ROW_DY + 5, same ? rowLabel(id) : "F/C", paramColor(id));
-    }
-    c.textRight(LABEL_W - 4, LVL_Y + 2, "LVL", col::DIM);
-    c.vline(LABEL_W - 1, 16, DISPLAY_H - 16, col::DARK);
-}
 
 void Ui::drawStrip(Canvas& c, int ch, int x) {
     const Scene& s = settings_->ctrlMode ? shadow_ : *scene_;
@@ -650,6 +652,7 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
     for (int r = 0; r < 3; r++) {
         int id = rowParam(ch, r), y0 = ROW_Y0 + r * ROW_DY;
         float v = paramGet(s, *live_, ch, id);
+        if (highlighted(ch, r)) c.fill(x, y0 - 3, w, 22, rgb(35, 55, 110));
         paramFormat(id, v, buf, sizeof buf);
         float n = paramNorm(id, v);
         c.textCentered(x + w / 2, y0, buf, col::WHITE);
@@ -701,13 +704,34 @@ void Ui::drawMaster(Canvas& c, int x) {
 }
 
 void Ui::drawHome(Canvas& c) {
-    char title[48];
-    if (shiftOn()) snprintf(title, sizeof title, shiftLatched_ ? "SHIFT ON: GAIN PAN FILT/COMP" : "SHIFT: GAIN PAN FILT/COMP");
-    else snprintf(title, sizeof title, "%s %s %s", auxLayer_ ? "AUX" : "HI", fxLayer_[0] ? rowLabel(P_SEND_FX1, true) : "MID",
-                  fxLayer_[1] ? rowLabel(P_SEND_FX2, true) : "LO");
     c.clear(col::BLACK);
-    drawTop(c, title, shiftOn() ? col::YELLOW : col::WHITE);
-    drawLabels(c);
+    drawTop(c, "", col::WHITE);
+    if ((int32_t)(hal_->millis() - toastUntil_) >= 0) {
+        // the three row names of the current layer; the one being turned gets a coloured background
+        const char* prefix = shiftOn() ? (shiftLatched_ ? "SHIFT ON:" : "SHIFT:") : "";
+        const char* words[3];
+        int ids[3];
+        for (int r = 0; r < 3; r++) {
+            int ch = highlighted(-1, r) ? hlCh_ : 0;
+            ids[r] = rowParam(ch, r);
+            bool same = true;
+            for (int k = 1; k < NCH; k++) same &= rowParam(k, r) == ids[r];
+            words[r] = same || highlighted(-1, r) ? rowLabel(ids[r], true) : "FILT/COMP";
+        }
+        int total = Canvas::textWidth(prefix) + (prefix[0] ? 6 : 0);
+        for (int r = 0; r < 3; r++) total += Canvas::textWidth(words[r]) + (r < 2 ? 8 : 0);
+        int x = DISPLAY_W / 2 - total / 2;
+        uint16_t base = shiftOn() ? col::YELLOW : col::WHITE;
+        if (prefix[0]) x = c.text(x, 3, prefix, base) + 5;
+        for (int r = 0; r < 3; r++) {
+            int wd = Canvas::textWidth(words[r]);
+            if (highlighted(-1, r)) {
+                c.fill(x - 2, 1, wd + 4, 12, paramColor(ids[r]));
+                c.text(x, 3, words[r], col::BLACK);
+            } else c.text(x, 3, words[r], base);
+            x += wd + 8;
+        }
+    }
     for (int ch = 0; ch < NCH; ch++) drawStrip(c, ch, LABEL_W + ch * STRIP_W);
     drawMaster(c, MASTER_X);
 }

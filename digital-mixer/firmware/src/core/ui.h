@@ -46,6 +46,8 @@ private:
     Scene& ed() { return settings_->ctrlMode ? shadow_ : *scene_; }
     int fxHeld() const;                   // -1 or 0/1 while FX I / FX II is held (edit mode)
     void changed();
+    void highlight(int ch, int row);      // the cell being turned, for the display
+    bool highlighted(int ch, int row) const;   // ch < 0: any channel
     int batteryPercent();                 // -1 unknown
     void setParam(int ch, int id, float v, bool fromMidi = false);
     void stepParam(int ch, int id, int delta);
@@ -61,7 +63,6 @@ private:
     void menuItem(int i, char* label, char* value, int n);
     // drawing
     void drawHome(Canvas& c);
-    void drawLabels(Canvas& c);
     void drawStrip(Canvas& c, int ch, int x);
     void drawMaster(Canvas& c, int x);
     void drawFx(Canvas& c, int k);
@@ -88,7 +89,9 @@ private:
     bool used_[B_COUNT] = {};             // a held button was used as a modifier
     bool auxLayer_ = false, fxLayer_[NFX] = {false, false};
     bool shiftLatched_ = false;           // SHIFT in toggle mode (settings)
-    bool compRow_[NCH] = {};              // SHIFT layer, 3rd row: false = filter, true = compressor
+    bool compRow_[NCH] = {};
+    int hlCh_ = 0, hlRow_ = -1;
+    uint32_t hlUntil_ = 0;              // SHIFT layer, 3rd row: false = filter, true = compressor
     uint32_t encAt_[E_COUNT] = {};
     bool encSeen_[E_COUNT] = {};
 
