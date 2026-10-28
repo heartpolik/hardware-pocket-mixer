@@ -19,8 +19,10 @@ enum MenuId {
 };
 static const int MENU_ROWS = 8;
 
-// value colour by position: blue at the minimum, white in the middle, red at the maximum
-static uint16_t valueColor(float n) {
+// value colour relative to 0: white at 0, toward blue at the minimum, toward red at the maximum
+static uint16_t valueColor(int id, float v) {
+    const ParamDesc& d = paramDesc(id);
+    float n = v >= 0 ? (d.max > 0 ? 0.5f + 0.5f * v / d.max : 0.5f) : (d.min < 0 ? 0.5f - 0.5f * v / d.min : 0.5f);
     n = clampf(n, 0, 1);
     const float lo[3] = {60, 110, 255}, mid[3] = {255, 255, 255}, hi[3] = {240, 50, 40};
     const float* a = n < 0.5f ? lo : mid;
@@ -652,7 +654,7 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
         float n = paramNorm(id, v);
         c.textCentered(x + w / 2, y0, buf, col::WHITE);
         int k = paramDesc(id).kind;
-        drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, valueColor(n));   // colour by position
+        drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, valueColor(id, v));   // colour relative to 0
     }
     // level block: fader level (and compressor gain reduction) on top, meters below (the faders are physical)
     float db = faderDb(live_->fader[ch]);
