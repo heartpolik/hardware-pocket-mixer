@@ -16,6 +16,10 @@ public:
 
 class Recorder {
 public:
+    // what goes into the file (menu REC TRACKS): MAIN L/R, the 8 inputs, or the 8 inputs + MAIN
+    enum Source : uint8_t { MAIN = 0, INPUTS = 1, INPUTS_MAIN = 2, SOURCE_COUNT = 3 };
+    static int channelsOf(int source) { return source == MAIN ? 2 : source == INPUTS ? 8 : 10; }
+
     // ring: power-of-two size in bytes
     void init(uint8_t* ring, uint32_t size, float fs) {
         ring_ = ring;
@@ -24,10 +28,12 @@ public:
     }
     uint32_t ringBytes() const { return mask_ + 1; }
 
-    bool start(FileSink* f, const char* name, int channels) {
+    bool start(FileSink* f, const char* name, int source, int bits = 24) {
         if (active_ || !ring_ || !f || !f->open(name)) return false;
         sink_ = f;
-        channels_ = channels;
+        source_ = source;
+        channels_ = channelsOf(source);
+        bytes_ = bits == 16 ? 2 : 3;
         head_ = tail_ = 0;
         dataBytes_ = 0;
         overruns = 0;
@@ -52,7 +58,7 @@ public:
     // audio thread: ch[channels_] pointers, n samples each
     void write(const float* const* ch, int n) {
         if (!active_) return;
-        uint32_t need = (uint32_t)(n * channels_ * 3);
+        uint32_t need = (uint32_t)(n * channels_ * bytes_);
         uint32_t used = head_ - tail_;
         if (used + need > mask_ + 1) { overruns = overruns + 1; return; }
         uint32_t h = head_;
@@ -60,10 +66,16 @@ public:
             for (int c = 0; c < channels_; c++) {
                 float x = ch[c] ? ch[c][i] : 0.f;
                 x = x > 1.f ? 1.f : (x < -1.f ? -1.f : x);
-                int32_t v = (int32_t)(x * 8388607.f);
-                ring_[h++ & mask_] = (uint8_t)v;
-                ring_[h++ & mask_] = (uint8_t)(v >> 8);
-                ring_[h++ & mask_] = (uint8_t)(v >> 16);
+                if (bytes_ == 2) {
+                    int32_t v = (int32_t)(x * 32767.f);
+                    ring_[h++ & mask_] = (uint8_t)v;
+                    ring_[h++ & mask_] = (uint8_t)(v >> 8);
+                } else {
+                    int32_t v = (int32_t)(x * 8388607.f);
+                    ring_[h++ & mask_] = (uint8_t)v;
+                    ring_[h++ & mask_] = (uint8_t)(v >> 8);
+                    ring_[h++ & mask_] = (uint8_t)(v >> 16);
+                }
             }
         head_ = h;
     }
@@ -87,7 +99,11 @@ public:
 
     bool active() const { return active_; }
     int channels() const { return channels_; }
-    uint32_t seconds() const { return channels_ ? dataBytes_ / (3u * channels_ * fs_) : 0; }
+    int source() const { return source_; }
+    int bits() const { return bytes_ * 8; }
+    uint32_t dataBytes() const { return dataBytes_; }
+    uint32_t ringUsed() const { return head_ - tail_; }
+    uint32_t seconds() const { return channels_ ? dataBytes_ / ((uint32_t)bytes_ * channels_ * fs_) : 0; }
     volatile uint32_t overruns = 0;
 
 private:
@@ -95,8 +111,8 @@ private:
         auto u32 = [&](int at, uint32_t v) { h[at] = v; h[at + 1] = v >> 8; h[at + 2] = v >> 16; h[at + 3] = v >> 24; };
         auto u16 = [&](int at, uint32_t v) { h[at] = v; h[at + 1] = v >> 8; };
         memcpy(h, "RIFF", 4); u32(4, 36 + data); memcpy(h + 8, "WAVEfmt ", 8);
-        u32(16, 16); u16(20, 1); u16(22, channels_); u32(24, fs_); u32(28, fs_ * 3 * channels_);
-        u16(32, 3 * channels_); u16(34, 24);
+        u32(16, 16); u16(20, 1); u16(22, channels_); u32(24, fs_); u32(28, fs_ * bytes_ * channels_);
+        u16(32, bytes_ * channels_); u16(34, bytes_ * 8);
         memcpy(h + 36, "data", 4); u32(40, data);
     }
 
@@ -104,7 +120,7 @@ private:
     uint32_t mask_ = 0, fs_ = 48000;
     volatile uint32_t head_ = 0, tail_ = 0;
     uint32_t dataBytes_ = 0;
-    int channels_ = 2;
+    int channels_ = 2, source_ = MAIN, bytes_ = 3;
     volatile bool active_ = false;
     FileSink* sink_ = nullptr;
 };

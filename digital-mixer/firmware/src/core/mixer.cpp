@@ -212,10 +212,9 @@ void Mixer::process(AudioIO& io) {
     if (recorder && recorder->active()) {
         const float* chans[2 * NCH + 2];
         int k = 0;
-        if (recorder->channels() > 2)
+        if (recorder->source() != Recorder::MAIN)
             for (int i = 0; i < 2 * NCH; i++) chans[k++] = io.in[i];
-        chans[k++] = oML;
-        chans[k++] = oMR;
+        if (recorder->source() != Recorder::INPUTS) { chans[k++] = oML; chans[k++] = oMR; }
         recorder->write(chans, n);
     }
 }

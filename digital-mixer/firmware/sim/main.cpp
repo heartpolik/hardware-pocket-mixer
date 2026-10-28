@@ -7,7 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <fcntl.h>
+#include <glob.h>
+#include <termios.h>
+#include <unistd.h>
+
 #include <atomic>
+#include <map>
 #include <chrono>
 #include <fstream>
 #include <mutex>
@@ -24,7 +30,8 @@
 #include "sources.h"
 
 static constexpr float FS = 48000.f;
-static constexpr int WIN_W = 960, WIN_H = 930;
+static constexpr int WIN_W = 1250, WIN_H = 930;     // panel 960 + status column
+static constexpr int STATUS_X = 975;
 
 // ------------------------------------------------------------------ platform glue
 class StdioSink : public FileSink {
@@ -94,7 +101,7 @@ public:
     float cpuLoad() override { return cpu; }
     FileSink* recSink() override { return &sink; }
     void recFileName(char* buf, int n) override { snprintf(buf, n, "rec-%04d.wav", recIndex++); }
-    int recChannels() override { return 10; }
+    int recMaxChannels() override { return 10; }
 
 private:
     std::chrono::steady_clock::time_point t0_;
@@ -189,6 +196,8 @@ struct Sim {
 };
 
 static Sim* g_sim = nullptr;
+struct RemoteLink;
+static RemoteLink* g_rl = nullptr;            // set in --remote mode (script screenshots)
 
 static void audioCallback(void*, Uint8* stream, int len) {
     float* out = (float*)stream;
@@ -233,10 +242,119 @@ static float faderFromY(int y) {
     return dsp::clampf(1.f - (float)(y - Panel::FADER_Y0) / (Panel::FADER_Y1 - Panel::FADER_Y0), 0, 1);
 }
 
-static void drawPanel(Sim& s, Canvas& w, const bool latched[B_COUNT], float encAngle[E_COUNT]) {
+// ------------------------------------------------------------------ remote panel (--remote)
+// A Teensy running the mixer firmware streams its display rows and a status line over USB serial
+// (src/teensy/remote.h); controls of the panel go back to it as text commands.
+struct RemoteLink {
+    int fd = -1;
+    std::string port;
+    std::vector<uint8_t> in;
+    std::map<std::string, std::string> st;   // last status line
+    uint32_t rows = 0, statusAt = 0;
+
+    bool open(const std::string& path) {
+        std::string p = path;
+        if (p == "auto") {
+            glob_t g;
+            if (glob("/dev/cu.usbmodem*", 0, nullptr, &g) == 0 && g.gl_pathc) p = g.gl_pathv[0];
+            globfree(&g);
+            if (p == "auto") return false;
+        }
+        fd = ::open(p.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+        if (fd < 0) return false;
+        termios t;
+        tcgetattr(fd, &t);
+        cfmakeraw(&t);
+        tcsetattr(fd, TCSANOW, &t);
+        port = p;
+        send("R 1");
+        return true;
+    }
+    void send(const char* line) {
+        if (fd < 0) return;
+        std::string l = std::string(line) + "\n";
+        if (::write(fd, l.data(), l.size()) < 0) {}
+    }
+    // read what arrived; display rows go straight into `display`
+    void poll(uint16_t* display) {
+        if (fd < 0) return;
+        uint8_t buf[65536];
+        for (;;) {
+            ssize_t n = ::read(fd, buf, sizeof buf);
+            if (n <= 0) break;
+            in.insert(in.end(), buf, buf + n);
+        }
+        size_t i = 0;
+        while (in.size() - i >= 5) {
+            if (in[i] != 0xA5 || in[i + 1] != 0x5A) { i++; continue; }
+            size_t len = in[i + 3] | in[i + 4] << 8;
+            if (in.size() - i < 5 + len) break;
+            const uint8_t* pl = &in[i + 5];
+            if (in[i + 2] == 1 && len == 1 + 2 * DISPLAY_W && pl[0] < DISPLAY_H) {
+                memcpy(display + pl[0] * DISPLAY_W, pl + 1, 2 * DISPLAY_W);
+                rows++;
+            } else if (in[i + 2] == 2) {
+                std::istringstream ss(std::string((const char*)pl, len));
+                std::string kv;
+                while (ss >> kv) {
+                    size_t e = kv.find('=');
+                    if (e != std::string::npos) st[kv.substr(0, e)] = kv.substr(e + 1);
+                }
+                statusAt = SDL_GetTicks();
+            }
+            i += 5 + len;
+        }
+        in.erase(in.begin(), in.begin() + i);
+    }
+    std::string get(const char* k) const { auto it = st.find(k); return it == st.end() ? "" : it->second; }
+};
+
+// what the panel shows: from the local simulator or from the remote Teensy
+struct PanelState {
+    std::string label[12];
+    bool held[B_COUNT] = {}, aux = false, fx[2] = {}, shift = false, mute[NCH] = {}, cue[NCH] = {};
+    float fader[NCH] = {};
+};
+
+static PanelState localState(Sim& s) {
+    PanelState p;
+    for (int i = 0; i < 12; i++) p.label[i] = s.ui.rowLabel(s.ui.rowParam(i / 3, i % 3));
+    for (int b = 0; b < B_COUNT; b++) p.held[b] = s.ui.held(b);
+    p.aux = s.ui.layerAux(); p.fx[0] = s.ui.layerFx(0); p.fx[1] = s.ui.layerFx(1); p.shift = s.ui.shiftOn();
+    for (int c = 0; c < NCH; c++) { p.mute[c] = s.scene.ch[c].mute; p.cue[c] = s.scene.ch[c].cue; p.fader[c] = s.live.fader[c]; }
+    return p;
+}
+
+static PanelState remoteState(const RemoteLink& r) {
+    PanelState p;
+    std::istringstream ls(r.get("lbl"));
+    std::string t;
+    for (int i = 0; i < 12 && std::getline(ls, t, ','); i++) p.label[i] = t;
+    std::string h = r.get("held"), m = r.get("mute"), c = r.get("cue");
+    for (int b = 0; b < B_COUNT && b < (int)h.size(); b++) p.held[b] = h[b] == '1';
+    for (int k = 0; k < NCH; k++) { p.mute[k] = k < (int)m.size() && m[k] == '1'; p.cue[k] = k < (int)c.size() && c[k] == '1'; }
+    p.aux = r.get("aux") == "1"; p.fx[0] = r.get("fx1") == "1"; p.fx[1] = r.get("fx2") == "1"; p.shift = r.get("shift") == "1";
+    std::istringstream fs(r.get("fad"));
+    for (int k = 0; k < NCH && std::getline(fs, t, ','); k++) p.fader[k] = (float)atof(t.c_str());
+    return p;
+}
+
+static uint16_t ringColor(const std::string& l, int row) {
+    if (l == "AUX") return col::CYAN;
+    if (l == "GN") return col::YELLOW;
+    if (l == "PAN") return col::GREEN;
+    if (l == "FLT" && row == 2) return col::BLUE;
+    if (l == "CMP") return col::RED;
+    if (row == 1 && l != "MID") return col::MAGENTA;      // FX I send
+    if (row == 2 && l != "LO") return col::ORANGE;        // FX II send
+    return col::GREY;
+}
+
+static void drawPanel(Sim& s, Canvas& w, const bool latched[B_COUNT], float encAngle[E_COUNT], const RemoteLink* rl = nullptr) {
+    PanelState ps = rl ? remoteState(*rl) : localState(s);
     w.clear(rgb(24, 24, 28));
     // display, 2x, dimmed by the backlight setting
-    int bl = s.hal.backlight;
+    int bl = rl ? 100 : (int)s.hal.backlight;
     for (int y = 0; y < DISPLAY_H; y++)
         for (int x = 0; x < DISPLAY_W; x++) {
             uint16_t p = s.display[y * DISPLAY_W + x];
@@ -263,43 +381,88 @@ static void drawPanel(Sim& s, Canvas& w, const bool latched[B_COUNT], float encA
     char buf[32];
     for (int ch = 0; ch < NCH; ch++) {
         int x = Panel::colX(ch);
-        snprintf(buf, sizeof buf, "IN%d %s", ch + 1, s.src[ch].name.substr(0, 10).c_str());
+        if (rl) snprintf(buf, sizeof buf, "IN%d", ch + 1);
+        else snprintf(buf, sizeof buf, "IN%d %s", ch + 1, s.src[ch].name.substr(0, 10).c_str());
         w.textCentered(x, 392, buf, col::DIM);
         for (int r = 0; r < 3; r++) {
-            int id = ch * 3 + r, pid = s.ui.rowParam(ch, r);
-            uint16_t ring = pid == P_SEND_AUX ? PCOL[1] : pid == P_SEND_FX1 ? PCOL[2] : pid == P_SEND_FX2 ? PCOL[3]
-                          : pid == P_GAIN ? col::YELLOW : pid == P_PAN ? col::GREEN : pid == P_FILTER ? col::BLUE
-                          : pid == P_COMP ? col::RED : col::GREY;
-            knob(x, Panel::rowY(r), 26, encAngle[id], s.ui.held(id), ring);
-            w.text(x + 32, Panel::rowY(r) - 4, s.ui.rowLabel(pid), ring == col::GREY ? col::DIM : ring);
+            int id = ch * 3 + r;
+            const std::string& lab = ps.label[id];
+            uint16_t ring = ringColor(lab, r);
+            knob(x, Panel::rowY(r), 26, encAngle[id], ps.held[id], ring);
+            w.text(x + 32, Panel::rowY(r) - 4, lab.c_str(), ring == col::GREY ? col::DIM : ring);
         }
         w.fill(x - 3, Panel::FADER_Y0, 6, Panel::FADER_Y1 - Panel::FADER_Y0, rgb(10, 10, 10));
-        int fy = Panel::FADER_Y0 + (int)((1.f - s.live.fader[ch]) * (Panel::FADER_Y1 - Panel::FADER_Y0));
+        int fy = Panel::FADER_Y0 + (int)((1.f - ps.fader[ch]) * (Panel::FADER_Y1 - Panel::FADER_Y0));
         w.fill(x - 20, fy - 8, 40, 16, rgb(200, 200, 205));
         w.hline(x - 20, fy, 40, col::BLACK);
-        const ChannelParams& p = s.scene.ch[ch];
-        button(x, Panel::MUTE_Y, p.cue ? "MUTE/CUE" : "MUTE", p.mute ? col::RED : p.cue ? col::YELLOW : 0,
-               s.ui.held(B_MUTE1 + ch), false);
+        button(x, Panel::MUTE_Y, ps.cue[ch] ? "MUTE/CUE" : "MUTE", ps.mute[ch] ? col::RED : ps.cue[ch] ? col::YELLOW : 0,
+               ps.held[B_MUTE1 + ch], false);
     }
-    knob(Panel::RIGHT_X, Panel::MASTER_Y, 32, encAngle[E_MASTER], s.ui.held(B_MASTER), col::WHITE);
+    knob(Panel::RIGHT_X, Panel::MASTER_Y, 32, encAngle[E_MASTER], ps.held[B_MASTER], col::WHITE);
     w.textCentered(Panel::RIGHT_X, Panel::MASTER_Y + 42, "MASTER", col::DIM);
     w.textCentered(Panel::RIGHT_X, Panel::MASTER_Y + 54, "PUSH = MENU", col::GREY);
-    button(Panel::RIGHT_X, Panel::rowY(0), "AUX", s.ui.layerAux() ? col::CYAN : 0, s.ui.held(B_AUX), latched[B_AUX]);
-    button(Panel::RIGHT_X, Panel::rowY(1), "FX I", s.ui.layerFx(0) ? col::MAGENTA : 0, s.ui.held(B_FX1), latched[B_FX1]);
-    button(Panel::RIGHT_X, Panel::rowY(2), "FX II", s.ui.layerFx(1) ? col::ORANGE : 0, s.ui.held(B_FX2), latched[B_FX2]);
-    button(Panel::RIGHT_X, Panel::MUTE_Y, "SHIFT", s.ui.shiftOn() ? col::YELLOW : 0, s.ui.held(B_SHIFT), latched[B_SHIFT]);
+    button(Panel::RIGHT_X, Panel::rowY(0), "AUX", ps.aux ? col::CYAN : 0, ps.held[B_AUX], latched[B_AUX]);
+    button(Panel::RIGHT_X, Panel::rowY(1), "FX I", ps.fx[0] ? col::MAGENTA : 0, ps.held[B_FX1], latched[B_FX1]);
+    button(Panel::RIGHT_X, Panel::rowY(2), "FX II", ps.fx[1] ? col::ORANGE : 0, ps.held[B_FX2], latched[B_FX2]);
+    button(Panel::RIGHT_X, Panel::MUTE_Y, "SHIFT", ps.shift ? col::YELLOW : 0, ps.held[B_SHIFT], latched[B_SHIFT]);
 
-    static const char* const MON[] = {"MAIN", "AUX", "PHONES"};
-    snprintf(buf, sizeof buf, "OUT: %s", MON[s.monitor % 3]);
-    w.text(720, 30, buf, col::GREEN, 2);
-    snprintf(buf, sizeof buf, "HOST CPU %.1f%%", (double)s.hal.cpu.load());
-    w.text(720, 56, buf, col::DIM);
-    if (s.paused) w.text(720, 70, "PAUSED", col::RED);
+    // status column
+    int sx = STATUS_X, sy = 24;
+    w.vline(sx - 12, 10, WIN_H - 60, col::DARK);
+    auto line = [&](const std::string& t, uint16_t c, int scale = 1) { w.text(sx, sy, t.c_str(), c, scale); sy += 9 * scale + 4; };
+    if (!rl) {
+        static const char* const MON[] = {"MAIN", "AUX", "PHONES"};
+        line("SIMULATOR", col::WHITE, 2);
+        line(std::string("OUT: ") + MON[s.monitor % 3], col::GREEN, 2);
+        snprintf(buf, sizeof buf, "HOST CPU %.1f%%", (double)s.hal.cpu.load());
+        line(buf, col::DIM);
+        if (s.paused) line("PAUSED", col::RED);
+    } else {
+        bool live = SDL_GetTicks() - rl->statusAt < 1500;
+        line("TEENSY", col::WHITE, 2);
+        line(rl->port, col::DIM);
+        line(live ? "LINK OK" : "NO DATA", live ? col::GREEN : col::RED);
+        sy += 6;
+        auto kv = [&](const char* name, const std::string& v, uint16_t c = col::WHITE) {
+            w.text(sx, sy, name, col::DIM);
+            w.text(sx + 84, sy, v.c_str(), c);
+            sy += 13;
+        };
+        char b2[64];
+        snprintf(b2, sizeof b2, "%.0f S", atof(rl->get("t").c_str()) / 1000.0); kv("UPTIME", b2);
+        snprintf(b2, sizeof b2, "%s / MAX %s %%", rl->get("cpu").c_str(), rl->get("cpumax").c_str()); kv("AUDIO CPU", b2);
+        snprintf(b2, sizeof b2, "%s / MAX %s", rl->get("amem").c_str(), rl->get("amemmax").c_str()); kv("AUDIO MEM", b2);
+        kv("LOOP / S", rl->get("loop"));
+        snprintf(b2, sizeof b2, "%s HZ, USB %sx%s", rl->get("fs").c_str(), rl->get("usb").c_str(), rl->get("usb").c_str()); kv("AUDIO", b2);
+        snprintf(b2, sizeof b2, "%s MB", rl->get("psram").c_str()); kv("PSRAM", b2, rl->get("psram") == "0" ? col::RED : col::GREEN);
+        kv("BATTERY", rl->get("bat") + " V");
+        sy += 6;
+        bool sd = rl->get("sd") == "1", rec = rl->get("rec") == "1";
+        kv("SD CARD", sd ? "PRESENT" : "NONE", sd ? col::GREEN : col::RED);
+        static const char* const SRC[] = {"MAIN 2", "IN 8", "IN+MAIN 10"};
+        int src = atoi(rl->get("recsrc").c_str()) % 3;
+        snprintf(b2, sizeof b2, "%s TRK, %s BIT", SRC[src], rl->get("recbits").c_str()); kv("REC SETUP", b2);
+        kv("RECORDING", rec ? rl->get("recfile") + "  " + rl->get("recsec") + " S" : "OFF", rec ? col::RED : col::WHITE);
+        kv("RING", rl->get("ring"));
+        kv("OVERRUNS", rl->get("overrun"), rl->get("overrun") == "0" ? col::WHITE : col::RED);
+        sy += 6;
+        std::string a = rl->get("i2c");
+        static const char* const DEV[] = {"ADC1 0x4A", "ADC2 0x4B", "MCP1 0x20", "MCP2 0x21", "MCP3 0x22"};
+        for (int i = 0; i < 5; i++) {
+            bool ok = i < (int)a.size() && a[i] == '1';
+            kv(DEV[i], ok ? "OK" : "NO ANSWER", ok ? col::GREEN : col::RED);
+        }
+        sy += 6;
+        snprintf(b2, sizeof b2, "%u / %s", rl->rows, rl->get("rowsout").c_str()); kv("ROWS RX/TX", b2, col::DIM);
+        kv("FRAMES", rl->get("frames"), col::DIM);
+    }
     w.text(10, WIN_H - 34, "WHEEL/DRAG: TURN  CLICK: PUSH  RMB ON AUX/FX/SHIFT: LATCH  KEYS: SHIFT A F G = HOLD,", col::GREY);
     w.text(10, WIN_H - 20, "Q W E R = MUTE, UP/DOWN/ENTER = MASTER, O = OUTPUT, SPACE = PAUSE, P = SCREENSHOT, ESC", col::GREY);
+    (void)PCOL;
 }
 
 // ------------------------------------------------------------------ script (headless and --script)
+static void remoteSend(const char* line) { g_rl->send(line); }
 static int buttonByName(const std::string& n) {
     if (n == "master") return B_MASTER;
     if (n == "aux") return B_AUX;
@@ -330,11 +493,17 @@ static bool runScriptLine(Sim& s, const std::string& line, Canvas* panel, bool l
     std::istringstream in(line);
     std::string cmd;
     if (!(in >> cmd) || cmd[0] == '#') return true;
-    if (cmd == "enc") { std::string id; int d; in >> id >> d; s.ui.encoder(encByName(id), d); }
-    else if (cmd == "press") { std::string id; in >> id; s.ui.button(buttonByName(id), true); }
-    else if (cmd == "release") { std::string id; in >> id; s.ui.button(buttonByName(id), false); }
-    else if (cmd == "click") { std::string id; in >> id; int b = buttonByName(id); s.ui.button(b, true); s.ui.button(b, false); }
-    else if (cmd == "fader") { int ch; float p; in >> ch >> p; s.ui.fader(ch - 1, p); }
+    char c[48];
+    auto enc = [&](int id, int d) { if (g_rl) { snprintf(c, sizeof c, "E %d %d", id, d); remoteSend(c); } else s.ui.encoder(id, d); };
+    auto btn = [&](int b, bool dn) { if (g_rl) { snprintf(c, sizeof c, "B %d %d", b, dn); remoteSend(c); } else s.ui.button(b, dn); };
+    if (cmd == "enc") { std::string id; int d; in >> id >> d; enc(encByName(id), d); }
+    else if (cmd == "press") { std::string id; in >> id; btn(buttonByName(id), true); }
+    else if (cmd == "release") { std::string id; in >> id; btn(buttonByName(id), false); }
+    else if (cmd == "click") { std::string id; in >> id; int b = buttonByName(id); btn(b, true); btn(b, false); }
+    else if (cmd == "fader") {
+        int ch; float p; in >> ch >> p;
+        if (g_rl) { snprintf(c, sizeof c, "F %d %.4f", ch - 1, (double)p); remoteSend(c); } else s.ui.fader(ch - 1, p);
+    }
     else if (cmd == "wait") { int ms; in >> ms; advance(s, ms); }
     else if (cmd == "monitor") { int m; in >> m; s.monitor = m; }
     else if (cmd == "midi") {
@@ -343,9 +512,9 @@ static bool runScriptLine(Sim& s, const std::string& line, Canvas* panel, bool l
         s.ui.midiIn(m, n);
     } else if (cmd == "shot" || cmd == "panel") {
         std::string f; in >> f;
-        s.ui.render(s.disp);
+        if (!g_rl) s.ui.render(s.disp);          // remote: the display already holds the Teensy's rows
         if (cmd == "shot") writePng(f.c_str(), s.display, DISPLAY_W, DISPLAY_H);
-        else if (panel) { drawPanel(s, *panel, latched, ang); writePng(f.c_str(), panel->data(), WIN_W, WIN_H); }
+        else if (panel) { drawPanel(s, *panel, latched, ang, g_rl); writePng(f.c_str(), panel->data(), WIN_W, WIN_H); }
         printf("screenshot %s\n", f.c_str());
     } else if (cmd == "meters") {
         printf("meters dBFS: ");
@@ -369,13 +538,16 @@ static void usage() {
            "  --headless          no window, no sound card: run the script on a virtual clock\n"
            "  --small-mem         FX memory as on a Teensy without PSRAM\n"
            "  --data DIR          where scenes are kept (default sim-data)\n"
-           "  --midi              print MIDI OUT messages\n");
+           "  --midi              print MIDI OUT messages\n"
+           "  --remote [PORT]     panel for a real Teensy over USB serial (default: first /dev/cu.usbmodem*)\n");
 }
 
 int main(int argc, char** argv) {
     static Sim sim;
     g_sim = &sim;
     bool headless = false, smallMem = false;
+    std::string remotePort;
+    static RemoteLink link;
     std::string script, outWav;
     for (int c = 0; c < NCH; c++) sim.src[c].setDemo(c);
     for (int i = 1; i < argc; i++) {
@@ -393,6 +565,7 @@ int main(int argc, char** argv) {
         else if (a == "--small-mem") smallMem = true;
         else if (a == "--data" && i + 1 < argc) sim.hal.dataDir = argv[++i];
         else if (a == "--midi") sim.hal.verboseMidi = true;
+        else if (a == "--remote") remotePort = (i + 1 < argc && argv[i + 1][0] != '-') ? argv[++i] : "auto";
         else { usage(); return a == "--help" || a == "-h" ? 0 : 1; }
     }
     sim.hal.virtualClock = headless;
@@ -430,9 +603,18 @@ int main(int argc, char** argv) {
     want.channels = 2;
     want.samples = 256;
     want.callback = audioCallback;
-    SDL_AudioDeviceID dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
-    if (!dev) fprintf(stderr, "no audio device: %s (running silent)\n", SDL_GetError());
-    else SDL_PauseAudioDevice(dev, 0);
+    RemoteLink* rl = nullptr;
+    if (!remotePort.empty()) {
+        if (!link.open(remotePort)) { fprintf(stderr, "cannot open %s\n", remotePort.c_str()); return 1; }
+        rl = &link;
+        g_rl = rl;
+        memset(sim.display, 0, sizeof sim.display);
+        printf("remote panel on %s\n", link.port.c_str());
+        SDL_SetWindowTitle(win, "Pocket digital mixer - remote panel (Teensy)");
+    }
+    SDL_AudioDeviceID dev = rl ? 0 : SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
+    if (!dev && !rl) fprintf(stderr, "no audio device: %s (running silent)\n", SDL_GetError());
+    else if (dev) SDL_PauseAudioDevice(dev, 0);
 
     size_t scriptPos = 0;
     uint32_t scriptWaitUntil = 0;
@@ -442,8 +624,24 @@ int main(int argc, char** argv) {
     float wheelAcc = 0;
     bool running = true;
     int shotN = 1;
-    auto setHeld = [&](int b, bool down) { if (!latched[b]) sim.ui.button(b, down); };
-    auto turn = [&](int id, int d) { sim.ui.encoder(id, d); ang[id] += d * 0.26f; };
+    char cmd[48];
+    auto uiButton = [&](int b, bool down) {
+        if (rl) { snprintf(cmd, sizeof cmd, "B %d %d", b, down ? 1 : 0); rl->send(cmd); }
+        else sim.ui.button(b, down);
+    };
+    float remoteFader[NCH] = {0.75f, 0.75f, 0.75f, 0.75f};
+    auto uiFader = [&](int ch, float pos) {
+        pos = dsp::clampf(pos, 0, 1);
+        if (rl) { remoteFader[ch] = pos; snprintf(cmd, sizeof cmd, "F %d %.4f", ch, (double)pos); rl->send(cmd); }
+        else sim.ui.fader(ch, pos);
+    };
+    auto faderNow = [&](int ch) { return rl ? remoteFader[ch] : (float)sim.live.fader[ch]; };
+    auto setHeld = [&](int b, bool down) { if (!latched[b]) uiButton(b, down); };
+    auto turn = [&](int id, int d) {
+        if (rl) { snprintf(cmd, sizeof cmd, "E %d %d", id, d); rl->send(cmd); }
+        else sim.ui.encoder(id, d);
+        ang[id] += d * 0.26f;
+    };
 
     while (running) {
         SDL_Event e;
@@ -459,7 +657,7 @@ int main(int argc, char** argv) {
                         while (wheelAcc >= 1) { turn(h.id, 1); wheelAcc -= 1; }
                         while (wheelAcc <= -1) { turn(h.id, -1); wheelAcc += 1; }
                     } else if (h.t == Panel::Hit::Fader) {
-                        sim.ui.fader(h.id, sim.live.fader[h.id] + e.wheel.preciseY * 0.01f);
+                        uiFader(h.id, faderNow(h.id) + e.wheel.preciseY * 0.01f);
                     }
                     break;
                 }
@@ -468,18 +666,18 @@ int main(int argc, char** argv) {
                     if (e.button.button == SDL_BUTTON_RIGHT) {
                         if (h.t == Panel::Hit::Btn && (h.id == B_AUX || h.id == B_FX1 || h.id == B_FX2 || h.id == B_SHIFT)) {
                             latched[h.id] = !latched[h.id];
-                            sim.ui.button(h.id, latched[h.id]);
-                        } else if (h.t == Panel::Hit::Enc) sim.ui.button(h.id == E_MASTER ? B_MASTER : h.id, true), drag = h;
+                            uiButton(h.id, latched[h.id]);
+                        } else if (h.t == Panel::Hit::Enc) uiButton(h.id == E_MASTER ? B_MASTER : h.id, true), drag = h;
                         break;
                     }
                     drag = h; dragY = e.button.y; dragAcc = 0; dragMoved = false;
                     if (h.t == Panel::Hit::Btn) setHeld(h.id, true);
-                    if (h.t == Panel::Hit::Fader) sim.ui.fader(h.id, faderFromY(e.button.y));
+                    if (h.t == Panel::Hit::Fader) uiFader(h.id, faderFromY(e.button.y));
                     break;
                 }
                 case SDL_MOUSEMOTION:
                     if (!(e.motion.state & SDL_BUTTON_LMASK)) break;
-                    if (drag.t == Panel::Hit::Fader) sim.ui.fader(drag.id, faderFromY(e.motion.y));
+                    if (drag.t == Panel::Hit::Fader) uiFader(drag.id, faderFromY(e.motion.y));
                     if (drag.t == Panel::Hit::Enc) {
                         dragAcc += dragY - e.motion.y;
                         dragY = e.motion.y;
@@ -489,15 +687,15 @@ int main(int argc, char** argv) {
                     break;
                 case SDL_MOUSEBUTTONUP:
                     if (e.button.button == SDL_BUTTON_RIGHT) {
-                        if (drag.t == Panel::Hit::Enc) sim.ui.button(drag.id == E_MASTER ? B_MASTER : drag.id, false);
+                        if (drag.t == Panel::Hit::Enc) uiButton(drag.id == E_MASTER ? B_MASTER : drag.id, false);
                         drag = {};
                         break;
                     }
                     if (drag.t == Panel::Hit::Btn) setHeld(drag.id, false);
                     if (drag.t == Panel::Hit::Enc && !dragMoved) {
                         int b = drag.id == E_MASTER ? B_MASTER : drag.id;
-                        sim.ui.button(b, true);
-                        sim.ui.button(b, false);
+                        uiButton(b, true);
+                        uiButton(b, false);
                     }
                     drag = {};
                     break;
@@ -510,11 +708,11 @@ int main(int argc, char** argv) {
                         case SDLK_a: setHeld(B_AUX, down); break;
                         case SDLK_f: setHeld(B_FX1, down); break;
                         case SDLK_g: setHeld(B_FX2, down); break;
-                        case SDLK_q: sim.ui.button(B_MUTE1, down); break;
-                        case SDLK_w: sim.ui.button(B_MUTE1 + 1, down); break;
-                        case SDLK_e: sim.ui.button(B_MUTE1 + 2, down); break;
-                        case SDLK_r: sim.ui.button(B_MUTE1 + 3, down); break;
-                        case SDLK_RETURN: sim.ui.button(B_MASTER, down); break;
+                        case SDLK_q: uiButton(B_MUTE1, down); break;
+                        case SDLK_w: uiButton(B_MUTE1 + 1, down); break;
+                        case SDLK_e: uiButton(B_MUTE1 + 2, down); break;
+                        case SDLK_r: uiButton(B_MUTE1 + 3, down); break;
+                        case SDLK_RETURN: uiButton(B_MASTER, down); break;
                         case SDLK_UP: if (down) turn(E_MASTER, 1); break;
                         case SDLK_DOWN: if (down) turn(E_MASTER, -1); break;
                         case SDLK_o: if (down) sim.monitor = (sim.monitor + 1) % 3; break;
@@ -542,15 +740,20 @@ int main(int argc, char** argv) {
             if (cmd == "wait") { int ms; in >> ms; scriptWaitUntil = sim.hal.millis() + ms; scriptPos++; break; }
             if (!runScriptLine(sim, lines[scriptPos++], &panel, latched, ang)) { running = false; break; }
         }
-        sim.ui.tick();
-        sim.ui.render(sim.disp);
-        drawPanel(sim, panel, latched, ang);
+        if (rl) {
+            rl->poll(sim.display);
+        } else {
+            sim.ui.tick();
+            sim.ui.render(sim.disp);
+        }
+        drawPanel(sim, panel, latched, ang, rl);
         SDL_UpdateTexture(tex, nullptr, panelBuf, WIN_W * 2);
         SDL_RenderClear(ren);
         SDL_RenderCopy(ren, tex, nullptr, nullptr);
         SDL_RenderPresent(ren);
     }
     if (dev) SDL_CloseAudioDevice(dev);
+    if (rl) rl->send("R 0");
     if (sim.recorder.active()) sim.recorder.stop();
     sim.closeOutWav();
     SDL_Quit();

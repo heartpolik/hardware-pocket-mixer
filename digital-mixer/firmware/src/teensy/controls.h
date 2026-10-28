@@ -42,6 +42,7 @@ public:
     bool begin(Ui* ui);
     void poll();                                // call from loop()
     static void masterIsr();
+    bool readFaders = true;                     // off while the remote panel drives the faders
 
 private:
     bool mcpWrite(int k, uint8_t reg, uint8_t v);

@@ -14,7 +14,7 @@ using dsp::clampf;
 
 enum MenuId {
     M_EXIT, M_LOAD, M_SAVE, M_MODE1, M_MODE4 = M_MODE1 + 3, M_WIDTH1, M_WIDTH4 = M_WIDTH1 + 3,
-    M_PHONES, M_TEMPO, M_TAP, M_CLOCK, M_LIMITER, M_USBVOL, M_USBSEND, M_TUNER, M_REC,
+    M_PHONES, M_TEMPO, M_TAP, M_CLOCK, M_LIMITER, M_USBVOL, M_USBSEND, M_TUNER, M_REC, M_RECSRC, M_RECBITS,
     M_MIDICH, M_CTRL, M_BRIGHT, M_ENCDIR, M_SHIFTMODE, M_FADERCAL, M_BATT, M_ABOUT, M_COUNT
 };
 static const int MENU_ROWS = 8;
@@ -380,7 +380,8 @@ void Ui::toggleRecord() {
     if (!sink) { toast("REC", "NO CARD"); return; }
     char name[32];
     hal_->recFileName(name, sizeof name);
-    if (rec_->start(sink, name, hal_->recChannels())) toast("REC", name);
+    if (Recorder::channelsOf(settings_->recSource) > hal_->recMaxChannels()) { toast("REC", "NEED PSRAM"); return; }
+    if (rec_->start(sink, name, settings_->recSource, settings_->recBits)) toast("REC", name);
     else toast("REC", "FAILED");
 }
 
@@ -477,6 +478,13 @@ void Ui::menuItem(int i, char* label, char* value, int n) {
                 snprintf(value, n, "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
             } else snprintf(value, n, "OFF");
             break;
+        case M_RECSRC: {
+            static const char* const S[] = {"MAIN", "IN 1-4", "IN+MAIN"};
+            snprintf(label, n, "REC TRACKS");
+            snprintf(value, n, "%s %d", S[settings_->recSource % 3], Recorder::channelsOf(settings_->recSource));
+            break;
+        }
+        case M_RECBITS: snprintf(label, n, "REC BITS"); snprintf(value, n, "%d", settings_->recBits); break;
         case M_MIDICH: snprintf(label, n, "MIDI CH"); snprintf(value, n, "%d-%d", settings_->midiCh + 1, (settings_->midiCh + 4) % 16 + 1); break;
         case M_CTRL: snprintf(label, n, "CONTROLLER"); snprintf(value, n, settings_->ctrlMode ? "ON" : "OFF"); break;
         case M_BRIGHT: snprintf(label, n, "BRIGHTNESS"); snprintf(value, n, "%d", settings_->brightness); break;
@@ -572,6 +580,13 @@ void Ui::menuPress() {
         case M_LIMITER: scene_->limiter ^= 1; changed(); break;
         case M_TUNER: page_ = TUNER; tuner_ = TunerResult(); break;
         case M_REC: toggleRecord(); break;
+        case M_RECSRC:
+        case M_RECBITS:
+            if (rec_ && rec_->active()) { toast("REC", "STOP FIRST"); break; }
+            if (i == M_RECSRC) settings_->recSource = (uint8_t)((settings_->recSource + 1) % Recorder::SOURCE_COUNT);
+            else settings_->recBits = settings_->recBits == 24 ? 16 : 24;
+            settingsDirty_ = true;
+            break;
         case M_CTRL:
             settings_->ctrlMode ^= 1;
             settingsDirty_ = true;
@@ -640,7 +655,12 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
         snprintf(buf, sizeof buf, "%s %s", toastL_, toastV_);
         c.fill(0, 0, rx + 4, 14, col::BLUE);
         c.textCentered(DISPLAY_W / 2, 3, buf, col::WHITE);
-    } else c.textCentered(DISPLAY_W / 2, 3, title, colr);
+    } else {
+        // centred, but moved left of the indicators (REC, CTRL) when they would overlap it
+        int w = Canvas::textWidth(title);
+        int x = (DISPLAY_W - w) / 2;
+        c.text(x < rx - 6 - w ? x : rx - 6 - w, 3, title, colr);
+    }
 }
 
 // Home layout: row labels once on the left, then 4 input strips and the master strip.

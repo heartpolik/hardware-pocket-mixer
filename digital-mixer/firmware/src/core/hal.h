@@ -21,5 +21,5 @@ public:
     // recorder
     virtual FileSink* recSink() = 0;                             // nullptr: no card
     virtual void recFileName(char* buf, int n) = 0;              // next free name
-    virtual int recChannels() = 0;                               // 10 (8 inputs + MAIN) or 2 (MAIN)
+    virtual int recMaxChannels() = 0;                            // 10 with PSRAM (2 MB ring), else 2 (MAIN)
 };

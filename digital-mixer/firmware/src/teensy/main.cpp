@@ -15,6 +15,7 @@
 #include "controls.h"
 #include "pcm1865.h"
 #include "pins.h"
+#include "remote.h"
 #include "st7789.h"
 
 extern "C" uint8_t external_psram_size;        // MB of PSRAM fitted under the Teensy 4.1 (0 = none)
@@ -28,6 +29,7 @@ static Ui ui;
 static Controls controls;
 static St7789 lcd;
 static Pcm1865 adc[2];
+static Remote remote;
 static uint16_t framebuf[DISPLAY_W * DISPLAY_H];
 static Canvas canvas(framebuf, DISPLAY_W, DISPLAY_H);
 
@@ -165,13 +167,15 @@ public:
     float batteryVolts() override { return analogRead(pin::VBAT) / 4095.f * 3.3f * 2.f; }
     float cpuLoad() override { return AudioProcessorUsage(); }
     FileSink* recSink() override { return sdOk ? &sink : nullptr; }
+    char lastRec[16] = "-";
     void recFileName(char* buf, int n) override {
         for (int i = 1; i < 10000; i++) {
             snprintf(buf, n, "REC%04d.WAV", i);
-            if (!SD.exists(buf)) return;
+            if (!SD.exists(buf)) break;
         }
+        snprintf(lastRec, sizeof lastRec, "%s", buf);
     }
-    int recChannels() override { return psram ? 10 : 2; }
+    int recMaxChannels() override { return psram ? 10 : 2; }
 };
 static TeensyHal hal;
 
@@ -229,16 +233,66 @@ void setup() {
     digitalWriteFast(pin::HP_EN, HIGH);
 }
 
+// which chips answer on I2C (a bare Teensy shows them missing on the remote panel)
+static bool i2cAck(TwoWire& w, uint8_t addr) {
+    w.beginTransmission(addr);
+    return w.endTransmission() == 0;
+}
+
+static uint32_t framesRendered = 0;
+
+static void sendStatus(uint32_t loopsPerSec, const bool ack[5]) {
+    static char s[512];
+    int n = 0;
+    auto add = [&](const char* fmt, auto... args) { n += snprintf(s + n, sizeof s - n, fmt, args...); };
+    add("t=%lu cpu=%.1f cpumax=%.1f amem=%u amemmax=%u fs=%d usb=%d psram=%u", (unsigned long)millis(),
+        (double)AudioProcessorUsage(), (double)AudioProcessorUsageMax(), AudioMemoryUsage(), AudioMemoryUsageMax(),
+        (int)AUDIO_SAMPLE_RATE_EXACT, USB_OUT, external_psram_size);
+    add(" sd=%d rec=%d recsrc=%d recbits=%d recsec=%lu recfile=%s overrun=%lu ring=%lu/%lu", hal.sdOk,
+        recorder.active(), settings.recSource, settings.recBits, (unsigned long)recorder.seconds(), hal.lastRec,
+        (unsigned long)recorder.overruns, (unsigned long)recorder.ringUsed(), (unsigned long)recorder.ringBytes());
+    add(" bat=%.2f loop=%lu i2c=%d%d%d%d%d page=%d aux=%d fx1=%d fx2=%d shift=%d held=", (double)hal.batteryVolts(),
+        (unsigned long)loopsPerSec, ack[0], ack[1], ack[2], ack[3], ack[4], ui.page(), ui.layerAux(), ui.layerFx(0),
+        ui.layerFx(1), ui.shiftOn());
+    for (int b = 0; b < B_COUNT; b++) add("%d", ui.held(b));
+    add(" frames=%lu rowsout=%lu", (unsigned long)framesRendered, (unsigned long)remote.rowsSent);
+    add(" mute=");
+    for (int c = 0; c < NCH; c++) add("%d", scene.ch[c].mute);
+    add(" cue=");
+    for (int c = 0; c < NCH; c++) add("%d", scene.ch[c].cue);
+    add(" fad=%.3f,%.3f,%.3f,%.3f lbl=", (double)live.fader[0], (double)live.fader[1], (double)live.fader[2],
+        (double)live.fader[3]);
+    for (int i = 0; i < 12; i++) add("%s%s", i ? "," : "", ui.rowLabel(ui.rowParam(i / 3, i % 3)));
+    remote.status(s);
+}
+
 void loop() {
-    static uint32_t lastFrame = 0;
+    static uint32_t lastFrame = 0, lastStatus = 0, lastProbe = 0, loops = 0, loopsPerSec = 0, loopsAt = 0;
+    static bool ack[5];
+    loops++;
+    controls.readFaders = !remote.fadersFromHost;
     controls.poll();
+    bool remoteInput = remote.poll(ui);
     midiFromUsb();
     ui.tick();
     uint32_t now = millis();
-    if (!lcd.pending() && now - lastFrame >= 33) {       // ~30 fps, only changed rows go to the panel
+    if (now - loopsAt >= 1000) { loopsPerSec = loops; loops = 0; loopsAt = now; }
+    if (now - lastProbe >= 5000 || !lastProbe) {
+        lastProbe = now | 1;
+        ack[0] = i2cAck(Wire, ADC_ADDR[0]);
+        ack[1] = i2cAck(Wire, ADC_ADDR[1]);
+        for (int k = 0; k < 3; k++) ack[2 + k] = i2cAck(Wire2, MCP_ADDR[k]);
+    }
+    if (!lcd.pending() && (now - lastFrame >= 33 || (remoteInput && now - lastFrame >= 10))) {   // ~30 fps
         lastFrame = now;
         ui.render(canvas);
         lcd.frame(framebuf);
+        remote.frame(framebuf);
+        framesRendered++;
+    }
+    if (remote.active && now - lastStatus >= 250) {
+        lastStatus = now;
+        sendStatus(loopsPerSec, ack);
     }
     lcd.service(framebuf);
     usbMIDI.send_now();

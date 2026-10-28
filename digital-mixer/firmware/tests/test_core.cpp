@@ -232,7 +232,7 @@ struct FakeHal : Hal {
     float batteryVolts() override { return 4.0f; }
     FileSink* recSink() override { return nullptr; }
     void recFileName(char* b, int n) override { snprintf(b, n, "X.WAV"); }
-    int recChannels() override { return 2; }
+    int recMaxChannels() override { return 2; }
 };
 
 static void testUi() {
@@ -360,7 +360,7 @@ static void testRecorder() {
     std::vector<uint8_t> ring(1 << 16);
     Recorder rec;
     rec.init(ring.data(), (uint32_t)ring.size(), FS);
-    rec.start(&sink, "x", 2);
+    rec.start(&sink, "x", Recorder::MAIN);
     float a[N], b[N];
     for (int i = 0; i < N; i++) { a[i] = 0.5f; b[i] = -0.5f; }
     const float* ch[2] = {a, b};
@@ -370,6 +370,17 @@ static void testRecorder() {
     CHECK(data == 100u * N * 6 && sink.d.size() == 44 + data, "wav data %u", data);
     int32_t v = (int32_t)((uint32_t)(sink.d[44] << 8 | sink.d[45] << 16 | sink.d[46] << 24)) >> 8;
     CHECK(abs(v - 4194303) <= 1, "24-bit sample %d", v);
+    // 10 tracks at 16 bits: header and data size follow the settings
+    rec.start(&sink, "y", Recorder::INPUTS_MAIN, 16);
+    const float* ch10[10];
+    for (int c = 0; c < 10; c++) ch10[c] = c & 1 ? b : a;
+    for (int k = 0; k < 50; k++) { rec.write(ch10, N); rec.service(); }
+    rec.stop();
+    int nch = sink.d[22] | sink.d[23] << 8, bitsPer = sink.d[34] | sink.d[35] << 8;
+    uint32_t data2 = sink.d[40] | sink.d[41] << 8 | sink.d[42] << 16 | (uint32_t)sink.d[43] << 24;
+    CHECK(nch == 10 && bitsPer == 16 && data2 == 50u * N * 10 * 2, "10 ch 16 bit: ch %d bits %d data %u", nch, bitsPer, data2);
+    int16_t s16 = (int16_t)(sink.d[44] | sink.d[45] << 8);
+    CHECK(abs(s16 - 16383) <= 1, "16-bit sample %d", s16);
 }
 
 int main() {

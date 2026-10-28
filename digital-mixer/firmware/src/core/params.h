@@ -66,8 +66,11 @@ struct Settings {
     // top < bottom = the fader is wired the other way round
     uint16_t fadLo[NCH] = {0, 0, 0, 0};
     uint16_t fadHi[NCH] = {65535, 65535, 65535, 65535};
+    uint8_t recSource = 2;      // Recorder::Source: 0 MAIN, 1 inputs, 2 inputs + MAIN
+    uint8_t recBits = 24;       // 16 or 24
+    uint8_t pad2[2] = {};
     uint32_t crc = 0;
-    static constexpr uint32_t MAGIC = 0x4D585332;
+    static constexpr uint32_t MAGIC = 0x4D585333;
     void seal();
     bool valid() const;
 };

@@ -38,6 +38,7 @@ public:
     bool layerFx(int k) const { return fxLayer_[k]; }
     bool held(int b) const { return down_[b]; }
     bool shiftOn() const { return down_[B_SHIFT] || shiftLatched_; }
+    int page() const { return page_; }      // 0 home, 1 menu, 2 tuner, 3 fader calibration
     int rowParam(int ch, int row) const;
     const char* rowLabel(int id, bool full = false) const;   // FX sends: engine of the bus (3 letters / full)
 

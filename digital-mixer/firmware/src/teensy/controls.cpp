@@ -113,7 +113,7 @@ void Controls::poll() {
     e = btn_[B_SHIFT].update(digitalReadFast(pin::SHIFT) == LOW, now);
     if (e) ui_->button(B_SHIFT, e > 0);
 
-    if (now - lastFader_ >= 5) {
+    if (readFaders && now - lastFader_ >= 5) {
         lastFader_ = now;
         for (int ch = 0; ch < 4; ch++) {
             float x = analogRead(pin::FADER[ch]) / 4095.f;      // raw; ends and direction: menu FADER CAL
