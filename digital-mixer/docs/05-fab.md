@@ -13,6 +13,7 @@ python3 hw/pcb/fab.py      # з digital-mixer/: усе нижче заново (
 |---|---|
 | [hw/fab/main-gerber.zip](../hw/fab/main-gerber.zip) | Gerber 4 шарів (F.Cu, In1 GND, In2, B.Cu), маски, паста, шовкографія, контур; свердловка PTH / NPTH окремо — **завантажити як PCB** |
 | [hw/fab/nextpcb/bom-nextpcb.csv](../hw/fab/nextpcb/bom-nextpcb.csv) | **BOM для PCBA**: Designator, Quantity, Manufacturer, Manufacturer Part Number, Description, Package, Procurement Type, Customer Note — 67 рядків, 25 з них `DNP` (ручний монтаж) |
+| [hw/fab/nextpcb-full/](../hw/fab/nextpcb-full/) | **для порівняння цін — повний монтаж:** BOM і координати обох боків, з вивідними деталями (фейдери, дисплей); DNP лише Teensy. Фейдер — PTA2043-2010DPB103 (код склав я за таблицею «How To Order» Bourns PTA); енкодери, кнопки, кнопка живлення й дисплей — деталі продавців, якщо NextPCB не знайде — давальницькі |
 | [hw/fab/nextpcb/centroid-nextpcb.zip](../hw/fab/nextpcb/centroid-nextpcb.zip) | **файл координат** (pick and place): Designator, Mid X / Mid Y (мм), Rotation, Layer — 158 деталей, усі на нижньому боці; той самий CSV — поруч |
 | [assembly-bottom.pdf](../hw/fab/nextpcb/assembly-bottom.pdf), [assembly-top.pdf](../hw/fab/nextpcb/assembly-top.pdf) | монтажні креслення (контур, шовкографія, контури деталей з позначеннями); низ — дзеркально, як його бачать на столі |
 | [hw/fab/bom.csv](../hw/fab/bom.csv) | повний перелік українською: 186 деталей, виробник, партномер, хто монтує |

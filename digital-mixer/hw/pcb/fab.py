@@ -9,6 +9,7 @@ Writes hw/fab/:
                              Number, Description, Package, Procurement Type (DNP = mounted by hand), Customer Note
   nextpcb/centroid-nextpcb.csv (+ .zip)  pick and place of the parts NextPCB places (mm, Top / Bottom)
   nextpcb/assembly-top.pdf, assembly-bottom.pdf   assembly drawings (fab + silk + outline)
+  nextpcb-full/              the same for a full-assembly quote (both sides, THT included, only the Teensy DNP)
 and docs/ibom/ibom.html - InteractiveHtmlBom (as mixerli documentation/ibom/ibom.html). InteractiveHtmlBom:
 common/tools/ibom (pip --target, see common/README.md).
 
@@ -77,6 +78,21 @@ PASSIVES = {
     ("470", "R_0805"): ("Yageo", "RC0805FR-07470RL", "resistor 470 R 1% 0805"),
     ("33 0.5W", "R_2010"): ("Yageo", "RC2010FK-0733RL", "resistor 33 R 1% 0.75 W 2010"),
     ("10 0.25W", "R_1206"): ("Yageo", "RC1206FR-0710RL", "resistor 10 R 1% 0.5 W 1206"),
+}
+# hand-mounted parts as they would be ordered for a full-assembly quote (by footprint keyword):
+# (manufacturer, part number, description, note for the assembler)
+FULL = {
+    "EC12SY": ("Shenzhen Darong Electronics (seller drawing)", "EC12SY-H6-17.5F5.0-24C24P-SMD-612",
+               "rotary encoder 24 detents / 24 pulses, push switch, SMD, shaft 17.5 mm D-flat",
+               "top side; seller part (docs/datasheets/ec12sy-smd-encoder-drawing.png) - consign if not sourceable"),
+    "TSF-1266": ("(seller drawing)", "TSF-1266", "tact switch 6 x 6 x 5 mm SMT, 2 pads 8.0 apart, 260 gf",
+                 "top side; any 6x6x5 SMT tact switch with this land pattern"),
+    "Latching": ("(seller drawing)", "self-locking DPDT 5.8 x 5.8 mm SMD", "push latching switch DPDT, 6 legs 2.0 pitch, 30 V 0.1 A",
+                 "top side; seller part (docs/datasheets/push-latching-dpdt-5.8mm-smd-drawing.png) - consign if not sourceable"),
+    "PTA2043": ("Bourns", "PTA2043-2010DPB103", "slide potentiometer 20 mm travel, single, 10 k linear, DP lever 10 mm",
+                "THT, top side; part number composed from the Bourns PTA 'How To Order' table"),
+    "LCD_GMT147SPI": ("(module)", "GMT147SPI (GMT147-01M) 1.47in 172x320 ST7789", "TFT display module on 8-pin 2.54 header",
+                      "THT, top side; consigned module"),
 }
 # who mounts it: NextPCB places every SMD part of the bottom side; these (by footprint) by hand
 HAND = {
@@ -151,11 +167,32 @@ def write_csv(path, rows, fields=None):
         w.writerows(rows)
 
 
-def nextpcb(rows):
+def full_rows(rows):
+    """Rows for a full-assembly quote: hand-mounted parts get the part numbers of FULL and NextPCB
+    mounts them; only the Teensy stays by hand. Lines of the same part number are merged."""
+    out, by_pn = [], {}
+    for r in rows:
+        key = next((k for k in FULL if k in r["Footprint"]), None)
+        if not key:
+            out.append(r)
+            continue
+        mfr, mpn, desc, note = FULL[key]
+        if mpn in by_pn:
+            m = by_pn[mpn]
+            m["К-сть"] += r["К-сть"]
+            m["Позначення"] += "," + r["Позначення"]
+            continue
+        m = dict(r, Виробник=mfr, Партномер=mpn, Опис=desc, Монтаж="NextPCB", Примітка=note)
+        by_pn[mpn] = m
+        out.append(m)
+    return out
+
+
+def nextpcb(rows, out=OUT, smd_only=True):
     """NextPCB PCBA files: BOM (hand-mounted lines as DNP), centroid of the parts NextPCB places,
     assembly drawings."""
-    shutil.rmtree(OUT, ignore_errors=True)
-    OUT.mkdir(parents=True)
+    shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True)
     bom = []
     for r in rows:
         if r["Монтаж"] == "—":
@@ -164,27 +201,27 @@ def nextpcb(rows):
         bom.append({"Designator": r["Позначення"], "Quantity": r["К-сть"], "Manufacturer": r["Виробник"],
                     "Manufacturer Part Number": r["Партномер"], "Description": r["Опис"] or r["Номінал"],
                     "Package": r["Footprint"].split(":")[-1], "Procurement Type": "DNP" if hand else "",
-                    "Customer Note": r["Монтаж"] if hand else
+                    "Customer Note": r["Монтаж"] if hand else r.get("Примітка") or
                     ("part number to be confirmed, any maker with this description" if "ПЕРЕВІРИТИ" in r["Опис"]
                      else "")})
-    write_csv(OUT / "bom-nextpcb.csv", bom)
+    write_csv(out / "bom-nextpcb.csv", bom)
     refs = {ref for r in rows if r["Монтаж"] == "NextPCB" for ref in r["Позначення"].split(",")}
     with tempfile.TemporaryDirectory() as tmp:
         pos = Path(tmp) / "pos.csv"
         cli("pcb", "export", "pos", "-o", pos, "--format", "csv", "--units", "mm", "--side", "both",
-            "--smd-only", PCB)
+            *(["--smd-only"] if smd_only else []), PCB)
         cen = []
         for r in csv.DictReader(pos.open(encoding="utf-8")):
             if r["Ref"] in refs:
                 cen.append({"Designator": r["Ref"], "Mid X(mm)": f'{float(r["PosX"]):.4f}',
                             "Mid Y(mm)": f'{float(r["PosY"]):.4f}', "Rotation": f'{float(r["Rot"]) % 360:.1f}',
                             "Layer": "Bottom" if r["Side"] == "bottom" else "Top"})
-    write_csv(OUT / "centroid-nextpcb.csv", cen)
-    with zipfile.ZipFile(OUT / "centroid-nextpcb.zip", "w", zipfile.ZIP_DEFLATED) as z:
-        z.write(OUT / "centroid-nextpcb.csv", "centroid-nextpcb.csv")
-    cli("pcb", "export", "pdf", "-o", OUT / "assembly-top.pdf", "-l", "F.Fab,F.Silkscreen,Edge.Cuts",
+    write_csv(out / "centroid-nextpcb.csv", cen)
+    with zipfile.ZipFile(out / "centroid-nextpcb.zip", "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(out / "centroid-nextpcb.csv", "centroid-nextpcb.csv")
+    cli("pcb", "export", "pdf", "-o", out / "assembly-top.pdf", "-l", "F.Fab,F.Silkscreen,Edge.Cuts",
         "--include-border-title", PCB)
-    cli("pcb", "export", "pdf", "-o", OUT / "assembly-bottom.pdf", "-l", "B.Fab,B.Silkscreen,Edge.Cuts",
+    cli("pcb", "export", "pdf", "-o", out / "assembly-bottom.pdf", "-l", "B.Fab,B.Silkscreen,Edge.Cuts",
         "--mirror", "--include-border-title", PCB)
     missing = sorted(ref for ref in refs if ref not in {c["Designator"] for c in cen})
     return bom, cen, missing
@@ -236,6 +273,10 @@ def main():
     bom, cen, missing = nextpcb(rows)
     print(f"nextpcb: {len(bom)} BOM lines ({sum(1 for b in bom if b['Procurement Type'] == 'DNP')} DNP), "
           f"{len(cen)} placements, not in centroid: {missing}")
+    bom, cen, missing = nextpcb(full_rows(rows), FAB / "nextpcb-full", smd_only=False)
+    top = sum(1 for c in cen if c["Layer"] == "Top")
+    print(f"nextpcb-full: {len(bom)} BOM lines ({sum(1 for b in bom if b['Procurement Type'] == 'DNP')} DNP), "
+          f"{len(cen)} placements ({top} top, {len(cen) - top} bottom), not in centroid: {missing}")
     print("ibom:", ibom(rows))
 
 
