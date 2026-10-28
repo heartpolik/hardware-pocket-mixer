@@ -15,7 +15,8 @@ R0805 = "Resistor_SMD:R_0805_2012Metric"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 C1206 = "Capacitor_SMD:C_1206_3216Metric"
 CP_IN = "Capacitor_SMD:CP_Elec_4x5.4"
-JACK = "pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal"     # Rev A part, footprint copied at PCB stage
+JACK = "pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal"    # DM38 (was CUI SJ-43514-SMT)
+JACK_SYM = "pocket-digital:AudioJack_Stereo_PJ-327A"
 FADER = "Potentiometer_THT:Potentiometer_Bourns_PTA2043_Single_Slide"
 ENC = "pocket-digital:RotaryEncoder_EC12SY_SMD"                # EC12SY SMD with push switch (DM26)
 TACT = "pocket-digital:SW_TSF-1266_6x6mm_SMD"                  # 6 x 6 x 5 SMT tact (DM16), drawing / sample TBD
@@ -204,8 +205,8 @@ def build():
                 f"Ведений TDM, слоти {4 * k - 3}–{4 * k}. Вхід: 10k послідовно (−6 dB з 10 kΩ входу) + 10 µF", 2)
         for ch in chs:
             T, R = f"IN{ch}_T", f"IN{ch}_R"
-            b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", f"IN{ch} SJ-43514-SMT", JACK,
-                   {"T": T, "R1": R, "R2": "GND", "S": "GND"}, w=30)
+            b.part("J", JACK_SYM, f"IN{ch} PJ-327A", JACK,
+                   {"T": T, "TN": None, "R": R, "S": "GND", "S2": "GND"}, w=30)
             for s, n in (("L", T), ("R", R)):
                 b.r("100k", n, "GND")                        # defines the cap's jack side
                 b.r("10k", n, f"IN{ch}_{s}S")
@@ -254,8 +255,8 @@ def build():
                    fields={"Decouples": dac})       # output RC at the DAC pins (fig. 33)
             b.c("2.2n", out, "GND")
         if name != "CUE":
-            b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", f"{name} OUT SJ-43514-SMT", JACK,
-                   {"T": f"{name}_L", "R1": f"{name}_R", "R2": "GND", "S": "GND"}, w=30)
+            b.part("J", JACK_SYM, f"{name} OUT PJ-327A", JACK,
+                   {"T": f"{name}_L", "TN": None, "R": f"{name}_R", "S": "GND", "S2": "GND"}, w=30)
 
     b.block("Навушники TPA6132A2 (рис. 27, несиметричний вхід): G0 = G1 = GND → −6 dB (2,1 Vrms ЦАП → ≈1 Vrms); "
             "EN від Teensy. QFN — лише при передзбиранні JLCPCB (DM7)", 0)
@@ -271,13 +272,13 @@ def build():
     b.c("2.2u", "HP_HPVDD", "GND", fields={"Decouples": tpa})
     b.c("1u", "HP_HPVSS", "GND", fields={"Decouples": tpa})
     b.c("1u", "HP_CPP", "HP_CPN", fields={"Decouples": tpa})
-    b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", "PHONES SJ-43514-SMT", JACK,
-           {"T": "PH_L", "R1": "PH_R", "R2": "GND", "S": "GND"}, w=30)
+    b.part("J", JACK_SYM, "PHONES PJ-327A", JACK,
+           {"T": "PH_L", "TN": None, "R": "PH_R", "S": "GND", "S2": "GND"}, w=30)
 
     b.block("MIDI OUT, TRS Type A (DM20): кінчик = DIN 5 (через RC 10 Ω від UART), кільце = DIN 4 (RA 33 Ω "
             "від +3,3 V), гільза = DIN 2 / GND. Значення для 3,3 V — MIDI 1.0 Electrical Spec Update, рис. 1", 0)
-    b.part("J", "pocket-digital:AudioJack_TRRS_SJ-43514", "MIDI OUT SJ-43514-SMT", JACK,
-           {"T": "MIDI_SINK", "R1": "MIDI_SRC", "R2": "GND", "S": "GND"}, w=30)
+    b.part("J", JACK_SYM, "MIDI OUT PJ-327A", JACK,
+           {"T": "MIDI_SINK", "TN": None, "R": "MIDI_SRC", "S": "GND", "S2": "GND"}, w=30)
     b.part("R", "Device:R", "33 0.5W", "Resistor_SMD:R_2010_5025Metric", {"1": D3, "2": "MIDI_SRC"})
     b.part("R", "Device:R", "10 0.25W", "Resistor_SMD:R_1206_3216Metric", {"1": "MIDI_TX", "2": "MIDI_SINK"})
 

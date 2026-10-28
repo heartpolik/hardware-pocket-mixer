@@ -31,15 +31,15 @@ flowchart LR
 | [docs/datasheets/](docs/datasheets/README.md) | Datasheets цього підпроєкту |
 
 З аналогового [Rev A](../analog-mixer/README.md) переносимо деталі там, де вони підходять:
-джеки CUI SJ-43514, USB-C GCT USB4085, захист USBLC6-2SC6, MBR0530 і AO3401A (load sharing).
+USB-C GCT USB4085, захист USBLC6-2SC6, MBR0530 і AO3401A (load sharing).
 
 ## Ліцензія
 
 SPDX-License-Identifier: GPL-3.0-or-later — повний текст у [LICENSE](LICENSE). Стосується всього в
 `digital-mixer/`: схеми, плати, бібліотек, документації й прошивки (DM36).
 
-Цифрова версія не є похідною від mixerli: файлів звідти в ній немає. Footprint і 3D-модель джека
-SJ-43514 перейшли з Rev A, але Rev A згенерував їх сам за кресленням CUI. Чужі файли зберігають свої ліцензії:
+Цифрова версія не є похідною від mixerli: файлів звідти в ній немає (джеки — PJ-327A, footprint і модель
+згенеровано тут за кресленням продавця, DM38). Чужі файли зберігають свої ліцензії:
 символ Teensy 4.1 від XenGi — MIT ([hw/lib/third_party](hw/lib/third_party/LICENSE-teensy_library.txt));
 стандартні бібліотеки KiCad — за їхньою ліцензією з винятком для проєктів; datasheets — власність
 виробників.

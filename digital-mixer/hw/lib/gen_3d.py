@@ -5,8 +5,8 @@ Run with CadQuery (not KiCad's Python), from digital-mixer/:
   ../.venv-cq/bin/python hw/lib/gen_3d.py
 
 Every model sits in its footprint's frame (x, -y), z = 0 on the PCB. Envelope dimensions come from
-the drawings; heights or positions the drawings do not give are marked ОРІЄНТИР. The SJ-43514 jack
-uses the Rev A model (analog-mixer/hw/lib/diy-mixer.3dshapes), stock footprints the KiCad models.
+the drawings; heights or positions the drawings do not give are marked ОРІЄНТИР. Stock
+footprints use the KiCad models.
 """
 import sys
 from pathlib import Path
@@ -133,8 +133,22 @@ def jst_ph_sm4():
     return save("JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal", [(body, WHITE), (legs, METAL)])
 
 
+def pj327a():
+    """PJ-327A in the footprint frame (seller's drawing docs/datasheets/pj-327a-seller-drawing.jpg and
+    seller's STEP): body 6.0 x 12.3, 4.4 high on the legs; nose d5.0, 2.0 long in front of y = 0, its
+    axis 2.3 up (it reaches 0.2 below the seating plane - off the board edge); legs 1.0 wide out to
+    x +-4.8 on the pad centres; pegs d0.75, 0.6 below. Axis height - ОРІЄНТИР (seller's STEP)."""
+    import cadquery as cq
+    body = box(-3.0, 0.0, 3.0, 12.3, 0.1, 4.5)
+    nose = cq.Workplane("XZ").center(0, 2.3).circle(2.5).circle(1.8).extrude(-2.0)
+    legs = union(*[box(s * 2.35, y - 0.5, s * 4.8, y + 0.5, 0.0, 0.2)
+                   for s, y in ((1, 1.7), (1, 5.4), (1, 11.4), (-1, 2.7), (-1, 9.7))])
+    pegs = union(*[cyl(0, y, 0.75, -0.6, 0.1) for y in (3.0, 9.0)])
+    return save("Jack_3.5mm_PJ-327A_SMT_Horizontal", [(body, BLACK), (nose, BLACK), (legs, METAL), (pegs, BLACK)])
+
+
 def main():
-    print("\n".join([ec12sy(), tsf1266(), latch(), lcd(), teensy(), xfl4015(), vson(), usb4110(), pta2043(), jst_ph_sm4()]))
+    print("\n".join([ec12sy(), tsf1266(), latch(), lcd(), teensy(), xfl4015(), vson(), usb4110(), pta2043(), jst_ph_sm4(), pj327a()]))
 
 
 if __name__ == "__main__":

@@ -14,14 +14,14 @@ D3,1,JSCJ,MBR0530,"Schottky 30 V 0.5 A, SOD-123",D_SOD-123,,
 DS1,1,,,GMT147SPI 1.47in 172x320,LCD_GMT147SPI,DNP,"вручну: THT, гребінка дисплея"
 J1,1,GCT,USB4110-GF-A,"USB-C 2.0 receptacle, SMT",USB_C_Receptacle_GCT_USB4110,,
 J2,1,JST,S2B-PH-SM4-TB(LF)(SN),"PH 2-pin side entry, SMT",JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal,,
-J3,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J4,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J5,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J6,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J7,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J8,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J9,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
-J10,1,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",CUI_SJ-43514-SMT_TRRS_Horizontal,DNP,"вручну: джек купує замовник (AliExpress), паяльник"
+J3,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J4,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J5,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J6,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J7,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J8,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J9,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
+J10,1,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",Jack_3.5mm_PJ-327A_SMT_Horizontal,DNP,вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки
 L1,1,Coilcraft,XFL4015-471MEC,"inductor 0.47 uH 6.6 A, 4x4x1.5",L_Coilcraft_XFL4015,,
 Q1,1,Alpha & Omega,AO3401A,"P-MOSFET 30 V 4 A, SOT-23",SOT-23,,
 "R1,R2,R3,R4",4,Yageo,RC0805FR-074K7L,resistor 4.7 k 1% 0805,R_0805_2012Metric,,

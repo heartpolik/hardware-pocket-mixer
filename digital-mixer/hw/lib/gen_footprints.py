@@ -186,6 +186,30 @@ def lcd_gmt147():
     return f.write(-23.2, 23.2)
 
 
+def pj327a():
+    """PJ-327A 3.5 mm stereo jack, SMT, 5 legs - the AliExpress seller's drawing (docs/datasheets/
+    pj-327a-seller-drawing.jpg, DM38): PCB pads 5 x 2 x 3 (+-0.1), rows 6.8 apart; from the body front
+    (plug side) 1 at 1.7, 3 at 5.4, 5 at 11.4 on one side, 2 at 2.7, 4 at 9.7 on the other; pegs d0.75
+    at 3 and 9 on the axis (holes d1.30 as the HOOYA drawing - the seller's hole size is not legible);
+    1 and 2 sleeve, 3 ring, 4 tip, 5 its normally-closed switch. The seller's STEP has its legs on the
+    same centres; HOOYA / XKB / SOFNG (pj-327a-*.pdf) differ by up to 0.4. Frame: plug axis on x = 0,
+    body front at y = 0, body towards +y; the nose (2.0) is past the board edge."""
+    f = FP("Jack_3.5mm_PJ-327A_SMT_Horizontal", "PJ-327A 3.5 mm stereo jack SMT, 5 legs (seller drawing): "
+           "1 / 2 sleeve, 3 ring, 4 tip, 5 tip switch", "audio jack 3.5mm stereo SMT PJ-327A", attr="smd")
+    for num, x, y in (("1", 3.4, 1.7), ("3", 3.4, 5.4), ("5", 3.4, 11.4), ("2", -3.4, 2.7), ("4", -3.4, 9.7)):
+        f.smd(num, x, y, 3.0, 2.0)
+    for y in (3.0, 9.0):
+        f.npth(0, y, 1.3)
+    f.rect(-3.0, 0.0, 3.0, 12.3, "F.Fab", FAB)
+    f.rect(-2.5, -2.0, 2.5, 0.0, "F.Fab", FAB)                  # nose, past the board edge
+    f.text(0, 6.0, "PLUG ^", "F.Fab", 0.8)
+    f.line(-3.0, 4.0, -3.0, 8.4, "F.SilkS", SILK)
+    f.line(3.0, 6.7, 3.0, 10.1, "F.SilkS", SILK)
+    f.line(-1.9, 12.3, 1.9, 12.3, "F.SilkS", SILK)
+    f.rect(-5.15, -2.25, 5.15, 12.65, "F.CrtYd", CRT)
+    return f.write(-3.2, 13.6)
+
+
 def mounting_hole_m2():
     """As analog-mixer/hw/lib/gen_footprints.py mounting_hole_m2 (D57): KiCad MountingHole_2.2mm_M2_Pad
     pad and drill, courtyard r 2.45 on both sides for a standoff, nut or screw head."""
@@ -202,7 +226,7 @@ def mounting_hole_m2():
 
 def main():
     print("\n".join([teensy41_tht(), vson_hr10(), xfl4015(), tsf1266(), latch_smd(), ec12sy_smd(), lcd_gmt147(),
-                     mounting_hole_m2()]))
+                     pj327a(), mounting_hole_m2()]))
 
 
 if __name__ == "__main__":

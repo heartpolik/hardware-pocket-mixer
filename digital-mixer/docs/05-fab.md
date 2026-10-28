@@ -12,10 +12,10 @@ python3 hw/pcb/fab.py      # з digital-mixer/: усе нижче заново (
 | Файл | Що це |
 |---|---|
 | [hw/fab/main-gerber.zip](../hw/fab/main-gerber.zip) | Gerber 4 шарів (F.Cu, In1 GND, In2, B.Cu), маски, паста, шовкографія, контур; свердловка PTH / NPTH окремо — **завантажити як PCB** |
-| [hw/fab/nextpcb/bom-nextpcb.csv](../hw/fab/nextpcb/bom-nextpcb.csv) | **BOM для PCBA**: Designator, Quantity, Manufacturer, Manufacturer Part Number, Description, Package, Procurement Type, Customer Note — 69 рядків, 25 з них `DNP` (ручний монтаж) |
-| [hw/fab/nextpcb-full/](../hw/fab/nextpcb-full/) | **для порівняння цін — повний монтаж:** BOM і координати обох боків, з вивідними фейдерами; DNP — Teensy і дисплей (обидва на гребінках, ставляться вручну). Фейдер — PTA2043-2010DPB103 (код склав я за таблицею «How To Order» Bourns PTA); енкодери, кнопки й кнопка живлення — деталі продавців, якщо NextPCB не знайде — давальницькі |
-| [hw/fab/nextpcb-opt/](../hw/fab/nextpcb-opt/) | **оптимізоване замовлення** (п. 1.1): як `nextpcb/`, але джеки SJ-43514 ×8 і PCM1865 ×2 — `DNP` (купуємо на AliExpress, паяємо самі); 148 деталей монтажу |
-| [hw/fab/nextpcb/centroid-nextpcb.zip](../hw/fab/nextpcb/centroid-nextpcb.zip) | **файл координат** (pick and place): Designator, Mid X / Mid Y (мм), Rotation, Layer — 158 деталей, усі на нижньому боці; той самий CSV — поруч |
+| [hw/fab/nextpcb/bom-nextpcb.csv](../hw/fab/nextpcb/bom-nextpcb.csv) | **BOM для PCBA**: Designator, Quantity, Manufacturer, Manufacturer Part Number, Description, Package, Procurement Type, Customer Note — 69 рядків, 33 з них `DNP` (ручний монтаж) |
+| [hw/fab/nextpcb-full/](../hw/fab/nextpcb-full/) | **для порівняння цін — повний монтаж:** BOM і координати обох боків, з вивідними фейдерами; DNP — Teensy, дисплей (обидва на гребінках) і джеки PJ-327A (DM38). Фейдер — PTA2043-2010DPB103 (код склав я за таблицею «How To Order» Bourns PTA); енкодери, кнопки й кнопка живлення — деталі продавців, якщо NextPCB не знайде — давальницькі |
+| [hw/fab/nextpcb-opt/](../hw/fab/nextpcb-opt/) | **оптимізоване замовлення** (п. 1.1): як `nextpcb/`, але й PCM1865 ×2 — `DNP` (купуємо на AliExpress, паяємо самі) |
+| [hw/fab/nextpcb/centroid-nextpcb.zip](../hw/fab/nextpcb/centroid-nextpcb.zip) | **файл координат** (pick and place): Designator, Mid X / Mid Y (мм), Rotation, Layer — 150 деталей, усі на нижньому боці; той самий CSV — поруч |
 | [assembly-bottom.pdf](../hw/fab/nextpcb/assembly-bottom.pdf), [assembly-top.pdf](../hw/fab/nextpcb/assembly-top.pdf) | монтажні креслення (контур, шовкографія, контури деталей з позначеннями); низ — дзеркально, як його бачать на столі |
 | [hw/fab/bom.csv](../hw/fab/bom.csv) | повний перелік українською: 186 деталей, виробник, партномер, хто монтує |
 | [ibom/ibom.html](ibom/ibom.html) | **інтерактивний BOM** (InteractiveHtmlBom, як у mixerli): обидва боки плати, підсвітка деталей рядка, позначки «Закуплено» / «Встановлено» |
@@ -24,27 +24,29 @@ python3 hw/pcb/fab.py      # з digital-mixer/: усе нижче заново (
 
 ```mermaid
 flowchart LR
-    subgraph NP["NextPCB PCBA, нижній бік (158 деталей)"]
+    subgraph NP["NextPCB PCBA, нижній бік (150 деталей)"]
         IC["АЦП, ЦАП, TPA6132A2,<br/>TPS63802, TP4056, LP5907,<br/>MCP23017 ×3, USBLC6"]
         PAS["резистори, конденсатори,<br/>світлодіоди, XFL4015"]
-        CON["USB4110, JST PH,<br/>джеки SJ-43514 ×8"]
+        CON["USB4110, JST PH"]
     end
     subgraph HAND["Вручну (DNP у BOM)"]
+        JK["знизу: джеки PJ-327A ×8<br/>(DM38)"]
         TOP["згори: EC12SY ×13,<br/>TSF-1266 ×8, кнопка ON"]
         THT["фейдери ×4,<br/>гребінка дисплея"]
         T["Teensy 4.1 + PSRAM<br/>на гребінках, дротик VUSB"]
     end
-    NP --> TOP --> THT --> CHK["перевірка живлення<br/>без Teensy"] --> T
+    NP --> JK --> TOP --> THT --> CHK["перевірка живлення<br/>без Teensy"] --> T
 ```
 
 - **NextPCB** ставить усе SMD нижнього боку й закуповує деталі за партномерами BOM. Серед них корпуси,
   які паяльником не запаяти: TPS63802 (VSON), TPA6132A2 (WQFN), TP4056 (площадка під корпусом).
-- **Вручну** — верхній бік (EC12SY, кнопки, кнопка ON — з AliExpress, у дистриб'юторів їх немає),
+- **Вручну** — джеки PJ-327A знизу (з AliExpress за кресленням продавця; PJ-327A, які купить NextPCB, мають інші
+  лапки, DM38), верхній бік (EC12SY, кнопки, кнопка ON — з AliExpress, у дистриб'юторів їх немає),
   вивідні деталі й модуль Teensy. Монтаж лише одного боку — без другого трафарету й налаштування.
 
 ### 1.1 Оптимізоване замовлення (`hw/fab/nextpcb-opt/`)
 
-Котировка NextPCB для 5 плат за `nextpcb/`: BOM $283, з них найбільше — джеки SJ-43514, PCM1865 і XFL4015.
+Котировка NextPCB для 5 плат за `nextpcb/` (ще з джеками SJ-43514): BOM $283, з них найбільше — джеки, PCM1865 і XFL4015.
 Операційний збір NextPCB рахується відсотком від BOM (≈ 31 % у цій котировці), тож дорогі деталі вигідніше
 купити самим. Пасивні й дрібні мікросхеми залишаються за заводом: на них нічого не заощадити, а пайка займе
 найбільше часу. Список деталей — `OWN_BUY` у `hw/pcb/fab.py`.
@@ -53,19 +55,19 @@ flowchart LR
 
 | Деталь | Шт. | Деталі | Доставка | Разом | Пайка |
 |---|---|---|---|---|---|
-| джек SJ-43514-SMT-TR | 8 = 2 лоти по 5 | 2 × 139,19 = 278,38 грн | 344,82 грн | **623,20 грн** | паяльником, крок 2,8 мм |
+| джек PJ-327A (DM38) | 8 | 8 × 8 = 64,00 грн | безкоштовно | **64,00 грн** | паяльником, лапки збоку корпусу |
 | PCM1865DBTR | 2 | 2 × 120,59 = 241,18 грн | 94,86 грн (у кошику — за 1 шт.) | **336,04 грн** | паяльником з флюсом, крок 0,5 мм; перемички знімати обплетенням |
-| **Усього** | | 519,56 грн | 439,68 грн | **959,24 грн** | |
+| **Усього** | | 305,18 грн | 94,86 грн | **400,04 грн** | |
 | XFL4015-471ME | 1 | — | — | — | **заводом**: одна штука на плату, окремо купувати дорого |
 
-Доставка — більше половини суми цього кошика й на плату не ділиться: при кількох платах вона майже та сама.
-Доставку PCM1865 за 2 шт. — `ПЕРЕВІРИТИ` в кошику (показано за 1 шт.).
+Доставку PCM1865 за 2 шт. — `ПЕРЕВІРИТИ` в кошику (показано за 1 шт.). Першим кошиком (джеки SJ-43514) було
+959,24 грн.
 
 Деталі з AliExpress — `ПЕРЕВІРИТИ` на оригінальність: PCM1865 у LCSC позначено NRND, тому на ринку трапляються
 перемарковані мікросхеми. Перший АЦП перевірити на платі за I²C-відповіддю 0x4A / 0x4B (пульт на ПК,
 [06](06-firmware.md), п. 6) до пайки другого.
 
-**Котировки NextPCB на 1 плату** (28.10.2026, з промо):
+**Котировки NextPCB на 1 плату** (28.10.2026, з промо; ще з джеками SJ-43514 — після DM38 котирувати заново):
 
 | | економний (7 деталей, прибрано) | `nextpcb-opt/` | `nextpcb/` |
 |---|---|---|---|
@@ -81,8 +83,8 @@ flowchart LR
 ніж на $200; умови промо не перевіряв (`ОРІЄНТИР`).
 
 `nextpcb/` дорожчий за `nextpcb-opt/` на **$44.59**: $33.59 — джеки й PCM1865 у BOM NextPCB, $11 — SMT понад межу
-промо. Кошик AliExpress ≈ 960 грн (≈ $23 за курсу ≈ 41–42 грн/$, `ОРІЄНТИР`) — `nextpcb-opt/` дешевший на ≈ $21
-ціною ручної пайки двох PCM1865 (0,5 мм) і восьми джеків.
+промо. Кошик AliExpress тоді був ≈ 960 грн (≈ $23 за курсу ≈ 41–42 грн/$, `ОРІЄНТИР`) — `nextpcb-opt/` дешевший на
+≈ $21 ціною ручної пайки двох PCM1865 (0,5 мм) і восьми джеків. З PJ-327A кошик ≈ 400 грн (≈ $10).
 
 ## 2. Замовлення плати (PCB)
 
@@ -137,7 +139,7 @@ Designator, Quantity, Manufacturer Part Number (+ Procurement Type: `DNP` — н
 | Дросель | XFL4015-471MEC | [LCSC](https://lcsc.com/product-detail/Power-Inductors_Coilcraft-XFL4015-471MEC_C18221164.html) | |
 | USB-C | USB4110-GF-A | [DigiKey](https://www.digikey.ca/en/products/detail/gct/USB4110-GF-A/10384547) | |
 | Роз'єм акумулятора | S2B-PH-SM4-TB(LF)(SN) | [LCSC](https://jlcpcb.com/partdetail/JST-S2B_PH_SM4_TB_LF_SN/C295747) | |
-| Джеки ×8 | SJ-43514-SMT-TR | [DigiKey](https://www.digikey.com/es/products/detail/same-sky-formerly-cui-devices/SJ-43514-SMT-TR/669724) | |
+| Джеки ×8 | PJ-327A (DM38) | [AliExpress](https://www.aliexpress.com/item/1005006127348664.html), [креслення продавця](datasheets/pj-327a-seller-drawing.jpg) | ціна ≈ 8 грн, безкоштовна доставка (28.10.2026, `ОРІЄНТИР`); PJ-327A інших виробників (LCSC: HOOYA, XKB, SOFNG) мають лапки до 0,4 мм інакше — не підставляти без звірки |
 | Кераміка | CL31B106KAHNNNE, CL21B104KBCNNNC, CL31A226KAHNNNE, CL21B105KAFNNNE, CL21B225KAFNNNE, CL21C222JBFNNNE (Samsung) | [10 µ](https://www.lcsc.com/product-image/C14860.html), [100 n](https://fat.lcsc.com/product-detail/image/CL21B104KBCNNNC_C1711.html), [22 µ](https://www.lcsc.com/product-detail/C12891.html), [1 µ](https://www.futureelectronics.com/p/passives--capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl21b105kafnnne-samsung-electro-mechanics-2046528), [2,2 µ](https://www.lcsc.com/product-detail/C19110.html), [2,2 n C0G](https://www.lcsc.com/product-detail/C28260.html) | 100 n і 2,2 µ — у частини дистриб'юторів «не для нових розробок»; рівноцінна заміна допустима |
 | Електроліти ×8 | EEE-1CA100SR (Panasonic) | [TME](https://www.tme.eu/gb/details/eee1ca100sr/smd-electrolytic-capacitors/panasonic/) | NRND за Octopart; заміна — 10 µF 16 V 4 × 5,4 SMD |
 | Світлодіоди | LTST-C171KRKT, LTST-C171KGKT (Lite-On) | [RS](https://twcn.rs-online.com/web/p/leds/6920941), [Arrow](https://www.arrow.com/en/products/ltst-c171kgkt/lite-on-technology.html?region=nac) | |
@@ -145,7 +147,7 @@ Designator, Quantity, Manufacturer Part Number (+ Procurement Type: `DNP` — н
 | Резистори 0805 1 % | Yageo RC0805FR-07… (10k, 100k, 4K7, 33R, 5K1, 2K4, 1K, 91K, 470R) | [10k](https://www.lcsc.com/product-detail/C84376.html), [4K7](https://jlcpcb.com/partdetail/RC0805FR-074K7L/C60816), [33R](https://www.lcsc.com/product-detail/C126353.html), [91K](https://www.lcsc.com/product-image/C137484.html), [5K1](https://www.lcsc.com/product-image/C84375.html), [2K4](https://www.lcsc.com/product-image/C114521.html) | **665k (RC0805FR-07665KL) — `ПЕРЕВІРИТИ`**: партномер за схемою Yageo, сторінки не знайдено; будь-який 665 kΩ 1 % 0805 |
 | Резистори MIDI | RC2010FK-0733RL (33 Ω 2010), RC1206FR-0710RL (10 Ω 1206) | [2010](https://www.ibselectronics.com/part/yageo/rc2010fk-0733rl/419924/), [1206](https://www.lcsc.com/product-image/C108080.html) | |
 
-Ручний монтаж (DNP) — з AliExpress / магазинів України (DM7): EC12SY-H6-17.5F5.0-24C24P-SMD ×13,
+Ручний монтаж (DNP) — з AliExpress / магазинів України (DM7): джеки PJ-327A ×8 (DM38), EC12SY-H6-17.5F5.0-24C24P-SMD ×13,
 TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери PTA2043 B10K ×4, дисплей GMT147SPI на
 гребінці, Teensy 4.1 + гребінки 2,54 (2 × 1×24, стандартна планка 2,5 мм) + 3 тонкі дроти (D−, D+, VUSB) + PSRAM
 8 МБ SOIC-8 (1–2 шт., PJRC тестувала APS6404L-3SQR, [PJRC](https://www.pjrc.com/store/psram.html)),
@@ -153,8 +155,8 @@ TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери PT
 
 ## 5. Ручний монтаж — порядок
 
-0. **Лише для `nextpcb-opt/` (п. 1.1):** нижній бік — PCM1865 ×2, потім джеки ×8. Перемички на PCM1865
-   перевірити під лупою.
+0. **Нижній бік:** для `nextpcb-opt/` (п. 1.1) — спершу PCM1865 ×2, перемички перевірити під лупою; потім у всіх
+   варіантах — джеки PJ-327A ×8 (передній торець корпусу — по краю плати, напрямні в отвори).
 1. **Верх: кнопки TSF-1266, кнопка ON, енкодери EC12SY** — напрямні енкодера в отвори (їхнє положення
    звірити до пайки, [04](04-pcb.md), п. 5). Плату класти на м'яку підкладку: знизу вже стоять деталі.
 2. **Фейдери PTA2043** і **гребінка дисплея** (дисплей ставити останнім, на стійки M2).

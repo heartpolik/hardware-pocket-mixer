@@ -279,12 +279,13 @@ def main():
     outs = {"MAIN_L": 0, "AUX_L": 1, "MIDI_SINK": 2, "PH_L": 3}
     for ref, c in comps.items():
         fpn, p = c["fp"], {k: v.lstrip("/") for k, v in c["pins"].items()}
-        if "SJ-43514" in fpn:
-            t = p.get("2", "")
+        if "PJ-327A" in fpn:
+            # PJ-327A (DM38): body front on the board edge, the nose (2.0) and courtyard margin past it
+            t = p.get("4", "")                      # tip
             if t.startswith("IN"):
-                at_edge(pcb, ref, L.xs[int(t[2]) - 1], 0.0, "-y", "1", True, 0.5)
+                at_edge(pcb, ref, L.xs[int(t[2]) - 1], 0.0, "-y", "1", True, 2.25)
             else:
-                at_edge(pcb, ref, L.y_out[outs[t]], W, "+x", "1", True, 0.5)
+                at_edge(pcb, ref, L.y_out[outs[t]], W, "+x", "1", True, 2.25)
             placed.add(ref)
         elif "Teensy41" in fpn:
             at_edge(pcb, ref, L.T_X, D, "+y", "25", True, -L.T_BACK)       # microSD end 6 mm off the front (DM35)

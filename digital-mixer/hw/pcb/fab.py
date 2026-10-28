@@ -55,7 +55,7 @@ PARTS = {
     "GCT USB4110-GF-A": ("GCT", "USB4110-GF-A", "USB-C 2.0 receptacle, SMT"),
     "LiPo 1S 3000 mAh (з платою захисту)": ("JST", "S2B-PH-SM4-TB(LF)(SN)", "PH 2-pin side entry, SMT"),
 }
-JACK = ("Same Sky (CUI)", "SJ-43514-SMT-TR", "3.5 mm TRRS jack, SMT")
+JACK = ("(AliExpress seller)", "PJ-327A", "3.5 mm stereo jack SMT, 5 legs (DM38)")
 # (value, footprint suffix) -> (manufacturer, part number, description)
 PASSIVES = {
     ("10u", "C_1206"): ("Samsung", "CL31B106KAHNNNE", "MLCC 10 uF 25 V X7R 1206"),
@@ -103,12 +103,13 @@ HAND = {
     "EC12SY": "вручну: верхній бік, AliExpress (DM26)",
     "TSF-1266": "вручну: верхній бік, AliExpress",
     "Latching": "вручну: верхній бік, AliExpress (DM27)",
+    "PJ-327A": "вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки",
     "MountingHole": "—",
 }
 # optimised order: these (by footprint keyword) are bought on AliExpress and soldered by hand - NextPCB's price
-# plus its fee is higher (docs/05-fab.md, p. 1.1); the XFL4015 stays with NextPCB (one piece per board)
+# plus its fee is higher (docs/05-fab.md, p. 1.1); the XFL4015 stays with NextPCB (one piece per board).
+# The PJ-327A jacks are hand-mounted in every variant (HAND)
 OWN_BUY = {
-    "SJ-43514": "вручну: джек купує замовник (AliExpress), паяльник",
     "TSSOP-30": "вручну: PCM1865 купує замовник (AliExpress), паяльник з флюсом, крок 0,5 мм",
 }
 
@@ -126,7 +127,7 @@ def mount(footprint):
 
 def part_of(value, footprint):
     fp = footprint.split(":")[-1]
-    if "SJ-43514" in fp:
+    if "PJ-327A" in fp:
         return JACK
     if value in PARTS:
         return PARTS[value]

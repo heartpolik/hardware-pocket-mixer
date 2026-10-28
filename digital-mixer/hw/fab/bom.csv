@@ -14,14 +14,14 @@
 1,GMT147SPI 1.47in 172x320,pocket-digital:LCD_GMT147SPI,,,,"вручну: THT, гребінка дисплея",DS1
 1,GCT USB4110-GF-A,Connector_USB:USB_C_Receptacle_GCT_USB4110,GCT,USB4110-GF-A,"USB-C 2.0 receptacle, SMT",NextPCB,J1
 1,LiPo 1S 3000 mAh (з платою захисту),Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal,JST,S2B-PH-SM4-TB(LF)(SN),"PH 2-pin side entry, SMT",NextPCB,J2
-1,IN1 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J3
-1,IN2 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J4
-1,IN3 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J5
-1,IN4 SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J6
-1,MAIN OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J7
-1,AUX OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J8
-1,PHONES SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J9
-1,MIDI OUT SJ-43514-SMT,pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal,Same Sky (CUI),SJ-43514-SMT-TR,"3.5 mm TRRS jack, SMT",NextPCB,J10
+1,IN1 PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J3
+1,IN2 PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J4
+1,IN3 PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J5
+1,IN4 PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J6
+1,MAIN OUT PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J7
+1,AUX OUT PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J8
+1,PHONES PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J9
+1,MIDI OUT PJ-327A,pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal,(AliExpress seller),PJ-327A,"3.5 mm stereo jack SMT, 5 legs (DM38)",вручну: PJ-327A з AliExpress за кресленням продавця (DM38) - в інших виробників інші лапки,J10
 1,0.47u XFL4015-471ME,pocket-digital:L_Coilcraft_XFL4015,Coilcraft,XFL4015-471MEC,"inductor 0.47 uH 6.6 A, 4x4x1.5",NextPCB,L1
 1,AO3401A,Package_TO_SOT_SMD:SOT-23,Alpha & Omega,AO3401A,"P-MOSFET 30 V 4 A, SOT-23",NextPCB,Q1
 4,4.7k,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-074K7L,resistor 4.7 k 1% 0805,NextPCB,"R1,R2,R3,R4"

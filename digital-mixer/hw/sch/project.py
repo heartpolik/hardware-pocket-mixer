@@ -19,8 +19,8 @@ RULES = ""
 # signals 0.2 (power 0.5), as Rev A: 4 layers (DM31) leave room around the 0.5-pitch packages
 TRACK = 0.2
 SEVERITIES = {
-    # locating pegs under parts of the other side: SJ-43514 pegs reach 0.8 below the jack (CUI
-    # drawing), USB4110 pegs 0.63 - neither comes through the 1.6 board (checked per case, 04-pcb.md)
+    # locating pegs under parts of the other side: PJ-327A pegs reach 0.6 below the jack (seller's
+    # STEP), USB4110 pegs 0.63 - neither comes through the 1.6 board (checked per case, 04-pcb.md)
     "npth_inside_courtyard": "warning",
     # one thermal spoke is enough (the .kicad_dru rule of common/kisch.py; hand soldering, D12) -
     # also a warning: with a second rule in the .kicad_dru kicad-cli stopped applying it (27.10.2026)

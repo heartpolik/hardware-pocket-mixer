@@ -25,3 +25,7 @@ Datasheets, на які посилається документація цифр
 | [coilcraft-xfl4015.pdf](coilcraft-xfl4015.pdf) | Coilcraft XFL4015, Doc 769, rev. 03/10/26 | дросель TPS63802 | coilcraft.com |
 | [mcp23017.pdf](mcp23017.pdf) | Microchip MCP23017/MCP23S17, DS20001952D, розширювач 16 GPIO I²C | регістри розширювачів у прошивці ([06](../06-firmware.md), п. 6) | microchip.com |
 | `st7789v.pdf` (у git не кладемо: позначений «Sitronix Confidential») | Sitronix ST7789V v1.3 (2014/03), контролер TFT 240 × 320 | драйвер дисплея GMT147SPI ([06](../06-firmware.md), п. 6) | [newhavendisplay.com](https://www.newhavendisplay.com/appnotes/datasheets/LCDs/ST7789V.pdf) — завантажити в цю теку |
+| [pj-327a-hooya.pdf](pj-327a-hooya.pdf) | HOOYA (Haoyu) PJ-327A, джек 3,5 мм SMT 5 виводів, rev. A1 2020: розміри, **посадкове місце** (5 × 1,6 × 2,9), схема контактів | звірка footprint PJ-327A (DM38) | lcsc.com, C19712376 |
+| [pj-327a-xkb.pdf](pj-327a-xkb.pdf) | XKB PJ-327AX-SMT, rev. A1 2024: розміри, посадкове місце, схеми варіантів A0–A5 | звірка footprint PJ-327A (DM38) | lcsc.com, C381135 |
+| [pj-327a-sofng.pdf](pj-327a-sofng.pdf) | SOFNG PJ-327A: розміри, характеристики 0,25 A 12 V | звірка footprint PJ-327A (DM38) | lcsc.com, C22355751 |
+| [pj-327a-seller-drawing.jpg](pj-327a-seller-drawing.jpg) | PJ-327A 5 виводів, креслення продавця AliExpress: розміри, посадкове місце (5 × 2 × 3, ±0,1), схема контактів | footprint `Jack_3.5mm_PJ-327A_SMT_Horizontal` (DM38) | від користувача (продавець, [AliExpress](https://www.aliexpress.com/item/1005006127348664.html)) |

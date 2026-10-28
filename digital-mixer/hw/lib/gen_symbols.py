@@ -62,13 +62,14 @@ def tps63802():
                        ("7", "L2", "passive"), None, None], width=12.7, kw="buck boost regulator")
 
 
-def jack_43514():
-    # same as analog-mixer/hw/lib/gen_symbols.py jack_43514() (CUI SJ-43514-SMT, no switches)
-    return box_symbol("AudioJack_TRRS_SJ-43514", "J", "pocket-digital:CUI_SJ-43514-SMT_TRRS_Horizontal",
-                      "../analog-mixer/docs/datasheets/sj-4351x-smt-series.pdf",
-                      "3.5 mm TRRS jack CUI SJ-43514-SMT (no switches)",
-                      [("2", "T", "passive"), ("3", "R1", "passive"), ("4", "R2", "passive"),
-                       ("1", "S", "passive")], [], kw="audio jack TRRS")
+def jack_pj327a():
+    # PJ-327A 5 legs, numbers and contacts of the seller's drawing (docs/datasheets/pj-327a-seller-drawing.jpg):
+    # 4 tip, 5 tip switch (closed to the tip without a plug), 3 ring, 1 and 2 sleeve (DM38)
+    return box_symbol("AudioJack_Stereo_PJ-327A", "J", "pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal",
+                      "docs/datasheets/pj-327a-seller-drawing.jpg",
+                      "3.5 mm stereo jack PJ-327A SMT, tip switch",
+                      [("4", "T", "passive"), ("5", "TN", "passive"), ("3", "R", "passive"),
+                       ("1", "S", "passive"), ("2", "S2", "passive")], [], kw="audio jack stereo TRS PJ-327A")
 
 
 # Electrical types normalised for ERC (the upstream symbol mixes them): the three 3V3 pins are one
@@ -85,7 +86,7 @@ def teensy41():
 
 
 def main():
-    syms = [tps63802(), jack_43514(), teensy41()]
+    syms = [tps63802(), jack_pj327a(), teensy41()]
     OUT.write_text('(kicad_symbol_lib (version 20241209) (generator "pocket-digital-gen") '
                    '(generator_version "1.0")\n' + "\n".join(syms) + "\n)\n")
     print(OUT)

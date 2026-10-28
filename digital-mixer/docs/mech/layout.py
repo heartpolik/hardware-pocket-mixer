@@ -5,7 +5,7 @@ imported by hw/pcb/build_pcb.py.
 
 Sizes (mm): EC12SY land pattern 18 x 20 and body 12.5 x 13.2 (seller drawing, DM26), PTA2043 courtyard
 (KiCad), TSF-1266 with legs, latch switch 5.8 mm SMD pads 9.3 tip to tip (seller drawing, DM27),
-GMT147SPI 44 x 20.96 landscape, SJ-43514 body, Teensy 4.1 (PJRC), USB-C courtyard. Columns: jack,
+GMT147SPI 44 x 20.96 landscape, PJ-327A jack (DM38), Teensy 4.1 (PJRC), USB-C courtyard. Columns: jack,
 3 encoders, fader and Mute of a channel share one axis; top row ON / display / MASTER on one axis;
 right column AUX, FX I, FX II on the encoder rows, SHIFT on the Mute row (DM28).
 """
@@ -25,7 +25,8 @@ TACT = (9.0, 7.0)
 CAP = (8.0, 8.0)
 LATCH = (6.0, 9.3)                         # SMD self-locking DPDT, pads 9.3 tip to tip
 LCD = (44.0, 20.96)                        # GMT147SPI landscape
-JACK = (17.6, 10.8)                        # SJ-43514 body length x width
+JACK = (14.0, 9.9)                         # PJ-327A body + nose length x land width (HOOYA, DM38)
+JACK_OUT = 2.0                             # the nose past the board edge
 TEENSY = (17.78, 60.96)
 USBC = (13.4, 8.94)                        # GCT USB4110 courtyard (KiCad, after the GCT drawing)
 BATT = (60.0, 50.0)                        # 3000 mAh pouch ~8 x 50 x 60 - ОРІЄНТИР, not chosen yet
@@ -131,9 +132,9 @@ def top():
 def bottom():
     o = axes()
     for x, n in zip(xs, ("IN1", "IN2", "IN3", "IN4")):
-        o += rect(x, JACK[0] / 2 - 0.5, JACK[1], JACK[0], "jack", n)
+        o += rect(x, JACK[0] / 2 - JACK_OUT, JACK[1], JACK[0], "jack", n)
     for y, n in zip(y_out, ("MAIN", "AUX", "MIDI", "PHONES")):
-        o += rect(W - JACK[0] / 2 + 0.5, y, *JACK, "jack", n, f=10)
+        o += rect(W - JACK[0] / 2 + JACK_OUT, y, *JACK, "jack", n, f=10)
     o += rect(T_X, T_Y, *TEENSY, "teensy", "Teensy", "↓ microSD", f=10)
     ze = (y_enc[0] - ENC[1] / 2, y_enc[-1] + ENC[1] / 2)
     o += rect(*BATT_C, *BATT, "batt", "LiPo 1S 3000 мАг", "під енкодерами (SMD)")
