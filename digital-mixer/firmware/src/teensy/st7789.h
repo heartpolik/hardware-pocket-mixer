@@ -16,7 +16,7 @@ public:
     static constexpr uint32_t SPI_HZ = 15000000;
     // MADCTL for landscape: MV = 1 (row/column exchange) + MX or MY for the mounting orientation, and
     // the 172-pixel side sits at offset 34 in the 240-line controller RAM - both `ПЕРЕВІРИТИ` on the sample.
-    static constexpr uint8_t MADCTL = 0x60;     // MX | MV, RGB order
+    static constexpr uint8_t MADCTL = 0xA0;     // MY | MV, RGB order: checked on the module (0x60 = upside down)
     static constexpr int OFFSET_Y = 34, OFFSET_X = 0;
 
     void begin() {

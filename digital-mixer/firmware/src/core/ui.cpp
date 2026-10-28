@@ -572,7 +572,7 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
     c.fill(0, 0, DISPLAY_W, 14, col::DARK);
     uint32_t now = hal_->millis();
     char buf[48];
-    int rx = DISPLAY_W - 3;
+    int rx = DISPLAY_W - CORNER_INSET;                  // clear of the panel's rounded corner
     auto right = [&](const char* s, uint16_t k) {      // right-aligned status items, right to left
         int x = rx - Canvas::textWidth(s);
         c.text(x, 3, s, k);
@@ -598,8 +598,8 @@ void Ui::drawTop(Canvas& c, const char* title, uint16_t colr) {
     if (now < toastUntil_) {
         snprintf(buf, sizeof buf, "%s %s", toastL_, toastV_);
         c.fill(0, 0, rx + 4, 14, col::BLUE);
-        c.text(3, 3, buf, col::WHITE);
-    } else c.text(3, 3, title, colr);
+        c.textCentered(DISPLAY_W / 2, 3, buf, col::WHITE);
+    } else c.textCentered(DISPLAY_W / 2, 3, title, colr);
 }
 
 void Ui::drawStrip(Canvas& c, int ch, int x) {
@@ -620,23 +620,23 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
         int k = paramDesc(id).kind;
         drawBar(c, x + 3, y0 + 11, 57, 5, paramNorm(id, v), k == K_DB || k == K_BIPOLAR, colr);
     }
-    // meters, fader, gain reduction
+    // left to right: fader level (and gain reduction) as numbers, meters, fader
     int y = 112, h = 56;
-    drawMeter(c, x + 4, y, 5, h, mix_->chMeter[ch][0].peak, mix_->chMeter[ch][0].clip);
-    drawMeter(c, x + 11, y, 5, h, mix_->chMeter[ch][1].peak, mix_->chMeter[ch][1].clip);
     float pos = live_->fader[ch];
-    c.vline(x + 25, y, h, col::GREY);
-    int yk = y + (int)lroundf((1.f - pos) * (h - 4));
-    c.fill(x + 20, yk, 11, 4, col::WHITE);
     float db = faderDb(pos);
     if (db <= -89.f) snprintf(buf, sizeof buf, "-INF"); else snprintf(buf, sizeof buf, "%+.1f", (double)db);
-    c.textRight(x + 61, y + 2, buf, col::WHITE);
+    c.text(x + 2, y + 2, buf, col::WHITE);
     float gr = mix_->chGr[ch];
     if (gr > 0.3f) {
         snprintf(buf, sizeof buf, "-%.0f", (double)gr);
-        c.textRight(x + 61, y + 14, "GR", col::RED);
-        c.textRight(x + 61, y + 24, buf, col::RED);
+        c.text(x + 2, y + 14, "GR", col::RED);
+        c.text(x + 2, y + 24, buf, col::RED);
     }
+    drawMeter(c, x + 33, y, 5, h, mix_->chMeter[ch][0].peak, mix_->chMeter[ch][0].clip);
+    drawMeter(c, x + 40, y, 5, h, mix_->chMeter[ch][1].peak, mix_->chMeter[ch][1].clip);
+    c.vline(x + 54, y, h, col::GREY);
+    int yk = y + (int)lroundf((1.f - pos) * (h - 4));
+    c.fill(x + 49, yk, 11, 4, col::WHITE);
     c.vline(x + 63, 16, DISPLAY_H - 16, col::DARK);
 }
 
@@ -656,18 +656,19 @@ void Ui::drawMaster(Canvas& c, int x) {
         drawBar(c, x + 3, y0 + 11, 58, 5, paramNorm(ids[r], v), false, cols[r]);
     }
     int y = 112, h = 56;
-    drawMeter(c, x + 4, y, 5, h, mix_->mainMeter[0].peak, mix_->mainMeter[0].clip);
-    drawMeter(c, x + 11, y, 5, h, mix_->mainMeter[1].peak, mix_->mainMeter[1].clip);
-    drawMeter(c, x + 21, y, 4, h, mix_->auxMeter[0].peak, mix_->auxMeter[0].clip);
-    drawMeter(c, x + 27, y, 4, h, mix_->auxMeter[1].peak, mix_->auxMeter[1].clip);
     bool cue = scene_->phonesSrc == (uint8_t)PhonesSrc::Cue || (scene_->phonesSrc == 0 && mix_->anyCue());
-    c.text(x + 35, y + 2, cue ? "CUE" : "", col::YELLOW);
+    c.text(x + 2, y + 2, cue ? "CUE" : "", col::YELLOW);
     if (mix_->limGr > 0.3f) {
         snprintf(buf, sizeof buf, "-%.0f", (double)mix_->limGr);
-        c.text(x + 35, y + 14, "LIM", col::RED);
-        c.text(x + 35, y + 24, buf, col::RED);
+        c.text(x + 2, y + 14, "LIM", col::RED);
+        c.text(x + 2, y + 24, buf, col::RED);
     }
+    drawMeter(c, x + 27, y, 5, h, mix_->mainMeter[0].peak, mix_->mainMeter[0].clip);
+    drawMeter(c, x + 34, y, 5, h, mix_->mainMeter[1].peak, mix_->mainMeter[1].clip);
+    drawMeter(c, x + 44, y, 4, h, mix_->auxMeter[0].peak, mix_->auxMeter[0].clip);
+    drawMeter(c, x + 50, y, 4, h, mix_->auxMeter[1].peak, mix_->auxMeter[1].clip);
 }
+
 
 void Ui::drawHome(Canvas& c) {
     char title[48];

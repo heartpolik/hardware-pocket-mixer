@@ -18,6 +18,7 @@ enum : uint8_t { E_MASTER = 12, E_COUNT = 13 };
 enum : uint8_t { B_MASTER = 12, B_MUTE1 = 13, B_AUX = 17, B_FX1 = 18, B_FX2 = 19, B_SHIFT = 20, B_COUNT = 21 };
 
 constexpr int DISPLAY_W = 320, DISPLAY_H = 172;     // GMT147SPI landscape (DM18, DM25)
+constexpr int CORNER_INSET = 14;                     // status items stay clear of the rounded panel corners
 constexpr const char* FW_VERSION = "0.2";
 
 class Ui {
