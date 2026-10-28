@@ -655,7 +655,10 @@ void Ui::drawStrip(Canvas& c, int ch, int x) {
         if (highlighted(ch, r)) c.fill(x, y0 - 3, w, 22, rgb(35, 55, 110));
         paramFormat(id, v, buf, sizeof buf);
         float n = paramNorm(id, v);
-        c.textCentered(x + w / 2, y0, buf, col::WHITE);
+        if (id == P_FILTER || id == P_COMP) {          // per-channel mode of the SHIFT row 3: tag in the cell
+            c.text(x + 2, y0, id == P_FILTER ? "FLT" : "CMP", paramColor(id));
+            c.textRight(x + w - 2, y0, buf, col::WHITE);
+        } else c.textCentered(x + w / 2, y0, buf, col::WHITE);
         int k = paramDesc(id).kind;
         drawBar(c, x + 2, y0 + 11, w - 3, 5, n, k == K_DB || k == K_BIPOLAR, valueColor(id, v));   // colour relative to 0
     }
@@ -716,7 +719,8 @@ void Ui::drawHome(Canvas& c) {
             ids[r] = rowParam(ch, r);
             bool same = true;
             for (int k = 1; k < NCH; k++) same &= rowParam(k, r) == ids[r];
-            words[r] = same || highlighted(-1, r) ? rowLabel(ids[r], true) : "FILT/COMP";
+            bool fc = ids[r] == P_FILTER || ids[r] == P_COMP;   // mode per channel: shown in the cells
+            words[r] = fc ? "FILT/COMP" : same ? rowLabel(ids[r], true) : "?";
         }
         int total = Canvas::textWidth(prefix) + (prefix[0] ? 6 : 0);
         for (int r = 0; r < 3; r++) total += Canvas::textWidth(words[r]) + (r < 2 ? 8 : 0);
@@ -726,7 +730,7 @@ void Ui::drawHome(Canvas& c) {
         for (int r = 0; r < 3; r++) {
             int wd = Canvas::textWidth(words[r]);
             if (highlighted(-1, r)) {
-                c.fill(x - 2, 1, wd + 4, 12, paramColor(ids[r]));
+                c.fill(x - 2, 1, wd + 4, 12, ids[r] == P_FILTER || ids[r] == P_COMP ? col::DIM : paramColor(ids[r]));
                 c.text(x, 3, words[r], col::BLACK);
             } else c.text(x, 3, words[r], base);
             x += wd + 8;
