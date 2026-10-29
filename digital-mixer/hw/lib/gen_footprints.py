@@ -223,6 +223,8 @@ def alps_rs20111():
     cx, cy = 12.5, -1.875
     f.rect(cx - 17.5, cy - 4.0, cx + 17.5, cy + 4.0, "F.Fab", FAB)
     f.line(cx - 10.0, cy, cx + 10.0, cy, "F.Fab", FAB)              # travel
+    for s in (-1, 1):
+        f.circle(cx + s * 15.5, cy, 1.0, "F.Fab", FAB)              # M2 in the top face, for a panel
     f.line(cx - 17.5 - 0.11, cy - 4.11, cx + 17.5 + 0.11, cy - 4.11, "F.SilkS", SILK)
     f.line(cx - 17.5 - 0.11, cy + 4.11, cx + 17.5 + 0.11, cy + 4.11, "F.SilkS", SILK)
     f.rect(cx - 17.75, cy - 4.25, cx + 17.75, cy + 4.25, "F.CrtYd", CRT)

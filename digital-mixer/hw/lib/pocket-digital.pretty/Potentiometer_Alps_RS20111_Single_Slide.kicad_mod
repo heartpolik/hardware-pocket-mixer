@@ -12,6 +12,8 @@
 	(pad "3" thru_hole circle (at 25 0) (size 2.2 2.2) (drill 1.5) (layers "*.Cu" "*.Mask"))
 	(fp_rect (start -5 -5.875) (end 30 2.125) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))
 	(fp_line (start 2.5 -1.875) (end 22.5 -1.875) (stroke (width 0.1) (type solid)) (layer "F.Fab"))
+	(fp_circle (center -3 -1.875) (end -2 -1.875) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))
+	(fp_circle (center 28 -1.875) (end 29 -1.875) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))
 	(fp_line (start -5.11 -5.985) (end 30.11 -5.985) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
 	(fp_line (start -5.11 2.235) (end 30.11 2.235) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
 	(fp_rect (start -5.25 -6.125) (end 30.25 2.375) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))

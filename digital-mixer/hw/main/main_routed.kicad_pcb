@@ -468,6 +468,28 @@
 			(layer "F.Fab")
 			(uuid "448e2c15-7d6a-4b6d-adae-53d9132d1b8c")
 		)
+		(fp_circle
+			(center -3 -1.875)
+			(end -3 -0.875)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "34a99315-08b4-414e-82a4-fe7f88d78aec")
+		)
+		(fp_circle
+			(center 28 -1.874999)
+			(end 28 -0.874999)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "17244e49-6595-4daa-9cc3-7dda3a6f1461")
+		)
 		(pad "1" thru_hole rect
 			(at 0 0 90)
 			(size 2.2 2.2)
@@ -2291,6 +2313,28 @@
 			(layer "F.Fab")
 			(uuid "4ca7322c-7c18-48c8-89be-174e06cca5c0")
 		)
+		(fp_circle
+			(center -3 -1.875)
+			(end -3 -0.875)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "f214b064-6ca7-41fb-bfda-f293b8cbff0a")
+		)
+		(fp_circle
+			(center 28 -1.874999)
+			(end 28 -0.874999)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "45dfcdad-a4df-443e-b693-48a21d79eeee")
+		)
 		(pad "1" thru_hole rect
 			(at 0 0 90)
 			(size 2.2 2.2)
@@ -2709,6 +2753,28 @@
 			(fill no)
 			(layer "F.Fab")
 			(uuid "9d753ca8-fe9c-4425-a606-fb338ebee39b")
+		)
+		(fp_circle
+			(center -3 -1.875)
+			(end -3 -0.875)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "f752e5ae-387e-4470-b1d0-1091790ab80b")
+		)
+		(fp_circle
+			(center 28 -1.874999)
+			(end 28 -0.874999)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "96a7a813-384c-4419-a4e2-ba28584ef43b")
 		)
 		(pad "1" thru_hole rect
 			(at 0 0 90)
@@ -4206,6 +4272,28 @@
 			(fill no)
 			(layer "F.Fab")
 			(uuid "13bd3d9c-66a5-4683-a6e8-0f881ea5ecff")
+		)
+		(fp_circle
+			(center -3 -1.875)
+			(end -3 -0.875)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "962a8514-df29-4417-95ea-1e2383700501")
+		)
+		(fp_circle
+			(center 28 -1.874999)
+			(end 28 -0.874999)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "466f544f-38e0-4741-a9c3-a246d8a7b1a7")
 		)
 		(pad "1" thru_hole rect
 			(at 0 0 90)

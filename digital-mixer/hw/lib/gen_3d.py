@@ -113,10 +113,13 @@ def usb4110():
 def alps_rs20111():
     """Alps RS201111J011 (docs/datasheets/alps-rs-super-slide.pdf, p. 387, drawing No. 1): body 35 x 8,
     7 high over the PCB, slot in the top face; lever 5 along the travel x 2, 15 above the body (seller's
-    photo - the lever length L1 is an ordering option, ОРІЄНТИР); pins 0.4 x 1, 3.5 below. Footprint frame:
+    photo - the lever length L1 is an ordering option, ОРІЄНТИР); 2 x M2 in the top face 31 apart on the
+    centre line (drawn d2.0, 2.0 deep - the depth is not on the drawing, ОРІЄНТИР); pins 0.4 x 1, 3.5 below. Footprint frame:
     pins 1 / 3 at x 0 / 25, pin 2 at y -3.75, centre (12.5, -1.875); lever at mid travel."""
     cx, cy = 12.5, -1.875
     body = box(cx - 17.5, cy - 4.0, cx + 17.5, cy + 4.0, 0.0, 7.0).cut(box(cx - 12.5, cy - 0.6, cx + 12.5, cy + 0.6, 6.0, 7.1))
+    for s in (-1, 1):
+        body = body.cut(cyl(cx + s * 15.5, cy, 2.0, 5.0, 7.1))
     lever = box(cx - 2.5, cy - 1.0, cx + 2.5, cy + 1.0, 6.0, 22.0)
     pins = union(*[box(x - 0.5, y - 0.2, x + 0.5, y + 0.2, -3.5, 0.0) for x, y in ((0, 0), (0, -3.75), (25, 0))])
     return save("Potentiometer_Alps_RS20111_Single_Slide", [(body, METAL), (lever, DARK), (pins, PIN)])
