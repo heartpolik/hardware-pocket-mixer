@@ -110,17 +110,16 @@ def usb4110():
     return save("USB_C_Receptacle_GCT_USB4110", [(shell, METAL), (tongue, BLACK), (tabs, METAL), (pins, PIN)])
 
 
-def pta2043():
-    """Bourns PTA2043 (docs/datasheets/bourns-pta.pdf, PTAxx43): body A = 35 x 9.0, 6.5 high over the
-    PCB (metal frame 5.7); lever DP 4.0 wide, 1.0 thick, L = 10 above the body - the lever length is
-    an ordering option (10 / 15), 10 taken here; lever at mid travel. In the frame of the KiCad
-    footprint Potentiometer_Bourns_PTA2043_Single_Slide (pins 1 / 3 at x 0 / 33 on y 0, travel along X)."""
-    cx, cy = 16.5, 1.75
-    body = box(cx - 17.5, cy - 4.5, cx + 17.5, cy + 4.5, 0.0, 6.5).cut(box(cx - 11.0, cy - 0.6, cx + 11.0, cy + 0.6, 5.5, 6.6))
-    lever = box(cx - 2.0, cy - 0.5, cx + 2.0, cy + 0.5, 5.5, 16.5)
-    pins = union(*[box(x - 0.4, y - 0.15, x + 0.4, y + 0.15, -3.0, 0.0)
-                   for x, y in ((0, 0), (0, 3.5), (33, 0), (3.9, 5.95), (5.1, -2.45), (27.9, -2.45), (29.1, 5.95))])
-    return save("Potentiometer_Bourns_PTA2043_Single_Slide", [(body, METAL), (lever, DARK), (pins, PIN)])
+def alps_rs20111():
+    """Alps RS201111J011 (docs/datasheets/alps-rs-super-slide.pdf, p. 387, drawing No. 1): body 35 x 8,
+    7 high over the PCB, slot in the top face; lever 5 along the travel x 2, 15 above the body (seller's
+    photo - the lever length L1 is an ordering option, ОРІЄНТИР); pins 0.4 x 1, 3.5 below. Footprint frame:
+    pins 1 / 3 at x 0 / 25, pin 2 at y -3.75, centre (12.5, -1.875); lever at mid travel."""
+    cx, cy = 12.5, -1.875
+    body = box(cx - 17.5, cy - 4.0, cx + 17.5, cy + 4.0, 0.0, 7.0).cut(box(cx - 12.5, cy - 0.6, cx + 12.5, cy + 0.6, 6.0, 7.1))
+    lever = box(cx - 2.5, cy - 1.0, cx + 2.5, cy + 1.0, 6.0, 22.0)
+    pins = union(*[box(x - 0.5, y - 0.2, x + 0.5, y + 0.2, -3.5, 0.0) for x, y in ((0, 0), (0, -3.75), (25, 0))])
+    return save("Potentiometer_Alps_RS20111_Single_Slide", [(body, METAL), (lever, DARK), (pins, PIN)])
 
 
 def jst_ph_sm4():
@@ -148,7 +147,7 @@ def pj327a():
 
 
 def main():
-    print("\n".join([ec12sy(), tsf1266(), latch(), lcd(), teensy(), xfl4015(), vson(), usb4110(), pta2043(), jst_ph_sm4(), pj327a()]))
+    print("\n".join([ec12sy(), tsf1266(), latch(), lcd(), teensy(), xfl4015(), vson(), usb4110(), alps_rs20111(), jst_ph_sm4(), pj327a()]))
 
 
 if __name__ == "__main__":

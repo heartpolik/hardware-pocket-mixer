@@ -3,8 +3,8 @@ imported by hw/pcb/build_pcb.py.
 
   python3 digital-mixer/docs/mech/layout.py
 
-Sizes (mm): EC12SY land pattern 18 x 20 and body 12.5 x 13.2 (seller drawing, DM26), PTA2043 courtyard
-(KiCad), TSF-1266 with legs, latch switch 5.8 mm SMD pads 9.3 tip to tip (seller drawing, DM27),
+Sizes (mm): EC12SY land pattern 18 x 20 and body 12.5 x 13.2 (seller drawing, DM26), fader space (PTA2043 courtyard, kept
+for the fixed layout; Alps RS20111 35.5 x 8.5 fits in it, DM39), TSF-1266 with legs, latch switch 5.8 mm SMD pads 9.3 tip to tip (seller drawing, DM27),
 GMT147SPI 44 x 20.96 landscape, PJ-327A jack (DM38), Teensy 4.1 (PJRC), USB-C courtyard. Columns: jack,
 3 encoders, fader and Mute of a channel share one axis; top row ON / display / MASTER on one axis;
 right column AUX, FX I, FX II on the encoder rows, SHIFT on the Mute row (DM28).
@@ -20,7 +20,7 @@ CLR = 1.5                                  # pad-to-part clearance where the bod
 ENC = (18.0, 20.0)                         # EC12SY SMD land pattern: 18 across the side lugs, 20 S1/S2 to A/C/B
 ENC_BODY = (12.5, 13.2)
 P = ENC[0] + 1.0                           # channel pitch: 1 mm between the side lugs of neighbours
-FADER = (10.0, 36.0)                       # PTA2043 courtyard, long side front-back
+FADER = (10.0, 36.0)                       # fader space, long side front-back (PTA2043 courtyard; RS20111 35.5 x 8.5, DM39)
 TACT = (9.0, 7.0)
 CAP = (8.0, 8.0)
 LATCH = (6.0, 9.3)                         # SMD self-locking DPDT, pads 9.3 tip to tip
@@ -61,8 +61,7 @@ BATT_C = (M + BATT[0] / 2, y_enc[-1] + ENC[1] / 2 - BATT[1] / 2)   # under the e
 # toward the faders: the band behind it takes the input RC and the power parts
 HOLES = [(3.0, 3.0), (3.0, D - 3.0), (W - 3.0, 3.0), (W - 3.0, D - 3.0)]
 
-FADER_PINS = [(y - 1.75, x - 16.5) for x, y in ((0, 0), (0, 3.5), (33, 0), (3.9, 5.95), (5.1, -2.45),
-                                                 (27.9, -2.45), (29.1, 5.95))]
+FADER_PINS = [(1.875, 12.5), (-1.875, 12.5), (1.875, -12.5)]     # Alps RS20111 pins 1, 2, 3 from the body centre (DM39)
 
 STYLE = {
     "board": "fill:#eef4ea;stroke:#333;stroke-width:1.5", "enc": "fill:#cfe0f5;stroke:#4a6fa5",

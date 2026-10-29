@@ -210,6 +210,25 @@ def pj327a():
     return f.write(-3.2, 13.6)
 
 
+def alps_rs20111():
+    """Alps RS201111J011 Super Slide, 20 mm travel, single (docs/datasheets/alps-rs-super-slide.pdf,
+    p. 387, drawing No. 1; seller's copy fader-rs20111-seller-*.png): PC board holes 3 x d1.5 viewed from
+    the mounting side - 1 and 3 25 apart, 2 3.75 from 1; body 35 x 8 centred on the hole pattern (the
+    drawing's centre lines), 2 x M2 in its top face 31 apart for a panel - no mounting tabs. Pins 0.4 x 1.
+    Frame: pin 1 at 0, pin 3 at +x, travel along x."""
+    f = FP("Potentiometer_Alps_RS20111_Single_Slide", "Alps RS20111 Super Slide slide potentiometer, 20 mm "
+           "travel, single; holes 3 x d1.5 (Alps catalog p. 387, drawing No. 1)", "slide potentiometer Alps RS20111")
+    for num, x, y in (("1", 0, 0), ("2", 0, -3.75), ("3", 25.0, 0)):
+        f.tht(num, x, y, 2.2, 1.5, "rect" if num == "1" else "circle")
+    cx, cy = 12.5, -1.875
+    f.rect(cx - 17.5, cy - 4.0, cx + 17.5, cy + 4.0, "F.Fab", FAB)
+    f.line(cx - 10.0, cy, cx + 10.0, cy, "F.Fab", FAB)              # travel
+    f.line(cx - 17.5 - 0.11, cy - 4.11, cx + 17.5 + 0.11, cy - 4.11, "F.SilkS", SILK)
+    f.line(cx - 17.5 - 0.11, cy + 4.11, cx + 17.5 + 0.11, cy + 4.11, "F.SilkS", SILK)
+    f.rect(cx - 17.75, cy - 4.25, cx + 17.75, cy + 4.25, "F.CrtYd", CRT)
+    return f.write(cy - 5.2, cy + 5.2)
+
+
 def mounting_hole_m2():
     """As analog-mixer/hw/lib/gen_footprints.py mounting_hole_m2 (D57): KiCad MountingHole_2.2mm_M2_Pad
     pad and drill, courtyard r 2.45 on both sides for a standoff, nut or screw head."""
@@ -226,7 +245,7 @@ def mounting_hole_m2():
 
 def main():
     print("\n".join([teensy41_tht(), vson_hr10(), xfl4015(), tsf1266(), latch_smd(), ec12sy_smd(), lcd_gmt147(),
-                     pj327a(), mounting_hole_m2()]))
+                     pj327a(), alps_rs20111(), mounting_hole_m2()]))
 
 
 if __name__ == "__main__":

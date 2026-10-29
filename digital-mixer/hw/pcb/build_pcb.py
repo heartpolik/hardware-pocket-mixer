@@ -33,7 +33,6 @@ BATT_ZONE = (L.BATT_C[0] - L.BATT[0] / 2 - 0.5, L.BATT_C[1] - L.BATT[1] / 2 - 0.
              L.BATT_C[0] + L.BATT[0] / 2 + 0.5, L.BATT_C[1] + L.BATT[1] / 2 + 0.5)
 MODEL_OVERRIDE = {
     "USB_C_Receptacle_GCT_USB4110": "OWN/USB_C_Receptacle_GCT_USB4110.step",
-    "Potentiometer_Bourns_PTA2043_Single_Slide": "OWN/Potentiometer_Bourns_PTA2043_Single_Slide.step",
     "JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal": "OWN/JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal.step",
     # TP4056: same SOIC-8 body, only the exposed pad differs
     "SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm":
@@ -257,7 +256,7 @@ def main():
                 a = next(x for x in n if x.startswith("ENC") and x.endswith("_A"))
                 ch, k = int(a[3]), int(a.split("_")[1])
                 put_c(ref, L.xs[ch - 1], L.y_enc[k - 1])
-        elif "PTA2043" in fpn:
+        elif "RS20111" in fpn:
             ch = int(next(x for x in n if x.startswith("FADER"))[5])
             put_c(ref, L.xs[ch - 1], L.y_fader, 90)
         elif "TSF-1266" in fpn:

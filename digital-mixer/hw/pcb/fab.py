@@ -92,13 +92,13 @@ FULL = {
                  "top side; any 6x6x5 SMT tact switch with this land pattern"),
     "Latching": ("(seller drawing)", "self-locking DPDT 5.8 x 5.8 mm SMD", "push latching switch DPDT, 6 legs 2.0 pitch, 30 V 0.1 A",
                  "top side; seller part (docs/datasheets/push-latching-dpdt-5.8mm-smd-drawing.png) - consign if not sourceable"),
-    "PTA2043": ("Bourns", "PTA2043-2010DPB103", "slide potentiometer 20 mm travel, single, 10 k linear, DP lever 10 mm",
-                "THT, top side; part number composed from the Bourns PTA 'How To Order' table"),
+    "RS20111": ("Alps Alpine", "RS201111J011", "slide potentiometer 20 mm travel, single, 10 k linear (1B), 3 pins",
+                "THT, top side; docs/datasheets/alps-rs-super-slide.pdf, drawing No. 1 (DM39)"),
 }
 # who mounts it: NextPCB places every SMD part of the bottom side; these (by footprint) by hand
 HAND = {
     "Teensy41_THT": "вручну: Teensy 4.1 на гребінках 2 × 24 (DM35) + 3 дроти USB, PSRAM на ньому — до встановлення; після перевірки живлення",
-    "PTA2043": "вручну: THT, фейдер",
+    "RS20111": "вручну: THT, фейдер Alps RS201111J011 (AliExpress, DM39)",
     "LCD_GMT147SPI": "вручну: THT, гребінка дисплея",
     "EC12SY": "вручну: верхній бік, AliExpress (DM26)",
     "TSF-1266": "вручну: верхній бік, AliExpress",

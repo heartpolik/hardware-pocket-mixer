@@ -17,7 +17,7 @@ C1206 = "Capacitor_SMD:C_1206_3216Metric"
 CP_IN = "Capacitor_SMD:CP_Elec_4x5.4"
 JACK = "pocket-digital:Jack_3.5mm_PJ-327A_SMT_Horizontal"    # DM38 (was CUI SJ-43514-SMT)
 JACK_SYM = "pocket-digital:AudioJack_Stereo_PJ-327A"
-FADER = "Potentiometer_THT:Potentiometer_Bourns_PTA2043_Single_Slide"
+FADER = "pocket-digital:Potentiometer_Alps_RS20111_Single_Slide"   # Alps RS201111J011 (DM39, was Bourns PTA2043)
 ENC = "pocket-digital:RotaryEncoder_EC12SY_SMD"                # EC12SY SMD with push switch (DM26)
 TACT = "pocket-digital:SW_TSF-1266_6x6mm_SMD"                  # 6 x 6 x 5 SMT tact (DM16), drawing / sample TBD
 LATCH = "pocket-digital:SW_Push_Latching_DPDT_5.8mm_SMD"       # self-locking 5.8 mm DPDT SMD (DM27)
@@ -315,13 +315,13 @@ def build():
     b.decouple(D3)
 
     for ch in (1, 2, 3, 4):
-        b.block(f"Канал {ch}: 3 енкодери EC12SY SMD з кнопкою (шари EQ / посили / канал, DM6, DM26), фейдер 35 мм (DM8), "
+        b.block(f"Канал {ch}: 3 енкодери EC12SY SMD з кнопкою (шари EQ / посили / канал, DM6, DM26), фейдер 35 мм Alps RS201111J011 (DM8, DM39), "
                 "Mute — тактова кнопка TSF-1266 (DM16)", 2)
         for e in range(3):
             b.part("SW", "Device:RotaryEncoder_Switch_MP", f"EC12SY ch{ch}.{e + 1}", ENC,
                    {"A": f"ENC{ch}_{e + 1}_A", "B": f"ENC{ch}_{e + 1}_B", "C": "GND",
                     "S1": f"ENC{ch}_{e + 1}_SW", "S2": "GND", "MP": "GND"}, w=20)
-        b.part("RV", "Device:R_Potentiometer", "PTA2043 10k B", FADER,
+        b.part("RV", "Device:R_Potentiometer", "RS201111J011 10k B", FADER,
                {"1": "GND", "2": f"FADER{ch}", "3": D3}, w=20)
         b.c("100n", f"FADER{ch}", "GND")
         b.part("SW", "Switch:SW_Push", f"Mute {ch} TSF-1266", TACT, {"1": f"MUTE{ch}", "2": "GND"}, w=20)

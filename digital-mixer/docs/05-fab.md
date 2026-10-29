@@ -13,7 +13,7 @@ python3 hw/pcb/fab.py      # з digital-mixer/: усе нижче заново (
 |---|---|
 | [hw/fab/main-gerber.zip](../hw/fab/main-gerber.zip) | Gerber 4 шарів (F.Cu, In1 GND, In2, B.Cu), маски, паста, шовкографія, контур; свердловка PTH / NPTH окремо — **завантажити як PCB** |
 | [hw/fab/nextpcb/bom-nextpcb.csv](../hw/fab/nextpcb/bom-nextpcb.csv) | **BOM для PCBA**: Designator, Quantity, Manufacturer, Manufacturer Part Number, Description, Package, Procurement Type, Customer Note — 69 рядків, 33 з них `DNP` (ручний монтаж) |
-| [hw/fab/nextpcb-full/](../hw/fab/nextpcb-full/) | **для порівняння цін — повний монтаж:** BOM і координати обох боків, з вивідними фейдерами; DNP — Teensy, дисплей (обидва на гребінках) і джеки PJ-327A (DM38). Фейдер — PTA2043-2010DPB103 (код склав я за таблицею «How To Order» Bourns PTA); енкодери, кнопки й кнопка живлення — деталі продавців, якщо NextPCB не знайде — давальницькі |
+| [hw/fab/nextpcb-full/](../hw/fab/nextpcb-full/) | **для порівняння цін — повний монтаж:** BOM і координати обох боків, з вивідними фейдерами; DNP — Teensy, дисплей (обидва на гребінках) і джеки PJ-327A (DM38). Фейдер — Alps RS201111J011 (DM39); енкодери, кнопки й кнопка живлення — деталі продавців, якщо NextPCB не знайде — давальницькі |
 | [hw/fab/nextpcb-opt/](../hw/fab/nextpcb-opt/) | **оптимізоване замовлення** (п. 1.1): як `nextpcb/`, але й PCM1865 ×2 — `DNP` (купуємо на AliExpress, паяємо самі) |
 | [hw/fab/nextpcb/centroid-nextpcb.zip](../hw/fab/nextpcb/centroid-nextpcb.zip) | **файл координат** (pick and place): Designator, Mid X / Mid Y (мм), Rotation, Layer — 150 деталей, усі на нижньому боці; той самий CSV — поруч |
 | [assembly-bottom.pdf](../hw/fab/nextpcb/assembly-bottom.pdf), [assembly-top.pdf](../hw/fab/nextpcb/assembly-top.pdf) | монтажні креслення (контур, шовкографія, контури деталей з позначеннями); низ — дзеркально, як його бачать на столі |
@@ -148,7 +148,7 @@ Designator, Quantity, Manufacturer Part Number (+ Procurement Type: `DNP` — н
 | Резистори MIDI | RC2010FK-0733RL (33 Ω 2010), RC1206FR-0710RL (10 Ω 1206) | [2010](https://www.ibselectronics.com/part/yageo/rc2010fk-0733rl/419924/), [1206](https://www.lcsc.com/product-image/C108080.html) | |
 
 Ручний монтаж (DNP) — з AliExpress / магазинів України (DM7): джеки PJ-327A ×8 (DM38), EC12SY-H6-17.5F5.0-24C24P-SMD ×13,
-TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери PTA2043 B10K ×4, дисплей GMT147SPI на
+TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери Alps RS201111J011 ×4 (DM39), дисплей GMT147SPI на
 гребінці, Teensy 4.1 + гребінки 2,54 (2 × 1×24, стандартна планка 2,5 мм) + 3 тонкі дроти (D−, D+, VUSB) + PSRAM
 8 МБ SOIC-8 (1–2 шт., PJRC тестувала APS6404L-3SQR, [PJRC](https://www.pjrc.com/store/psram.html)),
 акумулятор 1S 3000 mAh з платою захисту і роз'ємом JST PH.
@@ -159,7 +159,7 @@ TSF-1266 ×8, кнопка з фіксацією 5,8 мм SMD, фейдери PT
    варіантах — джеки PJ-327A ×8 (передній торець корпусу — по краю плати, напрямні в отвори).
 1. **Верх: кнопки TSF-1266, кнопка ON, енкодери EC12SY** — напрямні енкодера в отвори (їхнє положення
    звірити до пайки, [04](04-pcb.md), п. 5). Плату класти на м'яку підкладку: знизу вже стоять деталі.
-2. **Фейдери PTA2043** і **гребінка дисплея** (дисплей ставити останнім, на стійки M2).
+2. **Фейдери Alps RS201111J011** і **гребінка дисплея** (дисплей ставити останнім, на стійки M2).
 3. **Перевірка без Teensy:** USB-C → заряд (світлодіоди TP4056), кнопка ON → +4V2 ≈ 4,15 V, +3V3A ≈ 3,3 V.
 4. **Teensy 4.1 (DM35)** — на гребінках у наскрізні отвори, за 6 мм від переднього краю:
    1. розрізати перемичку VIN–VUSB на модулі (PJRC);

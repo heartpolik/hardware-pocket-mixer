@@ -36,7 +36,7 @@
 6,470,Resistor_SMD:R_0805_2012Metric,Yageo,RC0805FR-07470RL,resistor 470 R 1% 0805,NextPCB,"R41,R42,R43,R44,R45,R46"
 1,33 0.5W,Resistor_SMD:R_2010_5025Metric,Yageo,RC2010FK-0733RL,resistor 33 R 1% 0.75 W 2010,NextPCB,R47
 1,10 0.25W,Resistor_SMD:R_1206_3216Metric,Yageo,RC1206FR-0710RL,resistor 10 R 1% 0.5 W 1206,NextPCB,R48
-4,PTA2043 10k B,Potentiometer_THT:Potentiometer_Bourns_PTA2043_Single_Slide,,,,"вручну: THT, фейдер","RV1,RV2,RV3,RV4"
+4,RS201111J011 10k B,pocket-digital:Potentiometer_Alps_RS20111_Single_Slide,,,,"вручну: THT, фейдер Alps RS201111J011 (AliExpress, DM39)","RV1,RV2,RV3,RV4"
 1,Power 5.8mm DPDT self-lock SMD,pocket-digital:SW_Push_Latching_DPDT_5.8mm_SMD,,,,"вручну: верхній бік, AliExpress (DM27)",SW1
 1,EC12SY ch1.1,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW2
 1,EC12SY ch1.2,pocket-digital:RotaryEncoder_EC12SY_SMD,,,,"вручну: верхній бік, AliExpress (DM26)",SW3

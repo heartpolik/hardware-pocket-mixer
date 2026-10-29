@@ -36,7 +36,7 @@ R21,1,Yageo,RC0805FR-0791KL,resistor 91 k 1% 0805,R_0805_2012Metric,,
 "R41,R42,R43,R44,R45,R46",6,Yageo,RC0805FR-07470RL,resistor 470 R 1% 0805,R_0805_2012Metric,,
 R47,1,Yageo,RC2010FK-0733RL,resistor 33 R 1% 0.75 W 2010,R_2010_5025Metric,,
 R48,1,Yageo,RC1206FR-0710RL,resistor 10 R 1% 0.5 W 1206,R_1206_3216Metric,,
-"RV1,RV2,RV3,RV4",4,Bourns,PTA2043-2010DPB103,"slide potentiometer 20 mm travel, single, 10 k linear, DP lever 10 mm",Potentiometer_Bourns_PTA2043_Single_Slide,,"THT, top side; part number composed from the Bourns PTA 'How To Order' table"
+"RV1,RV2,RV3,RV4",4,Alps Alpine,RS201111J011,"slide potentiometer 20 mm travel, single, 10 k linear (1B), 3 pins",Potentiometer_Alps_RS20111_Single_Slide,,"THT, top side; docs/datasheets/alps-rs-super-slide.pdf, drawing No. 1 (DM39)"
 SW1,1,(seller drawing),self-locking DPDT 5.8 x 5.8 mm SMD,"push latching switch DPDT, 6 legs 2.0 pitch, 30 V 0.1 A",SW_Push_Latching_DPDT_5.8mm_SMD,,top side; seller part (docs/datasheets/push-latching-dpdt-5.8mm-smd-drawing.png) - consign if not sourceable
 "SW2,SW3,SW4,SW6,SW7,SW8,SW10,SW11,SW12,SW14,SW15,SW16,SW18",13,Shenzhen Darong Electronics (seller drawing),EC12SY-H6-17.5F5.0-24C24P-SMD-612,"rotary encoder 24 detents / 24 pulses, push switch, SMD, shaft 17.5 mm D-flat",RotaryEncoder_EC12SY_SMD,,top side; seller part (docs/datasheets/ec12sy-smd-encoder-drawing.png) - consign if not sourceable
 "SW5,SW9,SW13,SW17,SW19,SW20,SW21,SW22",8,(seller drawing),TSF-1266,"tact switch 6 x 6 x 5 mm SMT, 2 pads 8.0 apart, 260 gf",SW_TSF-1266_6x6mm_SMD,,top side; any 6x6x5 SMT tact switch with this land pattern
